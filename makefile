@@ -36,4 +36,4 @@ $(MAIN): %.o: %.f90
 
 
 clean:
-	rm $(MFOBJ) $(NUMOBJ) $(QAG) gentest.x
+	rm *.o *.so gentest.x
