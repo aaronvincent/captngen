@@ -15,7 +15,7 @@
     module capmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
-    double precision, parameter :: usun = 220.d5, u0 = 270.d5,rho0 = 0.3,vesc_halo=544d5, Rsun = 69.57d9
+    double precision, parameter :: usun = 220.d5, u0 = 270.d5,rho0 = 0.4,vesc_halo=544d5, Rsun = 69.57d9
     double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
     !this goes with the Serenelli table format
     double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
@@ -271,7 +271,7 @@
     *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
     + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
 
-    print*,"sigma_0 =", sigma_0, "; m = ", mdm, "; nq = ", nq, "; Capture rate: ", capped, "max = ", maxcap
+!    print*,"sigma_0 =", sigma_0, "; m = ", mdm, "; nq = ", nq, "; Capture rate: ", capped, "max = ", maxcap
 
     if (capped .gt. maxcap) then
         capped = maxcap
@@ -287,6 +287,19 @@
 
     end subroutine captn_general
 !
+
+
+    !! captn_specific calculates the capture rate for constant cross section.
+    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
+    double precision :: mx_in, sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI
+
+    call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
+    call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
+
+    end subroutine captn_specific
+
+
+! moved to main.f90:
 !    PROGRAM GENCAP
 !    implicit none
 !    double precision :: mx, sigma_0, capped,capped_sd(250),capped_si(250)
