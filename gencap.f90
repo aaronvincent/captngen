@@ -168,7 +168,7 @@
     return
     end
 
-! this is tho make sure the integrator does what it's supposed to
+! this is to make sure the integrator does what it's supposed to
     function gaussinmod(x)
 
     double precision :: x,gaussinmod
@@ -291,7 +291,9 @@
 
     !! captn_specific calculates the capture rate for constant cross section.
     subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
-    double precision :: mx_in, sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI
+    double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
+    double precision :: capped_SD,capped_SI
+
 
     call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
     call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
