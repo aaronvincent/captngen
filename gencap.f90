@@ -246,7 +246,7 @@
     if (.not. allocated(tab_r)) then !
         !solar model file: read in
 !        filename = "./solarmodels/model_agss09ph_nohead.dat"
-        filename = "./solarmodels/model_gs98_nohead.dat"
+        filename = "solarmodels/model_gs98_nohead.dat"
         call get_solar_params(filename,nlines)
     end if
 !        print*,nlines
