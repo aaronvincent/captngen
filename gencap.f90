@@ -220,7 +220,7 @@
     double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
     double precision, allocatable :: u_int_res(:)
-    character*50 :: filename
+    character*50, intent(in) :: filename
     dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
     external gausstest !this is just for testing
     external integrand
@@ -291,7 +291,7 @@
 
     !! captn_specific calculates the capture rate for constant cross section.
     subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,solarmodel,capped_SD,capped_SI)
-    character*50 :: solarmodel
+    character*50, intent(in) :: solarmodel
     double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
     double precision :: capped_SD,capped_SI
 
