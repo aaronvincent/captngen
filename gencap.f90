@@ -210,7 +210,7 @@
     dummyf = 1.d0
     end function dummyf
 
-    subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
+    subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,filename,capped)
     use capmod
     implicit none
     integer :: nq_in, niso_in, nv_in
@@ -246,7 +246,7 @@
     if (.not. allocated(tab_r)) then !
         !solar model file: read in
 !        filename = "./solarmodels/model_agss09ph_nohead.dat"
-        filename = "solarmodels/model_gs98_nohead.dat"
+
         call get_solar_params(filename,nlines)
     end if
 !        print*,nlines
@@ -290,13 +290,14 @@
 
 
     !! captn_specific calculates the capture rate for constant cross section.
-    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
+    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,solarmodel,capped_SD,capped_SI)
+    character*50 :: solarmodel
     double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
     double precision :: capped_SD,capped_SI
 
 
-    call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
-    call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
+    call captn_general(mx_in,sigma_0_SD_in,1,0,0,solarmodel,capped_SD)
+    call captn_general(mx_in,sigma_0_SI_in,29,0,0,solarmodel,capped_SI)
 
     end subroutine captn_specific
 
