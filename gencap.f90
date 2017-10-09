@@ -210,7 +210,7 @@
     dummyf = 1.d0
     end function dummyf
 
-    subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,filename,capped)
+    subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
     use capmod
     implicit none
     integer :: nq_in, niso_in, nv_in
@@ -220,7 +220,7 @@
     double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
     double precision, allocatable :: u_int_res(:)
-    character*50, intent(in) :: filename
+
     dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
     external gausstest !this is just for testing
     external integrand
@@ -236,7 +236,7 @@
     nq = nq_in
     nv = nv_in
 
-!    do i=1,100
+
 
     if (nq*nv .ne. 0) then
     print*, "Oh no! nq and nv can't both be nonzero. "
@@ -244,18 +244,14 @@
     end if
 
     if (.not. allocated(tab_r)) then !
-        !solar model file: read in
-!        filename = "./solarmodels/model_agss09ph_nohead.dat"
-
-        call get_solar_params(filename,nlines)
+        print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
+        return
     end if
-!        print*,nlines
         allocate(u_int_res(nlines))
-!    end if
-!    print*, "nlines ", nlines
+
 !    As far as I can tell, the second argument (fofuoveru) does nothing in this integrator. I've sent it to an inert dummy just in case.
     capped = 0.d0
-!    print*,nlines
+
     do ri=1,nlines !loop over the star
     result = 0.d0
     ri_for_omega = ri !accessed via the module
@@ -290,18 +286,28 @@
 
 
     !! captn_specific calculates the capture rate for constant cross section.
-    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,solarmodel,capped_SD,capped_SI)
-    character*50, intent(in) :: solarmodel
+    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
     double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
     double precision :: capped_SD,capped_SI
 
 
-    call captn_general(mx_in,sigma_0_SD_in,1,0,0,solarmodel,capped_SD)
-    call captn_general(mx_in,sigma_0_SI_in,29,0,0,solarmodel,capped_SI)
+    call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
+    call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
 
     end subroutine captn_specific
 
+!------!------!------!------!------INITIALIZATION FCT
 
+    subroutine captn_init(solarmodel)
+    use capmod
+    character*300, intent(in) :: solarmodel
+
+    if  (.not. allocated(tab_r)) then !
+        call get_solar_params(solarmodel,nlines)
+    else
+    print*,"Capgen tabulons already allocated, you might be overdoing it by calling the init function more than once."
+    end if
+    end subroutine captn_init
 ! moved to main.f90:
 !    PROGRAM GENCAP
 !    implicit none
