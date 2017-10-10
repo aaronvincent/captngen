@@ -1,7 +1,7 @@
 !   Capt'n General
 !   For a continuum of Q-dependent capture
 !   Simplified, general solar DM capture routine
-!   Standalone code for q^n, v^n
+!   Standalone code for q^2n, v^2n
 !   Useful stuff is run at the end; beginning is the module that does the heavy lifting
 !   Future plans: add form factor handling (a la Catena & Schwabe)
 !   Made for GAMBIT, with marginal competence
@@ -12,8 +12,6 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 !   Reference q0 is 40 MeV, and v0 is 220 km/s.
 
-!    character*300 solarmodel
-!    common solarmodel
 
     module capmod
     implicit none
