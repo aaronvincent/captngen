@@ -12,6 +12,9 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 !   Reference q0 is 40 MeV, and v0 is 220 km/s.
 
+!    character*300 solarmodel
+!    common solarmodel
+
     module capmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
@@ -120,7 +123,7 @@
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !read in solar parameters from Aldo Serenelli-style files, with header removed
     subroutine get_solar_params(filename,nlines)
-    character*50 :: filename
+    character*300 :: filename
     double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
     double precision, allocatable :: phi(:) !this is used briefly
     integer :: i,j, nlines,iostatus
@@ -290,7 +293,6 @@
     double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
     double precision :: capped_SD,capped_SI
 
-
     call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
     call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
 
@@ -300,8 +302,12 @@
 
     subroutine captn_init(solarmodel)
     use capmod
-    character*300, intent(in) :: solarmodel
-
+    use iso_c_binding, only: c_ptr
+    character (len=300) solarmodel
+!    common solarmodel
+!    external solarmodel
+    print*,"Capgen initializing"
+    print*,solarmodel
     if  (.not. allocated(tab_r)) then !
         call get_solar_params(solarmodel,nlines)
     else
