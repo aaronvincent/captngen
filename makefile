@@ -1,5 +1,5 @@
 FC=gfortran
-switch= -O3
+FOPT= -O3
 AUXDIR = ./aux
 QAGDIR = ./aux/dqag
 
@@ -18,21 +18,19 @@ gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG)
 	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG)
 
 $(NUMOBJ): %.o : $(AUXDIR)/%.f
-	$(FC) $(FOPT) -c $(switch) $<
+	$(FC) $(FOPT) -c  $<
 
 $(QAG): %.o : $(QAGDIR)/%.f
-	$(FC) $(FOPT) -c $(switch) $<
+	$(FC) $(FOPT) -c  $<
 
 
 $(MFOBJ): %.o: %.f90
-	$(FC) $(FOPT) -c $(switch) $<
+	$(FC) $(FOPT) -c $<
 
 $(MAIN): %.o: %.f90
-	$(FC) $(FOPT) -c $(switch) $<
+	$(FC) $(FOPT) -c  $<
 
 
-#%.o: %.f
-#	$(FC) -c $(switch) $<
 
 
 clean:
