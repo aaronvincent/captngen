@@ -159,7 +159,7 @@
     phi(nlines) = -GMoverR
     tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
     tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
-    do i = 1,nlines
+    do i = 1,nlines-1
     j = nlines-i !trapezoid integral
     phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
     tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
