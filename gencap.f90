@@ -16,10 +16,10 @@
     module capmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
-    double precision, parameter :: vesc_halo=544d5, Rsun = 69.57d9
+    double precision, parameter :: Rsun = 69.57d9
     double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
     !these are now set in captn_init
-    double precision :: usun , u0 ,rho0
+    double precision :: usun , u0 ,rho0,vesc_halo
     !this goes with the Serenelli table format
     double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
                                                         18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
@@ -290,6 +290,7 @@
 
     !! captn_specific calculates the capture rate for constant cross section.
     subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
+      implicit none
     double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
     double precision :: capped_SD,capped_SI
 
@@ -300,11 +301,12 @@
 
 !------!------!------!------!------INITIALIZATION FCT
 
-    subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in)
+    subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     use capmod
     use iso_c_binding, only: c_ptr
+    implicit none
     character (len=300) solarmodel
-    double precision,intent(in) :: rho0_in,usun_in,u0_in
+    double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 !    common solarmodel
 !    external solarmodel
 
@@ -317,6 +319,8 @@
     usun = usun_in
     u0 =  u0_in
     rho0 =rho0_in
+    vesc_halo = vesc_in
+    print*,usun, u0, rho0,vesc_halo
     end subroutine captn_init
 ! moved to main.f90:
 !    PROGRAM GENCAP
