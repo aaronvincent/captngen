@@ -320,7 +320,7 @@
     u0 =  u0_in
     rho0 =rho0_in
     vesc_halo = vesc_in
-    print*,usun, u0, rho0,vesc_halo
+    
     end subroutine captn_init
 ! moved to main.f90:
 !    PROGRAM GENCAP
