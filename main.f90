@@ -9,8 +9,8 @@
     integer :: niso, nq, nv, i
 !    modfile = "solarmodels/struct_b16_agss09_nohead.dat"
     modfile = "solarmodels/model_gs98_nohead.dat"
-    call captn_init(modfile)
-    call captn_init(modfile)
+    call captn_init(modfile,0.4d0,270.d0,220.d0)
+    call captn_init(modfile,0.4d0,270.d0,220.d0)
     niso = 29
     nq = 0
     nv = 0
