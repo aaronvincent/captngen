@@ -270,22 +270,24 @@
     *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
     + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
 
-!    print*,"sigma_0 =", sigma_0, "; m = ", mdm, "; nq = ", nq, "; Capture rate: ", capped, "max = ", maxcap
+  !  print*,"sigma_0 =", sigma_0, "; m = ", mdm, "; nq = ", nq, "; Capture rate: ", capped, "max = ", maxcap
 
-    if (capped .gt. maxcap) then
-        capped = maxcap
-    end if
+    ! if (capped .gt. maxcap) then
+    !     capped = maxcap
+    ! end if
 
-
-!    open(55,file = "captest.dat")
-!    do i=1,nlines
-!    write(55,*) tab_r(i), u_int_res(i)
-!    end do
-!    close(55)
-!    end do
 
     end subroutine captn_general
-!
+  !This is fine as long as the escape velocity is large enough
+  subroutine captn_maxcap(maxcap)
+    use capmod
+    implicit none
+    double precision maxcap
+    maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
+    *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
+    + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
+  end subroutine captn_maxcap
+
 
 
     !! captn_specific calculates the capture rate for constant cross section.
@@ -320,32 +322,5 @@
     u0 =  u0_in
     rho0 =rho0_in
     vesc_halo = vesc_in
-    
+
     end subroutine captn_init
-! moved to main.f90:
-!    PROGRAM GENCAP
-!    implicit none
-!    double precision :: mx, sigma_0, capped,capped_sd(250),capped_si(250)
-!    integer :: niso, nq, nv, i
-!
-!    niso = 29
-!    nq = 1
-!    nv = 0
-!    mx = 1000.d0
-!    sigma_0 = 1.0d-40 !cm^2
-!    do i = 1,250
-!    mx = 10**(.02*i - 0.02)
-!!    print*,mx
-!    call captn_general(mx,sigma_0,29,nq,nv,capped_si(i))
-!    call captn_general(mx,sigma_0,1,nq,nv,capped_sd(i))
-!
-!    end do
-!
-!    open(55,file = "captest_agss_q2.dat")
-!    do i=1,250
-!    write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i)
-!    end do
-!    close(55)
-!
-!    END PROGRAM GENCAP
-!
