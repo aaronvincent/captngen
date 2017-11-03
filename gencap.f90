@@ -216,9 +216,9 @@
     subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
     use capmod
     implicit none
-    integer :: nq_in, niso_in, nv_in
+    integer, intent(in):: nq_in, niso_in, nv_in
     integer i, ri
-    double precision :: mx_in, sigma_0_in
+    double precision, intent(in) :: mx_in, sigma_0_in
     double precision :: capped, maxcap !this is the output
     double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
