@@ -18,6 +18,7 @@
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
     double precision, parameter :: Rsun = 69.57d9
     double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
+    double precision, parameter :: eps = 1d-10 !stops divisions by zero
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0,vesc_halo
     !this goes with the Serenelli table format
@@ -32,9 +33,7 @@
     integer :: nq, nv, niso, ri_for_omega, nlines
     double precision :: mdm, sigma_0
 
-
     contains
-
 
     !velocity distribution,
     function get_vdist(u)
@@ -61,11 +60,11 @@
     if (nq .ne. -1) then
     G = (p/q0/c0)**(2.d0*nq)*mdm*w**2/(2.d0*mu**nq)*1./(1.+nq)*((mu/muplus**2)**(nq+1)-(u**2/w**2)**(nq+1))
     else
-    G = (p/q0/c0)**(2.d0*nq)*mdm*w**2/(2.d0*mu**nq)*log(mu/muplus**2*w**2/u**2)
+      !eps added to make the log finite: the value of eps does not affect the answer
+    G = ((p)/q0/c0)**(2.d0*nq)*mdm*w**2/(2.d0*mu**nq)*log(mu/muplus**2*w**2/(u+eps)**2)
     endif
     GFFI_H = G
     end function GFFI_H
-
 
     !generalized form factor: other elements
     function GFFI_A(w,vesc,A)
@@ -81,9 +80,10 @@
     if (nq .eq. 0) then
     GFFI_A = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
     else
-    GFFI_A = (p/q0/c0)**(2*nq)*Ei*c0**2/(B*mu)**nq*(dgamic(1.+dble(nq),B*u**2/w**2) &
-    - dgamic(1.+dble(nq),B*mu/muplus**2))
+    GFFI_A = ((p+eps)/q0/c0)**(2*nq)*Ei*c0**2/(B*mu)**nq*(dgamic(1.+dble(nq),B*u**2/w**2+eps) &
+    - dgamic(1.+dble(nq),B*mu/muplus**2+eps))
     end if
+
     end function GFFI_A
 
 
@@ -99,20 +99,16 @@
     !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
     sigma_N = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2
     !hydrogen
-
-
     mu = mdm/mnuc/AtomicNumber(i)
     muplus = (1.+mu)/2.
     muminus = (mu-1.d0)/2.
     if (mu*vesc**2/muminus**2 .gt. u**2) then
-
-    if (i .eq. 1) then
-    GF = GFFI_H(w,vesc)
-    else
-    GF = GFFI_A(w,vesc,AtomicNumber(i))
-    end if
-    Omega = Omega+sigma_N*NAvo*tab_starrho(rindex)/AtomicNumber(i)/mnuc*tab_mfr(rindex,i)*muplus**2/mu*GF
-
+      if (i .eq. 1) then
+        GF = GFFI_H(w,vesc)
+        else
+        GF = GFFI_A(w,vesc,AtomicNumber(i))
+      end if
+      Omega = Omega+sigma_N*NAvo*tab_starrho(rindex)/AtomicNumber(i)/mnuc*tab_mfr(rindex,i)*muplus**2/mu*GF
     end if
     end do
     Omega = Omega*2.d0/mdm/w
@@ -261,14 +257,23 @@
     !call integrator
     call dsntdqagse(integrand,dummyf,1.d0,vesc_halo, &
     epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+
+
+
     u_int_res(ri) = result*sigma_0
     capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+
     end do
     capped = 4.d0*pi*Rsun**3*capped
 
-    maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
-    *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-    + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
+    if (capped .gt. 1.d100) then
+      print*,"Capt'n General says: Oh my, it looks like you are capturing an infinite amount of dark matter in the Sun. Best to look into that."
+    end if
+
+    !this now has its own function:
+    ! maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
+    ! *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
+    ! + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
 
   !  print*,"sigma_0 =", sigma_0, "; m = ", mdm, "; nq = ", nq, "; Capture rate: ", capped, "max = ", maxcap
 
