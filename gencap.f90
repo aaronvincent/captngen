@@ -267,7 +267,8 @@
     capped = 4.d0*pi*Rsun**3*capped
 
     if (capped .gt. 1.d100) then
-      print*,"Capt'n General says: Oh my, it looks like you are capturing an infinite amount of dark matter in the Sun. Best to look into that."
+      print*,"Capt'n General says: Oh my, it looks like you are capturing an  &
+      infinite amount of dark matter in the Sun. Best to look into that."
     end if
 
     !this now has its own function:
@@ -284,10 +285,12 @@
 
     end subroutine captn_general
   !This is fine as long as the escape velocity is large enough
-  subroutine captn_maxcap(maxcap)
+  subroutine captn_maxcap(mwimp_in,maxcap)
     use capmod
     implicit none
     double precision maxcap
+    double precision, intent(in) :: mwimp_in
+    mdm = mwimp_in
     maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
     *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
     + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
