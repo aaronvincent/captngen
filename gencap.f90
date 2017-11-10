@@ -312,6 +312,7 @@
 !------!------!------!------!------INITIALIZATION FCT
 
     subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
+      !input velocities in km/s, not cm/s!!!
     use capmod
     use iso_c_binding, only: c_ptr
     implicit none
@@ -326,9 +327,9 @@
         call get_solar_params(solarmodel,nlines)
     end if
     ! print*,"Capgen tabulons already allocated, you might be overdoing it by calling the init function more than once."
-    usun = usun_in
-    u0 =  u0_in
+    usun = usun_in*1.d5
+    u0 =  u0_in*1.d5
     rho0 =rho0_in
-    vesc_halo = vesc_in
+    vesc_halo = vesc_in*1.d5
 
     end subroutine captn_init
