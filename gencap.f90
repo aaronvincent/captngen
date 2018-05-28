@@ -16,11 +16,10 @@
     module capmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
-    double precision, parameter :: Rsun = 69.57d9
     double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
     double precision, parameter :: eps = 1d-10 !stops divisions by zero
     !these are now set in captn_init
-    double precision :: usun , u0 ,rho0,vesc_halo
+    double precision :: usun , u0 ,rho0,vesc_halo, Rsun
     !this goes with the Serenelli table format
     double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
                                                         18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
@@ -91,6 +90,7 @@
     function OMEGA(rindex,w)
     double precision :: sigma_N, GF,vesc,Omega,mu,muplus,muminus,u,w
     integer i, rindex
+
     vesc = tab_vesc(rindex)
     u = sqrt(w**2-vesc**2)
     Omega = 0.d0
@@ -124,6 +124,9 @@
     double precision, allocatable :: phi(:) !this is used briefly
     integer :: i,j, nlines,iostatus
     !Get number of lines in the file
+
+    Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
+
     open(99,file=filename)
     nlines=0
     do
@@ -177,6 +180,8 @@
 !end get_solar_params
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
+
     end module capmod
 
 
@@ -201,6 +206,12 @@
     int = int*(w/v0)**(2*nv)
     end if
     integrand = int
+    ! print*,"integrand", u, vesc,get_vdist(u), w, ri_for_omega, Omega(ri_for_omega,w),int
+    ! open(55,file = "mesabullshit.dat", status="old", position="append", action="write")
+    ! ! do i=1,nlines
+    !   write(55,*) ri_for_omega, u, integrand
+    !   ! end do
+    ! close(55)
     end function integrand
 
 
@@ -208,6 +219,25 @@
     double precision :: x, dummyf
     dummyf = 1.d0
     end function dummyf
+
+
+    ! This is for use with MESA arrays specifically (though could likely be used for GARSTEC)
+    ! star initialization done elsewhere
+    ! subroutine captn_mesa(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
+    !   subroutine captn_mesa()
+    !   use capmod
+    !   implicit none
+    !   ! integer, intent(in):: nq_in, niso_in, nv_in
+    !   integer i, ri
+    !   ! double precision, intent(in) :: mx_in, sigma_0_in
+    !   double precision :: capped, maxcap !this is the output
+    !   double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
+    !   double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
+    !   double precision, allocatable :: u_int_res(:)
+    !
+    !
+    ! end subroutine captn_mesa
+
 
     subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
     use capmod
@@ -255,14 +285,13 @@
     result = 0.d0
     ri_for_omega = ri !accessed via the module
     !call integrator
-    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo, &
+    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo/3., &
     epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
-
-
     u_int_res(ri) = result*sigma_0
-    capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
+    capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+    ! print*,"Capgen capped ", capped, tab_r(ri), u_int_res(ri), tab_dr(ri)
     end do
     capped = 4.d0*pi*Rsun**3*capped
 
@@ -333,3 +362,94 @@
     vesc_halo = vesc_in*1.d5
 
     end subroutine captn_init
+
+!     subroutine captn_init_mesa(rho0_in,usun_in,u0_in,vesc_in,starrho)
+!       !input velocities in km/s, not cm/s!!!
+!     use capmod
+!     use iso_c_binding, only: c_ptr
+!     implicit none
+!     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
+! !    common solarmodel
+! !    external solarmodel
+!
+!
+!     if  (.not. allocated(tab_r)) then !
+!         print*,"Capgen initializing from model: ",solarmodel
+!         call get_solar_params(solarmodel,nlines)
+!     end if
+!     ! print*,"Capgen tabulons already allocated, you might be overdoing it by calling the init function more than once."
+!     usun = usun_in*1.d5
+!     u0 =  u0_in*1.d5
+!     rho0 =rho0_in
+!     vesc_halo = vesc_in*1.d5
+!
+!   end subroutine captn_init_mesa
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! For mesa interface only: allocate arrays.
+  subroutine allocate_stellar_arrays(nlines_mesa)
+    use capmod
+    integer, intent(in) :: nlines_mesa
+    nlines = nlines_mesa
+    allocate(tab_mencl(nlines))
+    allocate(tab_r(nlines))
+    allocate(tab_starrho(nlines))
+    allocate(tab_mfr(nlines,8)) !we could just allocate niso, but this leads to problems
+    allocate(tab_vesc(nlines))
+    ! allocate(phi(nlines)) !! <--- fix this dude
+    allocate(tab_dr(nlines))
+    RETURN
+  end subroutine allocate_stellar_arrays
+
+  subroutine deallocate_stellar_arrays()
+    use capmod
+    deallocate(tab_mencl)
+    deallocate(tab_r)
+    deallocate(tab_starrho)
+    deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
+    deallocate(tab_vesc)
+    ! allocate(phi(nlines)) !! <--- fix this dude
+    deallocate(tab_dr)
+    RETURN
+  end subroutine deallocate_stellar_arrays
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! This is called INSTEAD of get_solar_params, for use with MESA interface.
+  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
+    use capmod
+    double precision :: mesamass, mesaradius
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines),mesavesc(nlines)
+    integer i
+    double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
+
+    usun = usun_in*1.d5
+    u0 =  u0_in*1.d5
+    rho0 =rho0_in
+    vesc_halo = vesc_in*1.d5
+
+    Rsun = rmesa(nlines)
+    tab_r = rmesa/Rsun
+    tab_starrho = rhomesa
+    tab_vesc = mesavesc
+    do i= 1,8
+    tab_mfr(:,i) = mfrmesa(i,:)
+  end do
+
+  do i = 1, nlines-1
+    tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
+  end do
+  tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
+    ! print*,tab_mfr(1,:)
+    ! %this is where the tables get populated
+    ! print*,tab_r(nlines-1), tab_r(2)
+    ! print*,"Mass of guy ", mesamass
+    ! print*,"Radius of guy ",mesaradius
+    ! open(55,file = "mesabullshit.dat")
+    ! do i=1,nlines
+    !   write(55,*) tab_r(i), tab_starrho(i), tab_vesc(i), tab_mfr(i,:)
+    !   end do
+    !   close(55)
+
+    RETURN
+  end subroutine get_stellar_params
