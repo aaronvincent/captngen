@@ -21,12 +21,8 @@
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0,vesc_halo, Rsun
     !this goes with the Serenelli table format
-    double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
-                                                        18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
-                                                        39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
-                                                        54.93, 55.845, 58.933, 58.693/) !29 is the max niso, corresponding to Ni
-    !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
+    double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:),tab_T(:),tab_g(:)
 
     ! nq and nv can be -1, 0, 1, 2; this is set in the main program
     integer :: nq, nv, niso, ri_for_omega, nlines
@@ -83,6 +79,7 @@
     - dgamic(1.+dble(nq),B*mu/muplus**2+eps))
     end if
 
+
     end function GFFI_A
 
 
@@ -98,6 +95,7 @@
     do i = 1,niso
     !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
     sigma_N = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2
+
     !hydrogen
     mu = mdm/mnuc/AtomicNumber(i)
     muplus = (1.+mu)/2.
@@ -147,12 +145,14 @@
     allocate(tab_vesc(nlines))
     allocate(phi(nlines))
     allocate(tab_dr(nlines))
+    allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
+    allocate(tab_g(nlines))
 
 
     !now actually read in the file
     open(99,file=filename)
     do i=1,nlines
-    read(99,*) tab_mencl(i),tab_r(i), Temp, tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+    read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
     end do
     close(99)
 
@@ -165,7 +165,22 @@
     phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
     tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
     tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
+    tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
     end do
+    tab_g(nlines) = tab_g(nlines-1)
+
+    open(55,file = "tab_serenelli.dat")
+    do i=1,nlines
+      write(55,*) tab_r(i), tab_starrho(i), tab_vesc(i), tab_mfr(i,:)
+      end do
+      close(55)
+
+      ! Populate the atomic number tables here (because it relies on a specific format)
+    AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
+                      18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
+                      39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
+                      54.93, 55.845, 58.933, 58.693/)
+
 
     return
     end
@@ -177,8 +192,18 @@
     gaussinmod = nq*exp(-x**2/2.d0)
     end function gaussinmod
 
+
+
+
 !end get_solar_params
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!FUNCTIONS FOR USE BY TRANSGEN FOR DM TRANSPORT
+
+
 
 
 
@@ -206,12 +231,16 @@
     int = int*(w/v0)**(2*nv)
     end if
     integrand = int
+
+
     ! print*,"integrand", u, vesc,get_vdist(u), w, ri_for_omega, Omega(ri_for_omega,w),int
     ! open(55,file = "mesabullshit.dat", status="old", position="append", action="write")
-    ! ! do i=1,nlines
-    !   write(55,*) ri_for_omega, u, integrand
-    !   ! end do
+    ! do i=1,nlines
+    !   write(55,*) ri_for_omega, u,w, vesc, integrand
+    !   end do
     ! close(55)
+
+
     end function integrand
 
 
@@ -285,12 +314,22 @@
     result = 0.d0
     ri_for_omega = ri !accessed via the module
     !call integrator
-    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo/3., &
+    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo, &
     epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
     u_int_res(ri) = result*sigma_0
-
+    ! print*,ier
     capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+
+    if (isnan(capped)) then
+      capped = 0.d0
+      stop 'hammer time'
+    end if
+
+    !   print*, ri, tab_r(ri), result, ier
+    !   stop "nanintedfsfs"
+    ! end if
+
     ! print*,"Capgen capped ", capped, tab_r(ri), u_int_res(ri), tab_dr(ri)
     end do
     capped = 4.d0*pi*Rsun**3*capped
@@ -299,6 +338,11 @@
       print*,"Capt'n General says: Oh my, it looks like you are capturing an  &
       infinite amount of dark matter in the Sun. Best to look into that."
     end if
+
+
+
+    ! return
+  ! end if
 
     !this now has its own function:
     ! maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
@@ -392,13 +436,16 @@
     use capmod
     integer, intent(in) :: nlines_mesa
     nlines = nlines_mesa
-    allocate(tab_mencl(nlines))
-    allocate(tab_r(nlines))
-    allocate(tab_starrho(nlines))
-    allocate(tab_mfr(nlines,8)) !we could just allocate niso, but this leads to problems
-    allocate(tab_vesc(nlines))
-    ! allocate(phi(nlines)) !! <--- fix this dude
-    allocate(tab_dr(nlines))
+    allocate(tab_mencl(nlines))       !M(<r)
+    allocate(tab_r(nlines))           !r
+    allocate(tab_starrho(nlines))     !rho
+    allocate(tab_mfr(nlines,8))       !mass fraction per isotope
+    allocate(tab_vesc(nlines))        !local escape velocity
+    allocate(tab_T(nlines))           !temperature
+    ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
+    allocate(tab_dr(nlines))          !dr (nice)
+    allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
+
     RETURN
   end subroutine allocate_stellar_arrays
 
@@ -409,17 +456,19 @@
     deallocate(tab_starrho)
     deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
     deallocate(tab_vesc)
-    ! allocate(phi(nlines)) !! <--- fix this dude
+    deallocate(tab_T)
     deallocate(tab_dr)
+    deallocate(tab_g)
     RETURN
   end subroutine deallocate_stellar_arrays
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! This is called INSTEAD of get_solar_params, for use with MESA interface.
-  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,Tmesa,mesamass,mesaradius,mesag,rho0_in,usun_in,u0_in,vesc_in)
     use capmod
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines),mesavesc(nlines)
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines),mesavesc(nlines),mesag(nlines)
+    double precision :: Tmesa(nlines)
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
@@ -432,20 +481,28 @@
     tab_r = rmesa/Rsun
     tab_starrho = rhomesa
     tab_vesc = mesavesc
+    tab_T = tmesa
+    tab_g = mesag
     do i= 1,8
     tab_mfr(:,i) = mfrmesa(i,:)
   end do
+
+  ! tab_r(1) = tab_r(2)/10. !just to avoid some awkward?
 
   do i = 1, nlines-1
     tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
   end do
   tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
+
+  AtomicNumber(1:8) = (/1., 3., 4., 12., 14., 16., 20., 28.  /)
+
+
     ! print*,tab_mfr(1,:)
     ! %this is where the tables get populated
     ! print*,tab_r(nlines-1), tab_r(2)
     ! print*,"Mass of guy ", mesamass
     ! print*,"Radius of guy ",mesaradius
-    ! open(55,file = "mesabullshit.dat")
+    ! open(55,file = "mesatables.dat")
     ! do i=1,nlines
     !   write(55,*) tab_r(i), tab_starrho(i), tab_vesc(i), tab_mfr(i,:)
     !   end do
@@ -453,3 +510,11 @@
 
     RETURN
   end subroutine get_stellar_params
+
+
+  subroutine getnlines(nlines_out) !a little auxiliary trick
+    use capmod
+      integer, intent(out) :: nlines_out
+      nlines_out = nlines
+      return
+    end

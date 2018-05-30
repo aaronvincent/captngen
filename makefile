@@ -5,12 +5,13 @@ QAGDIR = ./aux/dqag
 
 MAIN = main.o
 MFOBJ = gencap.o
+TRGOBJ = alphakappamod.o transgen.o
 NUMOBJ =  dgamic.o d1mach.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 
 
-gentest.x: $(MAIN) $(MFOBJ) $(NUMOBJ) $(QAG)
-	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(NUMOBJ) $(QAG)
+gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(QAG)
+	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(QAG)
 #	rm $(MFOBJ) $(NUMOBJ) $(QAG)
 
 
@@ -25,6 +26,9 @@ $(QAG): %.o : $(QAGDIR)/%.f
 
 
 $(MFOBJ): %.o: %.f90
+	$(FC) $(FOPT) -c $<
+
+$(TRGOBJ): %.o: %.f90
 	$(FC) $(FOPT) -c $<
 
 $(MAIN): %.o: %.f90
