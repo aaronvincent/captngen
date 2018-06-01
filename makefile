@@ -7,18 +7,22 @@ MAIN = main.o
 MFOBJ = gencap.o
 TRGOBJ = alphakappamod.o transgen.o
 NUMOBJ =  dgamic.o d1mach.o
+AUXOBJ = sgolay.o spline.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 
 
-gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(QAG)
-	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(QAG)
+gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
+	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
 #	rm $(MFOBJ) $(NUMOBJ) $(QAG)
 
 
-gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG)
-	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG)
+gencaplib.so: $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
+	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
 
 $(NUMOBJ): %.o : $(AUXDIR)/%.f
+	$(FC) $(FOPT) -c  $<
+
+$(AUXOBJ): %.o : $(AUXDIR)/%.f90
 	$(FC) $(FOPT) -c  $<
 
 $(QAG): %.o : $(QAGDIR)/%.f

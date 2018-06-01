@@ -314,7 +314,7 @@
     result = 0.d0
     ri_for_omega = ri !accessed via the module
     !call integrator
-    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo, &
+    call dsntdqagse(integrand,dummyf,1.d0,vesc_halo/3., &
     epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
     u_int_res(ri) = result*sigma_0
@@ -464,7 +464,7 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! This is called INSTEAD of get_solar_params, for use with MESA interface.
-  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,Tmesa,mesamass,mesaradius,mesag,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,Tmesa,mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
     use capmod
     double precision :: mesamass, mesaradius
     double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines),mesavesc(nlines),mesag(nlines)

@@ -23,6 +23,7 @@ implicit none
 !nlines might be redundant
 integer, intent(in):: niso_in
 double precision, intent(in) :: Nwimps
+integer, parameter :: decsize = 161 !this should be done a bit more carefully
 integer i, ri
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
@@ -30,7 +31,13 @@ double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso_in,nlines),sigma_N(niso_in)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
 double precision :: muarray(niso_in),alpha(niso_in),kappa(niso_in),dphidr(nlines),dTdr(nlines)
-double precision :: fgoth, hgoth(nlines), dLdR(nlines)
+double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1
+double precision :: bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
+double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
+double precision :: smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
+
+
+smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
 
 ! niso = niso
 mxg = mdm*1.78d-24
@@ -39,6 +46,7 @@ rhoc = tab_starrho(1)
 niso = niso_in
 print*, "Nwimps in ", Nwimps
 
+if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 
 !Check if the stellar parameters have been allocated
 if (.not. allocated(tab_r)) then !
@@ -70,8 +78,6 @@ do i = 1,niso
 end do
     alphaofR = alphaofR/(sigma_N*sum(nabund,1))
 
-print*,"Nabund1 ", nabund(1,1), "Sigma_N ", sigma_N(1), tab_starrho(1),AtomicNumber(1)
-
 !compute mean free path
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
@@ -81,22 +87,52 @@ if ((nq .eq. 0) .and. (nv .eq. 0)) then
 end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
-print*,"rchi ", rchi, "mfp ", mfp(1)
+
 K = mfp(1)/rchi;
+
+
+!smooth T
+!some gymnastics are necessary, because the temperature is not smooth at all
+!first build a cubic spline fit
+call spline(tab_R, tab_T, bcoeff, ccoeff, dcoeff, nlines)
+!now build a lower resolution array: this effectively smooths to relevant scales
+do i= 1,decsize
+smallT(i) = ispline(smallr(i),tab_R,tab_T,bcoeff,ccoeff,dcoeff,nlines)
+end do
+
+call sgolay(smallT,decsize,3,1,smalldT) !differentiate
+call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
+
+!Re-expand to the full array size
+do i= 1,nlines
+dTdR(i) = ispline(tab_R(i),smallR,smalldT,bdcoeff,cdcoeff,ddcoeff,decsize)
+end do
+dTdR = dTdR/Rsun*dble(decsize-1)
+
+
+
+
+! call sgolay(tab_T,nlines,3,0,tab_T)
+! call spline(tab_r, tab_T, bcoeff, ccoeff, dcoeff, nlines)
+! dTdR = bcoeff/Rsun
+! call sgolay(dTdR,nlines,3,0,dTdR) !don't ask
+! take derivative (for more fun)
+! Get derivative of T
+! call sgolay(tab_T,nlines,3,1,dTdr)
+! dTdr = dTdr/Rsun/tab_dr
+
+
+! do i = 2,nlines
+!   dTdr(i) = (tab_T(i)-tab_T(i-1))/tab_dr(i) !does this kind of indexing work?
+! end do
+! dTdr(nlines) = 0.d0
+
 
 !this loop does a number of things
 cumint(1) = 0.d0
 cumNx = 0.d0
 
-do i = 2,nlines
-  dTdr(i) = (tab_T(i)-tab_T(i-1))/tab_dr(i) !does this kind of indexing work?
-end do
-dTdr(nlines) = 0.d0
-dTdr = dTdr/Rsun
-
 do i = 1,nlines
-
-
 
 ! 1) get alpha & kappa averages
   alphaofR(i) = sum(alpha*sigma_N*nabund(:,i))/sum(sigma_N*nabund(:,i))
@@ -105,7 +141,7 @@ do i = 1,nlines
   !perform the integral inside the nx integral
 integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 if (i > 1) then
-cumint(i) = cumint(i-1) - integrand*tab_dr(i)
+cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
 end if
 nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(cumint(i))
 ! print*,nx(i)
@@ -115,30 +151,68 @@ nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !norma
 ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
 nx = nx/cumNx*nwimps !normalize density
-print*, "niso 1 ", NxIso(1), tab_r(1), Nwimps, 1./(pi**(3./2.)*rchi**3)
+! print*, "niso 1 ", NxIso(1), tab_r(1), Nwimps, 1./(pi**(3./2.)*rchi**3)
 fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
+hgoth(1) = 0.d0 !some floating point shenanigans.
 
+print*,'fgoth'
 
+!this is super questonable.
+! nx = nxIso
 nx = fgoth*nx + (1.-fgoth)*nxIso
+
+
+
 
 Ltrans = 4.*pi*tab_r**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
-
-
-do i = 2,nlines
-  dLdr(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i) !does this kind of indexing work?
+!get derivative of luminosity - same nonsense as with the temperature
+!I'm going to reuse the temperature array, don't get confused :-)
+call spline(tab_R, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
+do i= 1,decsize
+smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
 end do
+call sgolay(smallL,decsize,3,1,smalldL) !Take the derivative
+call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
+do i= 1,nlines
+dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
+end do
+dLdR = dLdR/Rsun*dble(decsize-1)
 
-dLdr(nlines) = 0.d0
-dLdr = dLdr/Rsun
+
+
+
+! call sgolay(Ltrans,nlines,4,1,Ltrans)
+! call sgolay(Ltrans,nlines,3,1,dLdr)
+! ! call spline(tab_r, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
+! ! dLdr = bcoeff/Rsun
+! ! dLdr = dLdr/Rsun/tab_dr
+! ! dLdr(1)= 0.d0
+! call sgolay(dLdr,nlines,4,0,dLdr)
+
+! do i = 2,nlines
+!   dLdr(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i) !does this kind of indexing work?
+! end do
+!
+! dLdr(nlines) = 0.d0
+! dLdr = dLdr/Rsun
 
 Etrans = 1./(4.*pi*tab_r**2*tab_starrho)*dLdR/Rsun**2;
+
+! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
 
 open(55,file = "captranstest.dat")
 do i=1,nlines
-write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),hgoth(i),kappaofR(i)
+write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
+end do
+close(55)
+
+open(55,file = "smallarrays.dat")
+do i=1,decsize
+  write(55,*) smallR(i), smallT(i), smalldT(i)
+write(55,*)
 end do
 close(55)
 
