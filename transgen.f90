@@ -23,8 +23,9 @@ implicit none
 !nlines might be redundant
 integer, intent(in):: niso_in
 double precision, intent(in) :: Nwimps
-integer, parameter :: decsize = 161 !this should be done a bit more carefully
+integer, parameter :: decsize = 180 !this should be done a bit more carefully
 integer i, ri
+double precision :: epso
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
@@ -32,12 +33,15 @@ double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabun
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
 double precision :: muarray(niso_in),alpha(niso_in),kappa(niso_in),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1
-double precision :: bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
+double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
+double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
-double precision :: smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
+double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
 
-
-smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
+epso = tab_r(2)/10.d0 ! small number to prevent division by zero
+! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
+smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i, i=1,decsize /)
+biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,nlines/)
 
 ! niso = niso
 mxg = mdm*1.78d-24
@@ -47,12 +51,9 @@ niso = niso_in
 print*, "Nwimps in ", Nwimps
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
-
 !Check if the stellar parameters have been allocated
-if (.not. allocated(tab_r)) then !
-        print*,"Error: stellar parameters not allocated in transgen"
-        return
-end if
+if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in transgen"
+
 
 !set up extra stellar arrays that we need
 phi = - tab_vesc**2/2.d0
@@ -81,7 +82,7 @@ end do
 !compute mean free path
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(sigma_N*nabund(:,i))/sigma_0/2 !factor of 2 b/c  sigma_tot = 2 sigma_0
+    mfp(i) = 1/sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
   end do
 ! else if ((nq .eq. )) !q, v dependence goes here
 end if
@@ -94,19 +95,25 @@ K = mfp(1)/rchi;
 !smooth T
 !some gymnastics are necessary, because the temperature is not smooth at all
 !first build a cubic spline fit
+call spline(biggrid, tab_R, brcoeff, crcoeff, drcoeff, nlines)
 call spline(tab_R, tab_T, bcoeff, ccoeff, dcoeff, nlines)
+
 !now build a lower resolution array: this effectively smooths to relevant scales
+!the smallR is to ensure the adaptive grid is preserved
 do i= 1,decsize
+smallR(i) = ispline(smallgrid(i),biggrid,tab_R,brcoeff, crcoeff, drcoeff, nlines)
 smallT(i) = ispline(smallr(i),tab_R,tab_T,bcoeff,ccoeff,dcoeff,nlines)
 end do
-
-call sgolay(smallT,decsize,3,1,smalldT) !differentiate
+call sgolay(smallT,decsize,4,1,smalldT) !differentiate
+smalldT(decsize) = 0.d0
+smalldT(1) = 0.d0
 call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
-
 !Re-expand to the full array size
 do i= 1,nlines
 dTdR(i) = ispline(tab_R(i),smallR,smalldT,bdcoeff,cdcoeff,ddcoeff,decsize)
 end do
+dTdR(1) = 0.d0
+dTdR(nlines) = 0.d0
 dTdR = dTdR/Rsun*dble(decsize-1)
 
 
@@ -156,16 +163,11 @@ fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
 
-print*,'fgoth'
-
-!this is super questonable.
 ! nx = nxIso
 nx = fgoth*nx + (1.-fgoth)*nxIso
 
 
-
-
-Ltrans = 4.*pi*tab_r**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
 !get derivative of luminosity - same nonsense as with the temperature
 !I'm going to reuse the temperature array, don't get confused :-)
@@ -173,13 +175,21 @@ call spline(tab_R, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
 do i= 1,decsize
 smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
 end do
-call sgolay(smallL,decsize,3,1,smalldL) !Take the derivative
+call sgolay(smallL,decsize,4,1,smalldL) !Take the derivative
+! smalldL(1) = 0.d0
+! smalldL(decsize) = 0.d0
 call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
 do i= 1,nlines
 dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
 end do
+
 dLdR = dLdR/Rsun*dble(decsize-1)
 
+if (any(abs(dLdR) .gt. 1.d100)) then
+  print*,
+  stop "Infinite luminosity derivative encountered"
+
+end if
 
 
 
@@ -198,7 +208,7 @@ dLdR = dLdR/Rsun*dble(decsize-1)
 ! dLdr(nlines) = 0.d0
 ! dLdr = dLdr/Rsun
 
-Etrans = 1./(4.*pi*tab_r**2*tab_starrho)*dLdR/Rsun**2;
+Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
@@ -211,7 +221,7 @@ close(55)
 
 open(55,file = "smallarrays.dat")
 do i=1,decsize
-  write(55,*) smallR(i), smallT(i), smalldT(i)
+  write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
 write(55,*)
 end do
 close(55)
