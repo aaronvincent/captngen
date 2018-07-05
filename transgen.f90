@@ -48,7 +48,7 @@ mxg = mdm*1.78d-24
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
 niso = niso_in
-print*, "Nwimps in ", Nwimps
+! print*, "Nwimps in ", Nwimps
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
@@ -177,7 +177,8 @@ smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
 end do
 call sgolay(smallL,decsize,4,1,smalldL) !Take the derivative
 ! smalldL(1) = 0.d0
-! smalldL(decsize) = 0.d0
+! smalldL(1) = smalldL(2)
+smalldL(decsize) = 0.d0
 call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
 do i= 1,nlines
 dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
@@ -186,7 +187,12 @@ end do
 dLdR = dLdR/Rsun*dble(decsize-1)
 
 if (any(abs(dLdR) .gt. 1.d100)) then
-  print*,
+  open(55,file = "crashsmallarrays.dat")
+  do i=1,decsize
+    write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
+  write(55,*)
+  end do
+  close(55)
   stop "Infinite luminosity derivative encountered"
 
 end if
