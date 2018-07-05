@@ -12,9 +12,9 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   double precision, intent(in) :: Nwimps
   double precision, intent(out) :: EvapRate
   double precision :: Earg(nlines), muarray(niso_in),nabund(niso_in,nlines),sigma_N(niso_in)
-  double precision :: suparg,trapz
+  double precision :: suparg,trapz,Knud,rchi
   double precision :: mdmg,mnucg, Tc, rhoc,mn, Tw,nin,escFrac(nlines),vescc(nlines),nxIso(nlines),mfp(nlines),scatrate(nlines)
-  double precision, parameter :: kBeV=8.617e-5
+  double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
 
   integer :: i, j, k
   mdmg = mdm*1.78d-24
@@ -25,7 +25,7 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   niso = niso_in
   vescc = tab_vesc/c0
 
-  ! print*,"attempting to evaporate"
+  ! print*,"attempting to evaporate, Nwimps = ", Nwimps
 
 
   do i = 1,niso_in
@@ -42,6 +42,8 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   nxIso = exp(mdm*vescc**2/2./Tw);
   nin = 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines) !%niso norm
   nxIso = nxIso/nin
+
+  ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines)
   !Fraction of the kinetic distribution above the local escape velocity
   escFrac = sqrt(2.d0/pi)*vescc*sqrt(mdm/Tw)*exp(-mdm*vescc**2/Tw/2.d0) - derf(sqrt(mdm/Tw/2.d0)*vescc) + 1.d0;
   ! print*,"EscFrac = ", escFrac,
@@ -59,18 +61,28 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   ! else if ((nq .eq. )) !q, v dependence goes here
   end if
 
+  rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mdmg))**.5;
+  Knud = mfp(1)/rchi;
+  ! print*,"Knud", Knud
+  if (Knud .lt. 0.1) then
+    print*, "WARNING, K = ", knud, " is < 0.1. Approximate evaporation scheme is likely very wrong."
+  end if
+
   suparg = trapz(tab_r,rsun/mfp,nlines)
   Earg = escFrac*scatrate*exp(-suparg)*c0
 
   open(55,file = "sv.dat")
   do j=1,nlines
-  write(55,*) tab_r(j), escFrac(j),scatrate(j),exp(-suparg), nabund(1,j)
+  write(55,*) tab_r(j), Earg(j),suparg,nxIso(j),escFrac(j),scatrate(j),exp(-suparg)
   end do
   close(55)
 
-  EvapRate = Nwimps*4.*pi*trapz(tab_r,tab_r**2*nxIso*Earg,nlines)
-  print*,Nwimps
 
+  EvapRate = Nwimps*4.*pi*trapz(tab_r,tab_r**2*nxIso*Earg,nlines)
+
+  if (isnan(EvapRate)) then
+    stop "NaN evap rate, check it"
+  end if
 
 end subroutine fastevap
 
@@ -121,13 +133,16 @@ subroutine Twimp(nabund,niso_in,Tw)
 
     end do
             Tw_out = sum(Tw_out_num)/sum(Tw_out_denom);
-            ! print*,Tw_out, Tw
             dT = abs(Tw - Tw_out)/Tw;
             Tw = Tw_out;
-            ! print*, "dT ", dT
   end do
   Tw = Tw/TcGeV;
 
+  ! open(55,file = "svTw.dat")
+  ! do j=1,nlines
+  ! write(55,*) tab_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),tab_vesc(j),TwK
+  ! end do
+  ! close(55)
 
 
 
@@ -166,20 +181,27 @@ else
 end if
 fofn = f
 return
-end
+end function
 
 !Fast trapezoidal integral
-double precision function trapz(x,y,flen)
+  function trapz(x,y,flen)
   implicit none
   integer, intent(in) :: flen
   double precision, intent (in) :: x(flen), y(flen)
+  double precision trapz
+
   integer i
 
-  trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(i)-x(i-1))/2.
+
+  trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
   do i = 2,flen-1
-    trapz = trapz +y(i)*(x(i)-x(i-1))
+    trapz = trapz + y(i)*(x(i)-x(i-1))
+
+    if (trapz .lt. 0.d0) then
+      print*, "negative encountered in trapz: i = ", i
+    end if
   end do
 
 
   return
-end
+  end function
