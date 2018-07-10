@@ -8,6 +8,7 @@
     double precision :: capped_si_spec(250),capped_sd_spec(250)
     double precision :: maxcapped, nwimpsin, evapRate(50)
     double precision, allocatable :: Etrans(:)
+    double precision :: EtransTot
     integer :: niso, nq, nv, i,nlines
    ! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
    modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temeperature smoothed to not nonsense
