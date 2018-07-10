@@ -15,7 +15,7 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(Nwimps,niso_in,etrans)
+subroutine transgen(Nwimps,niso_in,etrans,EtransTot)
 !mdm is stored in capmod
 use capmod
 use akmod
@@ -25,7 +25,7 @@ integer, intent(in):: niso_in
 double precision, intent(in) :: Nwimps
 integer, parameter :: decsize = 180 !this should be done a bit more carefully
 integer i, ri
-double precision :: epso
+double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
@@ -216,21 +216,23 @@ end if
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
+EtransTot = trapz(tab_r,abs(dLdR),nlines)
+
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
-
-open(55,file = "captranstest.dat")
-do i=1,nlines
-write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
-end do
-close(55)
-
-open(55,file = "smallarrays.dat")
-do i=1,decsize
-  write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
-write(55,*)
-end do
-close(55)
+! Some testing bits:
+! open(55,file = "captranstest.dat")
+! do i=1,nlines
+! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
+! end do
+! close(55)
+!
+! open(55,file = "smallarrays.dat")
+! do i=1,decsize
+!   write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
+! write(55,*)
+! end do
+! close(55)
 
 
 

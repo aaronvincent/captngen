@@ -12,7 +12,7 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   double precision, intent(in) :: Nwimps
   double precision, intent(out) :: EvapRate
   double precision :: Earg(nlines), muarray(niso_in),nabund(niso_in,nlines),sigma_N(niso_in)
-  double precision :: suparg,trapz,Knud,rchi
+  double precision :: suparg,Knud,rchi
   double precision :: mdmg,mnucg, Tc, rhoc,mn, Tw,nin,escFrac(nlines),vescc(nlines),nxIso(nlines),mfp(nlines),scatrate(nlines)
   double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
 
@@ -94,7 +94,7 @@ subroutine Twimp(nabund,niso_in,Tw)
   integer, intent(in) :: niso_in
   double precision :: sv(nlines),TGeV(nlines), TcGeV,Tw, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
   double precision :: Tw_out_num(niso), Tw_out_denom(niso),nxIso(nlines)
-  double precision trapz,mu,nabund(niso_in,nlines)
+  double precision mu,nabund(niso_in,nlines)
   double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
   integer i,j
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
@@ -183,25 +183,26 @@ fofn = f
 return
 end function
 
-!Fast trapezoidal integral
-  function trapz(x,y,flen)
-  implicit none
-  integer, intent(in) :: flen
-  double precision, intent (in) :: x(flen), y(flen)
-  double precision trapz
-
-  integer i
-
-
-  trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
-  do i = 2,flen-1
-    trapz = trapz + y(i)*(x(i)-x(i-1))
-
-    if (trapz .lt. 0.d0) then
-      print*, "negative encountered in trapz: i = ", i
-    end if
-  end do
-
-
-  return
-  end function
+!now in Capmod
+! !Fast trapezoidal integral
+!   function trapz(x,y,flen)
+!   implicit none
+!   integer, intent(in) :: flen
+!   double precision, intent (in) :: x(flen), y(flen)
+!   double precision trapz
+!
+!   integer i
+!
+!
+!   trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
+!   do i = 2,flen-1
+!     trapz = trapz + y(i)*(x(i)-x(i-1))
+!
+!     if (trapz .lt. 0.d0) then
+!       print*, "negative encountered in trapz: i = ", i
+!     end if
+!   end do
+!
+!
+!   return
+!   end function

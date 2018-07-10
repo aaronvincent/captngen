@@ -193,6 +193,28 @@
     end function gaussinmod
 
 
+    !Fast trapezoidal integral
+      function trapz(x,y,flen)
+      implicit none
+      integer, intent(in) :: flen
+      double precision, intent (in) :: x(flen), y(flen)
+      double precision trapz
+
+      integer i
+
+
+      trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
+      do i = 2,flen-1
+        trapz = trapz + y(i)*(x(i)-x(i-1))
+
+        if (trapz .lt. 0.d0) then
+          print*, "negative encountered in trapz: i = ", i
+        end if
+      end do
+
+
+      return
+      end function
 
 !end get_solar_params
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -42,7 +42,7 @@
     print*,"calling transgen"
     nwimpsin = capped_sd(1)*3.d7*4.57d9
     print*,"passing ", nwimpsin
-    call transgen(nwimpsin,1,etrans)
+    call transgen(nwimpsin,1,etrans,Etranstot)
     ! print*,Etrans
 
     call fastevap(1.d0,28,EvapRate(i))
