@@ -1,5 +1,6 @@
 FC=gfortran
-FOPT= -O3
+#FOPT= -O3
+FOPT= -O3 -fPIC
 AUXDIR = ./aux
 QAGDIR = ./aux/dqag
 
