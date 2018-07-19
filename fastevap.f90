@@ -71,11 +71,11 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
   suparg = trapz(tab_r,rsun/mfp,nlines)
   Earg = escFrac*scatrate*exp(-suparg)*c0
 
-  open(55,file = "sv.dat")
-  do j=1,nlines
-  write(55,*) tab_r(j), Earg(j),suparg,nxIso(j),escFrac(j),scatrate(j),exp(-suparg)
-  end do
-  close(55)
+  ! open(55,file = "sv.dat")
+  ! do j=1,nlines
+  ! write(55,*) tab_r(j), Earg(j),suparg,nxIso(j),escFrac(j),scatrate(j),exp(-suparg)
+  ! end do
+  ! close(55)
 
 
   EvapRate = Nwimps*4.*pi*trapz(tab_r,tab_r**2*nxIso*Earg,nlines)
