@@ -27,7 +27,7 @@ PROGRAM GENCAP
 		print*, "mx: ", mx, "capped:",capped(i)
     end do
 
-    open(55,file = "captest_oper_c1-0_test.dat")
+    open(55,file = "captest_oper_c3-0_H.dat")
     do i=1,21
     	write(55,*) 10**(.1*i + 0.9), capped(i)
     end do

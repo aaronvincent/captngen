@@ -542,7 +542,7 @@ module capmod
 				end if
 			end do
 		end do
-		p_tot = p_tot   *hbar**2*c0**2
+		p_tot = p_tot * hbar**2*c0**2! * 0.5 !c7 is fixed by a factor of 0.5?
     end function p_tot
 
 	!	this is eqn 2.1 in 1501.03729
@@ -832,7 +832,7 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 	pickIsotope = isotopeChosen
 
 	! temporary, the user will want to choose their coupling constants to match a model
-	coupling_Array = reshape((/1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
+	coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
 							   0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
     
     if (.not. allocated(tab_r)) then !
