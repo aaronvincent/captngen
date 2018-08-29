@@ -3,7 +3,8 @@ import matplotlib.pyplot as plot
 def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 
 	isotopes = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]	
-	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]	
+	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]
+	colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670","#ef1a1a", "#0055ff", "#2fef19", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670"]
 	
 	# read in the file's data
 	file = open(filename,'r')
@@ -18,7 +19,7 @@ def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 	file.close()
 
 	# read in the file's data
-	file = open("Catena_data/"+otherfilename+"_data.dat",'r')
+	file = open("Catena_data/Catena_data_"+otherfilename+"/"+isotope+".dat",'r')#"Catena_data/"+otherfilename+"_data.dat",'r')
 	currentLine = file.readline()
 	otherXs=[]
 	otherYs=[]
@@ -31,8 +32,8 @@ def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 
 	plot.clf()
 	ax = plot.subplot(111)
-	plot.plot(Xs, Ys, color="blue", marker='.', linestyle='--', linewidth=0.4, markersize=3, label=isotopeLabels[isotopes.index(isotope)])
-	plot.plot(otherXs, otherYs, color="Black",  linestyle='-', linewidth=0.8, label="Catena Total")
+	plot.plot(Xs, Ys, color=colours[isotopes.index(isotope)], marker='.', linestyle='--', linewidth=0.4, markersize=3, label=isotopeLabels[isotopes.index(isotope)])
+	plot.plot(otherXs, otherYs, color=colours[isotopes.index(isotope)],  linestyle='-', linewidth=0.8, label="Catena "+isotopeLabels[isotopes.index(isotope)])
 	# Shrink current axis by 20%
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -54,6 +55,5 @@ def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 
 isotopes = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]	
 for i in range(len(isotopes)):
-	plotiso("captest_oper_c1-0_alliso.dat", isotopes[i], "c1-0", r"$c_{1}^{0}$", "c1-0_plots_"+str(i+1)+"-"+isotopes[i]+".png")
-
+	plotiso("captest_oper_c3-0_testR.dat", isotopes[i], "c3-0", r"$c_{3}^{0}$", "c3-0_plots_"+str(i+1)+"-"+isotopes[i]+"_testR.png")
 

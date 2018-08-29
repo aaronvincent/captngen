@@ -2,7 +2,8 @@ import matplotlib.pyplot as plot
 
 def plotall(filename, otherfilename, title="Title", savefigname=None):
 	
-	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]	
+	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]
+	colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670","#ef1a1a", "#0055ff", "#2fef19", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670"]
 	
 	# read in the file's data
 	file = open(filename,'r')
@@ -43,10 +44,10 @@ def plotall(filename, otherfilename, title="Title", savefigname=None):
 	plot.plot(Ms, totalCap, label="Total", color="Black", marker='.', linestyle='--', linewidth=0.8, markersize=3)
 	plot.plot(otherXs, otherYs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
 	for i in range(0,16):
-		if i<10:
-			plot.plot(Ms, ISOs[i], label=isotopeLabels[i], marker='.', linestyle='-', linewidth=0.4, markersize=3)
+		if i<8:
+			plot.plot(Ms, ISOs[i], color=colours[i],  label=isotopeLabels[i], marker='.', linestyle='-', linewidth=0.4, markersize=3)
 		else:
-			plot.plot(Ms, ISOs[i], label=isotopeLabels[i], marker='.', linestyle='--', linewidth=0.4, markersize=3)
+			plot.plot(Ms, ISOs[i], color=colours[i], label=isotopeLabels[i], marker='.', linestyle='--', linewidth=0.4, markersize=3)
 	# Shrink current axis by 20%
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -65,5 +66,5 @@ def plotall(filename, otherfilename, title="Title", savefigname=None):
 		plot.show()
 	print()
 
-plotall("captest_oper_c1-0_alliso.dat", "c1-0", r"$c_{1}^{0}$", "c1-0_plots_alliso.png")
+plotall("captest_oper_c3-0_testR.dat", "c3-0", r"$c_{3}^{0}$", "c3-0_plots_alliso_testR.png")
 
