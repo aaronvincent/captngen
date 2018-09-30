@@ -55,5 +55,5 @@ def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 
 isotopes = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]	
 for i in range(len(isotopes)):
-	plotiso("captest_oper_c3-0_testR.dat", isotopes[i], "c3-0", r"$c_{3}^{0}$", "c3-0_plots_"+str(i+1)+"-"+isotopes[i]+"_testR.png")
+	plotiso("captest_oper_c7-0_alliso.dat", isotopes[i], "c7-0", r"$c_{7}^{0}$", "c7-0_plots_"+str(i+1)+"-"+isotopes[i]+".png")
 

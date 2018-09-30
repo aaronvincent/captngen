@@ -12,8 +12,8 @@ PROGRAM GENCAP
 	character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20", "Na23", "Mg24", &
 											"Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"]
 
-	modfile = "solarmodels/struct_b16_agss09_nohead.dat"
-    !modfile = "solarmodels/model_gs98_nohead.dat"
+	!modfile = "solarmodels/struct_b16_agss09_nohead.dat"
+    modfile = "solarmodels/model_gs98_nohead.dat"
     call captn_init(modfile, 0.4d0, 270.d0, 220.d0, 540.d0)
     call captn_init_oper()
 
@@ -28,12 +28,12 @@ PROGRAM GENCAP
 		do i = 1,21
 			mx = 10**(.1*i + 0.9)
 			call captn_oper(mx,jx,niso,iso,capped(iso,i))
-			print*, "mx: ", mx, "capped:",capped(iso,i)
+			print*, "mx: ",mx, "capped: ",capped(iso,i)
 		end do
 		print*
 	end do
 
-    open(55,file = "captest_oper_c3-0_testR.dat")
+    open(55,file = "captest_oper_c12-0_halfnuctest-gs98.dat")
     do i=1,21
     	write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
 									capped(5,i), capped(6,i), capped(7,i), capped(8,i), &

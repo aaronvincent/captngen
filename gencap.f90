@@ -186,192 +186,6 @@ module capmod
 	!end get_solar_params
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	! The R dark matter response functions broken up by each term [constant, v^2n, q^2n]
-	function R_M_c(m_N, tau, tauprime)
-		double precision :: m_N, R_M_c
-		integer tau, tauprime
-		
-		R_M_c = coupling_Array(1,tau)*coupling_Array(1,tauprime)
-	end function R_M_c
-	
-	function R_M_v2(m_N, tau, tauprime)
-		double precision :: m_N, R_M_v2
-		integer tau, tauprime
-		
-		R_M_v2 = 1/c0**2 * (j_chi*(j_chi+1))/3.*coupling_Array(7,tau)*coupling_Array(7,tauprime)
-	end function R_M_v2
-	
-	function R_M_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_M_q2
-		integer tau, tauprime
-		
-		R_M_q2 = 1/m_N**2 * (j_chi*(j_chi+1))/3.*coupling_Array(10,tau)*coupling_Array(10,tauprime)
-	end function R_M_q2
-
-	function R_M_v2q2(m_N, tau, tauprime)
-		double precision :: m_N, R_M_v2q2
-		integer tau, tauprime
-		
-		R_M_v2q2 = 1/c0**2 * 1/m_N**2 * (j_chi*(j_chi+1))/3.*coupling_Array(4,tau)*coupling_Array(4,tauprime)
-	end function R_M_v2q2
-	
-	
-	function R_SS_c(m_N, tau, tauprime)
-		double precision :: m_N, R_SS_c
-		integer tau, tauprime
-		
-		R_SS_c = (j_chi*(j_chi+1))/12.*coupling_Array(3,tau)*coupling_Array(3,tauprime)
-	end function R_SS_c
-	
-	function R_SS_v2(m_N, tau, tauprime)
-		double precision :: m_N, R_SS_v2
-		integer tau, tauprime
-		
-		R_SS_v2 = 1/c0**2 * (j_chi*(j_chi+1))/12.*coupling_Array(11,tau)*coupling_Array(11,tauprime)
-	end function R_SS_v2
-	
-	function R_SS_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_SS_q2
-		integer tau, tauprime
-		
-		R_SS_q2 = 1/m_N**2 * ((1/4.)*coupling_Array(9,tau)*coupling_Array(9,tauprime) &
-					+(j_chi*(j_chi+1))/12.*(coupling_Array(3,tau)*coupling_Array(5,tauprime)&
-					+coupling_Array(5,tau)*coupling_Array(3,tauprime)))
-	end function R_SS_q2
-
-	function R_SS_v2q2(m_N, tau, tauprime)
-		double precision :: m_N, R_SS_v2q2
-		integer tau, tauprime
-		
-		R_SS_v2q2 = 1/c0**2 * 1/m_N**2 * (j_chi*(j_chi+1))/12.*coupling_Array(12,tau)*coupling_Array(12,tauprime)
-	end function R_SS_v2q2
-
-	function R_SS_q4(m_N, tau, tauprime)
-		double precision :: m_N, R_SS_q4
-		integer tau, tauprime
-		
-		R_SS_q4 = 1/m_N**4 * (j_chi*(j_chi+1))/12.*coupling_Array(5,tau)*coupling_Array(5,tauprime)
-	end function R_SS_q4
-
-	
-	function R_S_c(m_N, tau, tauprime)
-		double precision :: m_N, R_S_c
-		integer tau, tauprime
-		
-		R_S_c = (j_chi*(j_chi+1))/12.*coupling_Array(3,tau)*coupling_Array(3,tauprime)
-	end function R_S_c
-	
-	function R_S_v2(m_N, tau, tauprime)
-		double precision :: m_N, R_S_v2
-		integer tau, tauprime
-		
-		R_S_v2 = 1/c0**2 * (1/8.*coupling_Array(6,tau)*coupling_Array(6,tauprime) &
-					+(j_chi*(j_chi+1))/24.*coupling_Array(11,tau)*coupling_Array(11,tauprime))
-	end function R_S_v2
-	
-	function R_S_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_S_q2
-		integer tau, tauprime
-		
-		R_S_q2 = 1/m_N**2 * (j_chi*(j_chi+1))/12.*coupling_Array(8,tau)*coupling_Array(8,tauprime)
-	end function R_S_q2
-	
-	function R_S_v2q2(m_N, tau, tauprime)
-		double precision :: m_N, R_S_v2q2
-		integer tau, tauprime
-		
-		R_S_v2q2 = 1/c0**2 * 1/m_N**2 * ((1/8.)*coupling_Array(2,tau)*coupling_Array(2,tauprime) &
-					-(j_chi*(j_chi+1))/24.*(coupling_Array(11,tau)*coupling_Array(14,tauprime) &
-					+coupling_Array(14,tau)*coupling_Array(11,tauprime)) &
-					+(j_chi*(j_chi+1))/24.*coupling_Array(13,tau)*coupling_Array(13,tauprime))
-					
-	end function R_S_v2q2
-	
-	function R_S_v2q4(m_N, tau, tauprime)
-		double precision :: m_N, R_S_v2q4
-		integer tau, tauprime
-		
-		R_S_v2q4 = 1/c0**2 * 1/m_N**4 * (j_chi*(j_chi+1))/24.*coupling_Array(14,tau)*coupling_Array(14,tauprime)
-	end function R_S_v2q4
-	
-	
-	function R_PP_c(m_N, tau, tauprime)
-		double precision :: m_N, R_PP_c
-		integer tau, tauprime
-		
-		R_PP_c = (j_chi*(j_chi+1))/12.*coupling_Array(11,tau)*coupling_Array(11,tauprime)
-	end function R_PP_c
-	
-	function R_PP_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_PP_q2
-		integer tau, tauprime
-		
-		R_PP_q2 = 1/m_N**2 * ((1/4.)*coupling_Array(2,tau)*coupling_Array(2,tauprime) &
-					-(j_chi*(j_chi+1))/12.*(coupling_Array(11,tau)*coupling_Array(14,tauprime)+coupling_Array(14,tau)*coupling_Array(11,tauprime)))
-	end function R_PP_q2
-	
-	function R_PP_q4(m_N, tau, tauprime)
-		double precision :: m_N, R_PP_q4
-		integer tau, tauprime
-		
-		R_PP_q4 = 1/m_N**4 * (j_chi*(j_chi+1))/12.*coupling_Array(14,tau)*coupling_Array(14,tauprime)
-	end function R_PP_q4
-	
-	
-	function R_PPM_c(m_N, tau, tauprime)
-		double precision :: m_N, R_PPM_c
-		integer tau, tauprime
-		
-		R_PPM_c = coupling_Array(2,tau)*coupling_Array(1,tauprime) &
-					+(j_chi*(j_chi+1))/3.*coupling_Array(11,tau)*coupling_Array(10,tauprime)
-	end function R_PPM_c
-	
-	function R_PPM_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_PPM_q2
-		integer tau, tauprime
-		
-		R_PPM_q2 = 1/m_N**2 * (j_chi*(j_chi+1))/3.*coupling_Array(14,tau)*coupling_Array(10,tauprime)
-	end function R_PPM_q2
-	
-	
-	function R_P_c(m_N, tau, tauprime)
-		double precision :: m_N, R_P_c
-		integer tau, tauprime
-		
-		R_P_c = (j_chi*(j_chi+1))/12.*coupling_Array(11,tau)*coupling_Array(11,tauprime)
-	end function R_P_c
-	
-	function R_P_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_P_q2
-		integer tau, tauprime
-		
-		R_P_q2 = 1/m_N**2 * (j_chi*(j_chi+1))/12.*coupling_Array(12,tau)*coupling_Array(12,tauprime)
-	end function R_P_q2
-	
-	
-	function R_D_c(m_N, tau, tauprime)
-		double precision :: m_N, R_D_c
-		integer tau, tauprime
-		
-		R_D_c = (j_chi*(j_chi+1))/3.*coupling_Array(7,tau)*coupling_Array(7,tauprime)
-	end function R_D_c
-	
-	function R_D_q2(m_N, tau, tauprime)
-		double precision :: m_N, R_D_q2
-		integer tau, tauprime
-		
-		R_D_q2 = 1/m_N**2 * (j_chi*(j_chi+1))/3.*coupling_Array(4,tau)*coupling_Array(4,tauprime)
-	end function R_D_q2
-	
-	
-	function R_DS_c(m_N, tau, tauprime)
-		double precision :: m_N, R_DS_c
-		integer tau, tauprime
-		
-		R_DS_c = (j_chi*(j_chi+1))/3.*(coupling_Array(4,tau)*coupling_Array(3,tauprime)-coupling_Array(7,tau)*coupling_Array(8,tauprime))
-	end function R_DS_c
-	
-
 	function GFFI_H_oper(w,vesc,mq)
 		double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
 		integer mq
@@ -434,6 +248,15 @@ module capmod
 		double precision :: w,vesc, p_tot
 		double precision :: m_N,mu_N,GF
 		integer :: i,tau,taup
+		integer :: c, v2, q2, v2q2, q4, v2q4
+		double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2
+		
+		c = 0
+		v2 = 1
+		q2 = 2
+		v2q2 = 3
+		q4 = 4
+		v2q4 = 5
 		
 		m_N = mnuc*AtomicNumber_oper(i)
 		mu_N = (m_N*mdm)/(m_N+mdm)
@@ -451,98 +274,98 @@ module capmod
 			do taup=1,2
 				! c1,c1
 				if ((coupling_Array(1,tau).ne.0).and.(coupling_Array(1,taup).ne.0)) then
-					p_tot = p_tot + R_M_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,1,0)
+					p_tot = p_tot + RM(m_N,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,1,0)
 				end if
 				! c8,c8
 				if ((coupling_Array(7,tau).ne.0).and.(coupling_Array(7,taup).ne.0)) then
-					p_tot = p_tot + R_M_v2(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,1,0) &
-								- R_M_v2(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,1) &
-								+ 1/m_N**2 * R_D_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,7,1)
+					p_tot = p_tot + RM(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,0) &
+								- RM(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,1) &
+								+ 1/m_N**2 * RD(m_N,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,7,1)
 				end if
 				! c11,c11
 				if ((coupling_Array(10,tau).ne.0).and.(coupling_Array(10,taup).ne.0)) then
-					p_tot = p_tot + R_M_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,1,1)
+					p_tot = p_tot + RM(m_N,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,1,1)
 				end if
 				! c5,c5
 				if ((coupling_Array(4,tau).ne.0).and.(coupling_Array(4,taup).ne.0)) then
-					p_tot = p_tot + R_M_v2q2(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,1,1) &
-								- R_M_v2q2(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,2) &
-								+ 1/m_N**2 * R_D_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,7,2)
+					p_tot = p_tot + RM(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,1) &
+								- RM(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,2) &
+								+ 1/m_N**2 * RD(m_N,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,7,2)
 				end if
 				! c4,c4
 				if ((coupling_Array(3,tau).ne.0).and.(coupling_Array(3,taup).ne.0)) then
-					p_tot = p_tot + R_SS_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,2,0) &
-								+ R_S_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,3,0)
+					p_tot = p_tot + RS2(m_N,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,0) &
+								+ RS1(m_N,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,3,0)
 				end if
 				! c12,c12
 				if ((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0)) then
-					p_tot = p_tot + R_SS_v2(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,2,0) &
-								- R_SS_v2(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,1) &
-								+ 1/m_N**2 * R_PP_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,4,1) &
-								+ 1/m_N**2 * R_P_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,6,1)
+					p_tot = p_tot + RS2(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,0) &
+								- RS2(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,1) &
+								+ 1/m_N**2 * RP2(m_N,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,1) &
+								+ 1/m_N**2 * RP1(m_N,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,6,1)
 				end if
 				! c10,c10 or c4,c6 or c6,c4
 				if (((coupling_Array(9,tau).ne.0).and.(coupling_Array(9,taup).ne.0)).or. &
 						((coupling_Array(3,tau).ne.0).and.(coupling_Array(5,taup).ne.0)).or. &
 						((coupling_Array(5,tau).ne.0).and.(coupling_Array(3,taup).ne.0))) then
-					p_tot = p_tot + R_SS_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,2,1)
+					p_tot = p_tot + RS2(m_N,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,1)
 				end if
 				! c13,c13
 				if ((coupling_Array(12,tau).ne.0).and.(coupling_Array(12,taup).ne.0)) then
-					p_tot = p_tot + R_SS_v2q2(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,2,1) &
-								- R_SS_v2q2(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,2) &
-								+ 1/m_N**2 * R_P_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,6,2)
+					p_tot = p_tot + RS2(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,1) &
+								- RS2(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,2) &
+								+ 1/m_N**2 * RP1(m_N,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,6,2)
 				end if
 				! c6,c6
 				if ((coupling_Array(5,tau).ne.0).and.(coupling_Array(5,taup).ne.0)) then
-					p_tot = p_tot + R_SS_q4(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,2,2)
+					p_tot = p_tot + RS2(m_N,c0,tau,taup,q4,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,2)
 				end if
 				! c7,c7 or c12,c12
 				if (((coupling_Array(6,tau).ne.0).and.(coupling_Array(6,taup).ne.0)).or. &
 						((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
-					p_tot = p_tot + R_S_v2(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,3,0) &
-								- R_S_v2(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,1)
+					p_tot = p_tot + RS1(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,0) &
+								- RS1(m_N,c0,tau,taup,v2,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,1)
 				end if
 				! c9,c9
 				if ((coupling_Array(8,tau).ne.0).and.(coupling_Array(8,taup).ne.0)) then
-					p_tot = p_tot + R_S_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,3,1)
+					p_tot = p_tot + RS1(m_N,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,3,1)
 				end if
 				! c14,c14 or c15,c12 or c12,c15
 				if (((coupling_Array(13,tau).ne.0).and.(coupling_Array(13,taup).ne.0)).or. &
 						((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0)).or. &
 						((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
-					p_tot = p_tot + R_S_v2q2(m_N, tau, taup)  * w**2 * sumW(w,vesc,i,tau,taup,3,1) &
-								- R_S_v2q2(m_N, tau, taup)  * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,2)
+					p_tot = p_tot + RS1(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array)  * w**2 * sumW(w,vesc,i,tau,taup,3,1) &
+								- RS1(m_N,c0,tau,taup,v2q2,j_chi,coupling_Array)  * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,2)
 				end if
 				! c15,c15 or c15,11
 				if (coupling_Array(14,tau).ne.0) then
 					if (coupling_Array(14,taup).ne.0) then
-						p_tot = p_tot + R_S_v2q4(m_N, tau, taup) * w**2 * sumW(w,vesc,i,tau,taup,3,2) &
-									- R_S_v2q4(m_N, tau, taup) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,3) &
-									+ 1/m_N**2 * R_PP_q4(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,4,3)
+						p_tot = p_tot + RS1(m_N,c0,tau,taup,v2q4,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,2) &
+									- RS1(m_N,c0,tau,taup,v2q4,j_chi,coupling_Array) * 1/(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,3) &
+									+ 1/m_N**2 * RP2(m_N,tau,taup,q4,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,3)
 					else if (coupling_Array(10,taup).ne.0) then
-						p_tot = p_tot + 1/m_N**2 * R_PPM_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,5,2)
+						p_tot = p_tot + 1/m_N**2 * RMP2(m_N,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,5,2)
 					end if
 				end if
 				! c3,c3 or c15,c12 or c12,c15
 				if (((coupling_Array(2,tau).ne.0).and.(coupling_Array(2,taup).ne.0)).or. &
 						((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0)).or. &
 						((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
-					p_tot = p_tot + 1/m_N**2 * R_PP_q2(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,4,2)
+					p_tot = p_tot + 1./m_N**2 * RP2(m_N,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,2)
 				end if
 				! c3,c1 or c12,c11
 				if (((coupling_Array(2,tau).ne.0).and.(coupling_Array(1,taup).ne.0)).or. &
 						((coupling_Array(11,tau).ne.0).and.(coupling_Array(10,taup).ne.0))) then
-					p_tot = p_tot + 1/m_N**2 * R_PPM_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,5,1)
+					p_tot = p_tot + 1/m_N**2 * RMP2(m_N,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,5,1)
 				end if
 				! c5,c4 or c8,c9
 				if (((coupling_Array(4,tau).ne.0).and.(coupling_Array(3,taup).ne.0)).or. &
 						((coupling_Array(7,tau).ne.0).and.(coupling_Array(8,taup).ne.0))) then
-					p_tot = p_tot + 1/m_N**2 * R_DS_c(m_N, tau, taup) * sumW(w,vesc,i,tau,taup,8,1)
+					p_tot = p_tot + 1/m_N**2 * RS1D(tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,8,1)
 				end if
 			end do
 		end do
-		p_tot = p_tot * hbar**2*c0**2! * 0.5 !c7 is fixed by a factor of 0.5?
+		p_tot = p_tot   *hbar**2*c0**2
     end function p_tot
 
 	!	this is eqn 2.1 in 1501.03729
@@ -832,7 +655,7 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 	pickIsotope = isotopeChosen
 
 	! temporary, the user will want to choose their coupling constants to match a model
-	coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
+	coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
 							   0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
     
     if (.not. allocated(tab_r)) then !

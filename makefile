@@ -5,7 +5,7 @@ QAGDIR = ./aux/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = mainTesting.o
+MAIN = main3.o
 MFOBJ = gencapTesting.o
 NUMOBJ =  dgamic.o d1mach.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
