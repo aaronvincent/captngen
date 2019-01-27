@@ -696,8 +696,8 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 
 	! temporary, the user will want to choose their coupling constants to match a model
 	!						    c1,  c3,  c4, c5,   c6,  c7,  c8,  c9, c10, c11, c12, c13, c14, c15   
-	coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
-								0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
+	!coupling_Array = reshape((/1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
+								!0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 	
 	if (.not. allocated(tab_r)) then 
 		print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
@@ -709,6 +709,7 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 	!I've sent it to an inert dummy just in case.
 	capped = 0.d0
 
+	! completes integral (2.3) in paper 1501.03729 (gives dC/dV as fn of radius)
 	do ri=1,nlines !loop over the star
 		result = 0.d0
 		ri_for_omega = ri !accessed via the module
@@ -719,6 +720,7 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 		capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 	end do
 
+	!completes integral (2.4) of paper 1501.03729
 	capped = 4.d0*pi*Rsun**3*capped
 
 	if (capped .gt. 1.d100) then
@@ -727,15 +729,38 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 	end if
 end subroutine captn_oper
 
-subroutine populate_array(val, isospin, couple)
+subroutine populate_array(val, couple, isospin)
 	! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
+	! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
+	! might want a way to quit out of subroutine early if error is reached
 	use capmod
 	implicit none
-	integer :: isospin, couple
+	integer :: couple, isospin
 	double precision :: val
-	! isospin can be 0 or 1
-	! couple can be integer from 1 to 15, BUT 2 IS NOT ALLOWED!
-	! val is the value you want to populate with
+	integer :: cpl, iso
 
+	! isospin can be 0 or 1
+	if ((-1.lt.isospin).and.(isospin.lt.2)) then
+		iso = isospin + 1 !fortran arrays start at 1
+	else
+		print*,"Error: isospin can only be 0 or 1!"
+	endif
+
+
+	! couple can be integer from 1 to 15, BUT 2 IS NOT ALLOWED!
+	if (couple.lt.1) then
+		print*,"Error: you cannto pick a coupling constant lower than one!"
+	else if (couple.eq.1) then
+		cpl = couple
+	else if (couple.eq.2) then
+		print*,"Error: you cannot use the second coupling constant!"
+	else if (couple.gt.2) then
+		cpl = couple - 1 !the coupling array doesn't have a slot for 2, so all constants other than one are shifted in row number
+	else if (couple.gt.15) then
+		print*,"Error: you cannot pick a coupling constant past 15!"
+	endif
+
+	! val is the value you want to populate with
 	! set the value picked in the slot chosen
+	coupling_Array(cpl,iso) = val
 end subroutine populate_array

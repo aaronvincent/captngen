@@ -66,5 +66,5 @@ def plotall(filename, otherfilename, title="Title", savefigname=None):
 		plot.show()
 	print()
 
-plotall("captest_oper_c7-0_alliso.dat", "c7-0", r"$c_{7}^{0}$", "c7-0_plots_alliso.png")
+plotall("captest_oper_c1-0_alliso-gs98.dat", "c1-0", r"$c_{1}^{0}$", "c1-0_plots_alliso.png")
 

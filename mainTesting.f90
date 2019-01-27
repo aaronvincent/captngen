@@ -16,9 +16,10 @@ PROGRAM GENCAP
 	modfile = "solarmodels/model_gs98_nohead.dat"
 	call captn_init(modfile, 0.4d0, 270.d0, 220.d0, 540.d0)
 	call captn_init_oper()
-
+	call populate_array(1.65d-8, 1, 0)
+	
 	niso = 16
-	mx = 10.d0
+	!mx = 10.d0
 	jx = 0.5
 	call captn_maxcap(mx, maxcapped)
 	print*, "maximum captured", maxcapped
@@ -33,7 +34,7 @@ PROGRAM GENCAP
 		print*
 	end do
 
-	open(55,file = "captest_oper_c12-0_halfnuctest-gs98.dat")
+	open(55,file = "captest_oper_c1-0_alliso-gs98.dat")
 	do i=1,21
 		write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
 									capped(5,i), capped(6,i), capped(7,i), capped(8,i), &
