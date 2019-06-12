@@ -5,8 +5,8 @@ QAGDIR = ./aux/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = main3.o
-MFOBJ = gencapTesting.o
+MAIN = mainOper.o
+MFOBJ = gencap.o
 NUMOBJ =  dgamic.o d1mach.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 WFUNC = WM.o WS2.o WS1.o WP2.o WMP2.o WP1.o WD.o WS1D.o
@@ -18,8 +18,8 @@ gentest.x: $(MAIN) $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
 #	rm $(MFOBJ) $(NUMOBJ) $(QAG)
 
 
-gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG)
-	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG)
+gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 
 $(MAIN): %.o: %.f90
