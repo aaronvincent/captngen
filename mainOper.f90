@@ -2,6 +2,7 @@
 !	program for testing
 !	the good stuff is in gencap.f90
 !	runs the capture code one isotope at a time, letting the user sum the total later
+!	to compile this version of main, switch out 'MAIN = main.o' for 'MAIN = mainOper.o' in the make file (line 8)
 
 PROGRAM GENCAP
 	implicit none
