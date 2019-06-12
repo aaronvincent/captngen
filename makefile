@@ -18,8 +18,8 @@ gentest.x: $(MAIN) $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
 #	rm $(MFOBJ) $(NUMOBJ) $(QAG)
 
 
-gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG)
-	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG)
+gencaplib.so: $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 
 $(MAIN): %.o: %.f90
