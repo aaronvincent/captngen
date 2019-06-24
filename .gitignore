@@ -1,0 +1,8 @@
+# ignore .o files
+*.o
+
+# ignore .mod files
+*.mod
+
+# ignore .x files
+*.x
