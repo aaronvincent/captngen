@@ -419,8 +419,9 @@ module capmod
             if (mu/muplus**2 .gt. u**2/w**2) then
                 ! note the factor [(2*mnuc*AtomicNumber(pickIsotope))/(w**2*(2*J+1))],is the product of
                 ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
-                Omega_oper = Omega_oper+(NAvo*tab_starrho(rindex)/AtomicNumber_oper(pickIsotope)/mnuc*tab_mfr_oper(rindex,pickIsotope))*w* &
-                                        ((2*mnuc*AtomicNumber_oper(pickIsotope))/(w**2*(2*J+1)))*p_tot(w,vesc,pickIsotope)
+                Omega_oper = Omega_oper+(NAvo*tab_starrho(rindex)/AtomicNumber_oper(pickIsotope)/mnuc* &
+                    tab_mfr_oper(rindex,pickIsotope))*w*((2*mnuc*AtomicNumber_oper(pickIsotope))/(w**2*(2*J+1)))* &
+                    p_tot(w,vesc,pickIsotope)
             end if
         else ! if all the isotopes are being run
             do i = 1,niso
