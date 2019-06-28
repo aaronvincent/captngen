@@ -1,7 +1,7 @@
 FC=gfortran
 FOPT= -O3
-AUXDIR = ./aux
-QAGDIR = ./aux/dqag
+AUXDIR = ./numerical
+QAGDIR = ./numerical/dqag
 
 MAIN = main.o
 MFOBJ = gencap.o
