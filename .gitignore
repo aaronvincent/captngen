@@ -8,3 +8,4 @@
 *.x
 
 # ignore .dat files
+*.dat
