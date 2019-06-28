@@ -1,6 +1,6 @@
 FC=gfortran
 FOPT= -O3
-AUXDIR = ./numerical
+NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
@@ -28,7 +28,7 @@ $(MAIN): %.o: %.f90
 $(MFOBJ): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
-$(NUMOBJ): %.o: $(AUXDIR)/%.f
+$(NUMOBJ): %.o: $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
 
 $(QAG): %.o: $(QAGDIR)/%.f

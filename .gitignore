@@ -6,3 +6,5 @@
 
 # ignore .x files
 *.x
+
+# ignore .dat files
