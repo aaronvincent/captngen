@@ -402,9 +402,24 @@ module capmod
         p_tot = p_tot  * hbar**2 * c0**2
     end function p_tot
 
+    ! intermediate function between p_tot and OMEGA_oper, designed to output the cross section
+    function sigma_oper(currentIsotope, rindex, w)
+        double precision :: w, J, vesc, sigma_oper
+        integer :: currentIsotope
+        J = AtomicSpin_oper(currentIsotope)
+        vesc = tab_vesc(rindex)
+        
+        ! note the factor [(2*mnuc*AtomicNumber(pickIsotope))/(w**2*(2*J+1))],is the product of
+        ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
+        sigma_oper = ((2*mnuc*AtomicNumber_oper(currentIsotope))/(w**2*(2*J+1)))*p_tot(w,vesc,currentIsotope)
+        ! technically this is dSigma/dE from eqn. 3.26 in paper 1501.03729 -> does it need to be integrated w.r.t. 
+        ! E to just get sigma (the cross section, to be used in heat transport calculations?)
+    end function sigma_oper
+
+
     !   this is eqn 2.1 in 1501.03729
     function OMEGA_oper(rindex,w)
-        double precision :: w, vesc,mu,muplus,u,Omega,J, OMEGA_oper
+        double precision :: w, vesc,mu,muplus,u,J, OMEGA_oper
         integer rindex, i
         
         vesc = tab_vesc(rindex)
