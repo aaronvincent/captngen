@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plot
 
-def plotall(filename, otherfilename, title="Title", savefigname=None):
+def plotall(filename, catenafilename, title="Title", savefigname=None):
 	
 	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]
 	colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670","#ef1a1a", "#0055ff", "#2fef19", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670"]
 	
-	# read in the file's data
+	# read in the file's data outputed from captn
+	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
 	currentLine = file.readline()
 	Ms=[]
@@ -19,30 +20,35 @@ def plotall(filename, otherfilename, title="Title", savefigname=None):
 		ISOs.append(tempList)
 		currentLine = file.readline()
 	file.close()
+	
+	# ISOs is now a list of lists: each sub-list has an isotope-specific capture rate for the given DM mass
+	# now create a list of the total capture rate at each DM mass (sum over each sub list)
 
 	totalCap = []
-	for currentMass in ISOs:
-		totalCap.append(sum(currentMass))
+	for subList in ISOs:
+		totalCap.append(sum(subList))
 
-	# read in the file's data
-	file = open("Catena_data/"+otherfilename+"_data.dat",'r')
+	# read in the file's data from catena paper (total capture rate data)
+	file = open("Catena_data/"+catenafilename+"_data.dat",'r')
 	currentLine = file.readline()
-	otherXs=[]
-	otherYs=[]
+	catenaXs=[]
+	catenaYs=[]
 	while currentLine != "":
 		theLine = currentLine.split()
-		otherXs.append(float(theLine[0]))
-		otherYs.append(float(theLine[1]))
+		catenaXs.append(float(theLine[0]))
+		catenaYs.append(float(theLine[1]))
 		currentLine = file.readline()
 	file.close()
 
-	# make each sub list a list of only the isotope changing with DM mass
+	# flip the list of lists around
+	# (I need each sub-list to be of one isotope walking through the DM mass to plot it correctly)
+	# eg. [[1,2,3],[4,5,6]] --> [[1,4],[2,5],[3,6]]
 	ISOs = [list(temp) for temp in zip(*ISOs)]
 
 	plot.clf()
 	ax = plot.subplot(111)
 	plot.plot(Ms, totalCap, label="Total", color="Black", marker='.', linestyle='--', linewidth=0.8, markersize=3)
-	plot.plot(otherXs, otherYs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
+	plot.plot(catenaXs, catenaYs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
 	for i in range(0,16):
 		if i<8:
 			plot.plot(Ms, ISOs[i], color=colours[i],  label=isotopeLabels[i], marker='.', linestyle='-', linewidth=0.4, markersize=3)

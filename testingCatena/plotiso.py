@@ -1,39 +1,43 @@
 import matplotlib.pyplot as plot
 
-def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
+isotopeList = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]
 
-	isotopes = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]	
+def plotiso(filename, isotopePick, catenafilename, title="Title", savefigname=None):
+
 	isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]
 	colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670","#ef1a1a", "#0055ff", "#2fef19", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670"]
 	
-	# read in the file's data
+	isoIndex = isotopeList.index(isotopePick)
+
+	# read in the file's data outputed from captn
+	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
 	currentLine = file.readline()
-	Xs=[]
-	Ys=[]
+	dmMasses=[]
+	capRates=[]
 	while currentLine != "":
 		theLine = currentLine.split()
-		Xs.append(float(theLine[0]))
-		Ys.append(float(theLine[1+isotopes.index(isotope)]))
+		dmMasses.append(float(theLine[0]))
+		capRates.append(float(theLine[1+isoIndex])) # offset to pickout the chosen isotope to plot
 		currentLine = file.readline()
 	file.close()
 
-	# read in the file's data
-	file = open("Catena_data/Catena_data_"+otherfilename+"/"+isotope+".dat",'r')#"Catena_data/"+otherfilename+"_data.dat",'r')
+	# read in the file's data from catena paper (isotope-specific capture rate data)
+	file = open("Catena_data/Catena_data_"+catenafilename+"/"+isotopePick+".dat",'r')
 	currentLine = file.readline()
-	otherXs=[]
-	otherYs=[]
+	catenaDMms=[]
+	catenaCaps=[]
 	while currentLine != "":
 		theLine = currentLine.split()
-		otherXs.append(float(theLine[0]))
-		otherYs.append(float(theLine[1]))
+		catenaDMms.append(float(theLine[0]))
+		catenaCaps.append(float(theLine[1]))
 		currentLine = file.readline()
 	file.close()
 
 	plot.clf()
 	ax = plot.subplot(111)
-	plot.plot(Xs, Ys, color=colours[isotopes.index(isotope)], marker='.', linestyle='--', linewidth=0.4, markersize=3, label=isotopeLabels[isotopes.index(isotope)])
-	plot.plot(otherXs, otherYs, color=colours[isotopes.index(isotope)],  linestyle='-', linewidth=0.8, label="Catena "+isotopeLabels[isotopes.index(isotope)])
+	plot.plot(dmMasses, capRates, color=colours[isoIndex], marker='.', linestyle='--', linewidth=0.4, markersize=3, label=isotopeLabels[isoIndex])
+	plot.plot(catenaDMms, catenaCaps, color=colours[isoIndex],  linestyle='-', linewidth=0.8, label="Catena "+isotopeLabels[isoIndex])
 	# Shrink current axis by 20%
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -53,7 +57,6 @@ def plotiso(filename, isotope, otherfilename, title="Title", savefigname=None):
 	print()
 
 
-isotopes = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]	
-for i in range(len(isotopes)):
-	plotiso("captest_oper_c7-0_alliso.dat", isotopes[i], "c7-0", r"$c_{7}^{0}$", "c7-0_plots_"+str(i+1)+"-"+isotopes[i]+".png")
+for iso in isotopes:
+	plotiso("captest_oper_c7-0_alliso-gs98.dat", iso, "c7-0", r"$c_{7}^{0}$", "c7-0_plots_"+str(i+1)+"-"+isotopes[i]+".png")
 
