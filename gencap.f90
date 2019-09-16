@@ -243,7 +243,7 @@ module capmod
     
     ! this is eqn 3.23 in 1501.03729
     ! large sum handled through expansion of R functions
-    ! many if statements used to check for terms excluded by choice of constants (c1,c2..c15) = 0
+    ! many if statements used to check for terms excluded by choice of constants (c1,c3..c15) = 0
     function p_tot(w,vesc,i)
         double precision :: w,vesc, p_tot
         double precision :: mu_N,GF
@@ -402,19 +402,20 @@ module capmod
         p_tot = p_tot  * hbar**2 * c0**2
     end function p_tot
 
-    ! intermediate function between p_tot and OMEGA_oper, designed to output the cross section
-    function sigma_oper(currentIsotope, rindex, w)
-        double precision :: w, J, vesc, sigma_oper
-        integer :: currentIsotope
-        J = AtomicSpin_oper(currentIsotope)
-        vesc = tab_vesc(rindex)
+    ! no longer in use (used to be called byOMEGA_oper, which itself then called p_tot)
+    ! ! intermediate function between p_tot and OMEGA_oper, designed to output the cross section
+    ! function sigma_oper(currentIsotope, rindex, w)
+    !     double precision :: w, J, vesc, sigma_oper
+    !     integer :: currentIsotope
+    !     J = AtomicSpin_oper(currentIsotope)
+    !     vesc = tab_vesc(rindex)
         
-        ! note the factor [(2*mnuc*AtomicNumber(pickIsotope))/(w**2*(2*J+1))],is the product of
-        ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
-        sigma_oper = ((2*mnuc*AtomicNumber_oper(currentIsotope))/(w**2*(2*J+1)))*p_tot(w,vesc,currentIsotope)
-        ! technically this is dSigma/dE from eqn. 3.26 in paper 1501.03729 -> does it need to be integrated w.r.t. 
-        ! E to just get sigma (the cross section, to be used in heat transport calculations?)
-    end function sigma_oper
+    !     ! note the factor [(2*mnuc*AtomicNumber(pickIsotope))/(w**2*(2*J+1))],is the product of
+    !     ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
+    !     sigma_oper = ((2*mnuc*AtomicNumber_oper(currentIsotope))/(w**2*(2*J+1)))*p_tot(w,vesc,currentIsotope)
+    !     ! technically this is dSigma/dE from eqn. 3.26 in paper 1501.03729 -> does it need to be integrated w.r.t. 
+    !     ! E to just get sigma (the cross section, to be used in heat transport calculations?)
+    ! end function sigma_oper
 
 
     !   this is eqn 2.1 in 1501.03729
