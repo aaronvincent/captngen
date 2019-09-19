@@ -11,24 +11,25 @@ colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9
 def plotcatena(couplingConstant, title="Catena Plot", savefigname=None):
 	
 	
-	folder = "Catena_data_updated/Catena_data+"+couplingConstant+"/"
+	folder = "Catena_data_updated/Catena_data_"+couplingConstant+"/"
 
 	# read in the file's data from catena paper
 	catenaMs = []
 	catenaCs = []
 	for i in range(len(isotopeList)+1):
-		if i = len(isotopeList):
+		if i == len(isotopeList):
 			filename = folder+"Total_"+couplingConstant+".dat"
 		else:
-			filename = folder+iso[i]+".dat"
+			filename = folder+isotopeList[i]+".dat"
 		file = open(filename,'r')
 		currentLine = file.readline()
 		Ms=[]
 		Cs=[]
 		while currentLine != "":
 			theLine = currentLine.split()
-			Ms.append(float(theLine[0]))
-			Cs.append(float(theLine[1]))
+			if len(theLine) > 1:
+				Ms.append(float(theLine[0]))
+				Cs.append(float(theLine[1]))
 			currentLine = file.readline()
 		catenaMs.append(Ms)
 		catenaCs.append(Cs)
@@ -43,7 +44,7 @@ def plotcatena(couplingConstant, title="Catena Plot", savefigname=None):
 	plot.clf()
 	ax = plot.subplot(111)
 	for i in range(len(isotopeList)+1):
-		if i = len(isotopeList):
+		if i == len(isotopeList):
 			plot.plot(catenaMs[i], catenaCs[i], color="Black", linestyle='-', linewidth=0.8, label="Total")
 		elif 7<i<len(isotopeList):
 			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label=isotopeLabels[i], linestyle='--', linewidth=0.4)
@@ -70,4 +71,4 @@ def plotcatena(couplingConstant, title="Catena Plot", savefigname=None):
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 for c in couplingConstants:
-	plotcatena(c, "Copy of Catena Plot of "+c, "catenaCopies"+c+"_catena_copy.png")
+	plotcatena(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
