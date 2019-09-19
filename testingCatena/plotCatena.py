@@ -8,38 +8,47 @@ colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9
 
 # plotcatena takes the capture rates from the Catena paper (https://arxiv.org/abs/1501.03729) for a
 # specified coupling constant (eg c1-0, c5-1, ect...). This is designed to mimic the plots found in the paper
-def plotcatena(couplingConstant, title="Title", savefigname=None):
+def plotcatena(couplingConstant, title="Catena Plot", savefigname=None):
 	
 	
 	folder = "Catena_data_updated/Catena_data+"+couplingConstant+"/"
 
 	# read in the file's data from catena paper
-	for i in range(len(iso))
-	file = open(".dat",'r')
-	currentLine = file.readline()
-	catenaXs=[]
-	catenaYs=[]
-	while currentLine != "":
-		theLine = currentLine.split()
-		catenaXs.append(float(theLine[0]))
-		catenaYs.append(float(theLine[1]))
+	catenaMs = []
+	catenaCs = []
+	for i in range(len(isotopeList)+1):
+		if i = len(isotopeList):
+			filename = folder+"Total_"+couplingConstant+".dat"
+		else:
+			filename = folder+iso[i]+".dat"
+		file = open(filename,'r')
 		currentLine = file.readline()
-	file.close()
+		Ms=[]
+		Cs=[]
+		while currentLine != "":
+			theLine = currentLine.split()
+			Ms.append(float(theLine[0]))
+			Cs.append(float(theLine[1]))
+			currentLine = file.readline()
+		catenaMs.append(Ms)
+		catenaCs.append(Cs)
+		file.close()
 
-	# flip the list of lists around
-	# (I need each sub-list to be of one isotope walking through the DM mass to plot it correctly)
-	# eg. [[1,2,3],[4,5,6]] --> [[1,4],[2,5],[3,6]]
-	ISOs = [list(temp) for temp in zip(*ISOs)]
+	# # flip the list of lists around
+	# # (I need each sub-list to be of one isotope walking through the DM mass to plot it correctly)
+	# # eg. [[1,2,3],[4,5,6]] --> [[1,4],[2,5],[3,6]]
+	# ISOs = [list(temp) for temp in zip(*ISOs)]
+
 
 	plot.clf()
 	ax = plot.subplot(111)
-	plot.plot(Ms, totalCap, label="Total", color="Black", marker='.', linestyle='--', linewidth=0.8, markersize=3)
-	plot.plot(catenaXs, catenaYs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
-	for i in range(0,16):
-		if i<8:
-			plot.plot(Ms, ISOs[i], color=colours[i],  label=isotopeLabels[i], marker='.', linestyle='-', linewidth=0.4, markersize=3)
+	for i in range(len(isotopeList)+1):
+		if i = len(isotopeList):
+			plot.plot(catenaMs[i], catenaCs[i], color="Black", linestyle='-', linewidth=0.8, label="Total")
+		elif 7<i<len(isotopeList):
+			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label=isotopeLabels[i], linestyle='--', linewidth=0.4)
 		else:
-			plot.plot(Ms, ISOs[i], color=colours[i], label=isotopeLabels[i], marker='.', linestyle='--', linewidth=0.4, markersize=3)
+			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label=isotopeLabels[i], linestyle='-', linewidth=0.4)
 	# Shrink current axis by 20%
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -58,5 +67,7 @@ def plotcatena(couplingConstant, title="Title", savefigname=None):
 		plot.show()
 	print()
 
-plotall("captest_oper_c1-0_alliso-gs98.dat", "c1-0", r"$c_{1}^{0}$", "c1-0_plots_alliso.png")
+couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
+for c in couplingConstants:
+	plotcatena(c, "Copy of Catena Plot of "+c, "catenaCopies"+c+"_catena_copy.png")
