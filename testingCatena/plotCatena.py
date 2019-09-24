@@ -35,12 +35,6 @@ def plotcatena(couplingConstant, title="Catena Plot", savefigname=None):
 		catenaCs.append(Cs)
 		file.close()
 
-	# # flip the list of lists around
-	# # (I need each sub-list to be of one isotope walking through the DM mass to plot it correctly)
-	# # eg. [[1,2,3],[4,5,6]] --> [[1,4],[2,5],[3,6]]
-	# ISOs = [list(temp) for temp in zip(*ISOs)]
-
-
 	plot.clf()
 	ax = plot.subplot(111)
 	for i in range(len(isotopeList)+1):
