@@ -5,7 +5,7 @@ QAGDIR = ./numerical/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = main.o
+MAIN = mainOper.o
 MFOBJ = gencap.o
 NUMOBJ =  dgamic.o d1mach.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
