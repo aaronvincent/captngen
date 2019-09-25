@@ -41,7 +41,7 @@ def plotall(couplingConstant, title="All isotopes + Catena Total Plot", savefign
 	ISOs = [list(temp) for temp in zip(*ISOs)]
 
 
-	folder = "Catena_data_updated/Catena_data_"+couplingConstant+"/Total_"+couplingConstant+".dat"
+	filename = "Catena_data_updated/Catena_data_"+couplingConstant+"/Total_"+couplingConstant+".dat"
 	# read in the file's data from catena paper
 	catenaMs = []
 	catenaCs = []
@@ -58,6 +58,7 @@ def plotall(couplingConstant, title="All isotopes + Catena Total Plot", savefign
 
 	plot.clf()
 	ax = plot.subplot(111)
+	plot.plot(catenaMs, catenaCs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
 	for i in range(len(isotopeList)+1):
 		if i == len(isotopeList):
 			plot.plot(Ms, totalCap, label="Total", color="Black", marker='.', linestyle='-', linewidth=0.8, markersize=3)
@@ -65,7 +66,6 @@ def plotall(couplingConstant, title="All isotopes + Catena Total Plot", savefign
 			plot.plot(Ms, ISOs[i], color=colours[i], label=isotopeLabels[i], marker='.', linestyle='--', linewidth=0.4, markersize=3)
 		else:
 			plot.plot(Ms, ISOs[i], color=colours[i],  label=isotopeLabels[i], marker='.', linestyle='-', linewidth=0.4, markersize=3)
-	plot.plot(catenaMs, catenaCs, color="Black", linestyle='-', linewidth=0.8, label="Catena Total")
 	# Shrink current axis by 20%
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
