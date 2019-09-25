@@ -35,7 +35,7 @@ PROGRAM GENCAP
 		print*
 	end do
 
-	open(55,file = "testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
+	open(55,file = "factortwotest_oper_c1-0_alliso-gs98.dat")!"testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
 	do i=1,21
 		write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
 									capped(5,i), capped(6,i), capped(7,i), capped(8,i), &
