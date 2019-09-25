@@ -9,3 +9,4 @@
 
 # ignore .dat files
 *.dat
+!/testingCatena/**/*.dat
