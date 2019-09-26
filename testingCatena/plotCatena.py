@@ -118,12 +118,12 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 	plot.clf()
 	ax = plot.subplot(111)
 	# the zeroth entry in the data list is the total, so the isotopes are all offset by one w.r.t. the global lists in the script
-	plot.plot(catenaMs[0], catenaCs[0], color="Black", linestyle='-', linewidth=0.8, label="Total")
+	plot.plot(catenaMs[0], catenaCs[0], color="Black", linestyle='-', linewidth=1.0, label="Total")
 	for i in range(len(isotopeList)):
 		if i<8:
-			plot.plot(catenaMs[i+1], catenaCs[i+1], color=colours[i], label=isotopeLabels[i], linestyle='-', linewidth=0.4)
+			plot.plot(catenaMs[i+1], catenaCs[i+1], color=colours[i], label=isotopeLabels[i], linestyle='-', linewidth=0.6)
 		else:
-			plot.plot(catenaMs[i+1], catenaCs[i+1], color=colours[i], label=isotopeLabels[i], linestyle='--', linewidth=0.4)
+			plot.plot(catenaMs[i+1], catenaCs[i+1], color=colours[i], label=isotopeLabels[i], linestyle='--', linewidth=0.6)
 			
 	# Shrink current axis by 20%
 	box = ax.get_position()
