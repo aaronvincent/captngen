@@ -71,23 +71,6 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 	filename = "Catena_data_updated/Catena_"+couplingConstant+".csv"
 
 	# read in the file's data from catena paper
-	catenaMs = []
-	catenaCs = []
-	for i in range(len(isotopeList)+1):
-		file = open(filename,'r')
-		currentLine = file.readline()
-		Ms=[]
-		Cs=[]
-		while currentLine != "":
-			theLine = currentLine.split()
-			if len(theLine) > 1:
-				Ms.append(float(theLine[0]))
-				Cs.append(float(theLine[1]))
-			currentLine = file.readline()
-		catenaMs.append(Ms)
-		catenaCs.append(Cs)
-		file.close()
-
 	file = open(filename,'r')
 	# skip two header lines
 	currentLine = file.readline()
@@ -103,16 +86,24 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 			for i in range(len(isotopeList)+1): # loop through each isotope + total capture rate
 				# the csv file WebPlotDigitizer outputs is X,Y,X,Y,X,Y... ect for each isotope
 				# so I need to pull the DM mass and capture rate for each isotope on each line I read
-				# Python doesn't like converting the empty string into a zero, so I did it manually
+				# Python doesn't like converting the empty string into a None, so I did it manually
 				M = theLine[0+2*i]
 				C = theLine[1+2*i]
 				C = C.rstrip("\n") # the csv has newline characters on the final capture rate of each line
+
 				if M == "":
-					M = 0
-				if C == "": # this is creating 0 Gev, 0 1/s entries at the end of may of the isotopes
-					C = 0
-				Ms.append(float(M))
-				Cs.append(float(C))
+					M = None
+				else:
+					M = float(M)
+
+				if C == "":
+					C = None
+				else:
+					C = float(C)
+
+				Ms.append(M)
+				Cs.append(C)
+
 		catenaMs.append(Ms)
 		catenaCs.append(Cs)
 		currentLine = file.readline()
@@ -124,8 +115,6 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 	catenaMs = [list(temp) for temp in zip(*catenaMs)]
 	catenaCs = [list(temp) for temp in zip(*catenaCs)]
 
-	print(catenaMs[1])
-	print(catenaCs[1])
 	plot.clf()
 	ax = plot.subplot(111)
 	# the zeroth entry in the data list is the total, so the isotopes are all offset by one w.r.t. the global lists in the script
@@ -158,7 +147,7 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-# for c in couplingConstants:
-# 	plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
-c = couplingConstants[2]
-plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
+for c in couplingConstants:
+	plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
+# c = couplingConstants[2]
+# plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
