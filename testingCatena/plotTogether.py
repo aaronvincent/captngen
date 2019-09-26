@@ -37,7 +37,8 @@ def plottogether(couplingConstant, title="Catena Plot", savefigname=None):
 
 
 	# Read in the CaptnOper data
-	filename = "../factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"#"Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	#filename = "../factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"#
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
@@ -73,11 +74,11 @@ def plottogether(couplingConstant, title="Catena Plot", savefigname=None):
 	# plotting all of the Catena Data
 	for i in range(len(isotopeList)+1):
 		if i == len(isotopeList):
-			plot.plot(catenaMs[i], catenaCs[i], color="Black", linestyle='-', linewidth=0.6, label="Catena Total")
+			plot.plot(catenaMs[i], catenaCs[i], color="Black", linestyle='-.', linewidth=0.8, label="Catena Total")
 		elif 7<i<len(isotopeList):
-			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label="Catena "+isotopeLabels[i], linestyle='--', linewidth=0.3)
+			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label="Catena "+isotopeLabels[i], linestyle=':', linewidth=0.4)
 		else:
-			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label="Catena "+isotopeLabels[i], linestyle='-', linewidth=0.3)
+			plot.plot(catenaMs[i], catenaCs[i], color=colours[i], label="Catena "+isotopeLabels[i], linestyle='-.', linewidth=0.4)
 	# plotting all of the CaptnOper data
 	for i in range(len(isotopeList)+1):
 		if i == len(isotopeList):
@@ -108,5 +109,5 @@ def plottogether(couplingConstant, title="Catena Plot", savefigname=None):
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 for c in couplingConstants:
-	#plottogether(c, "Comparison plot of "+c, "Comparison_Plots/"+c+"_comparison.png")
-	plottogether(c, "Comparison plot of "+c, "../"+c+"_comparison.png")
+	plottogether(c, "Comparison plot of "+c, "Comparison_Plots/"+c+"_comparison.png")
+	#plottogether(c, "Comparison plot of "+c, "../"+c+"_comparison.png")
