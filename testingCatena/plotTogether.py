@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plot
 
 # global list to reference the order of the isotopes, and their colours
-isotopeList = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni59"]
-isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{59}Ni$"]
+isotopeList = ["H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24","Al27","Si28","S32","Ar40","Ca40","Fe56","Ni58"]
+isotopeLabels = [r"$H$",r"$^{3}He$",r"$^{4}He$",r"$^{12}C$",r"$^{14}N$",r"$^{16}O$",r"$^{20}Ne$",r"$^{23}Na$",r"$^{24}Mg$",r"$^{27}Al$",r"$^{28}Si$",r"$^{32}S$",r"$^{40}Ar$",r"$^{40}Ca$",r"$^{56}Fe$",r"$^{58}Ni$"]
 colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670","#ef1a1a", "#0055ff", "#2fef19", "#137708", "#00fff2", "#ff5efc", "#9b9b9b", "#080670"]
 
 
@@ -151,7 +151,7 @@ def plottogether_csv(couplingConstant, title="Catena Plot", savefigname=None):
 	file.close()
 
 	# now I need to flip the lists around (the first entry of each sublist in catenaMs and catenaCs corresponds to Total,
-	# the next is H, then He3, ect ..., Ni59). I want each sublist to be one isotope
+	# the next is H, then He3, ect ..., Ni58). I want each sublist to be one isotope
 	# eg. [[1,2,3],[4,5,6]] --> [[1,4],[2,5],[3,6]]
 	catenaMs = [list(temp) for temp in zip(*catenaMs)]
 	catenaCs = [list(temp) for temp in zip(*catenaCs)]
