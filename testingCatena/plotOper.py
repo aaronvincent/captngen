@@ -9,7 +9,8 @@ colours = ["#ef1a1a", "#2fef19", "#0055ff", "#137708", "#00fff2", "#ff5efc", "#9
 # that captnoper calculates. This is designed to mimic Catena's plots
 def plotoper(couplingConstant, title="Operator Plot", savefigname=None):
 
-	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
 
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
@@ -73,4 +74,5 @@ def plotoper(couplingConstant, title="Operator Plot", savefigname=None):
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 for c in couplingConstants:
-	plotoper(c, "Oper results from "+c, "Oper_plots/"+c+"_oper_plot.png")
+	# plotoper(c, "Oper results from "+c, "Oper_plots/"+c+"_oper_plot.png")
+	plotoper(c, "Oper results from "+c, "Oper_factor_of_two_plots/"+c+"_oper_plot.png")
