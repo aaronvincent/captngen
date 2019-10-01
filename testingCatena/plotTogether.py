@@ -160,8 +160,8 @@ def plottogether_csv(couplingConstant, title="Catena Plot", savefigname=None):
 
 	# Read in the CaptnOper data
 	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
-	filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
-	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-b16.dat"
+	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-b16.dat"
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
@@ -232,6 +232,6 @@ def plottogether_csv(couplingConstant, title="Catena Plot", savefigname=None):
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 for c in couplingConstants:
-	# plottogether_csv(c, "Comparison plot of "+c+" gs98", "Comparison_Plots/"+c+"_gs98_comparison.png")
-	plottogether_csv(c, "Comparison plot of "+c+" gs98", "New_Comparisons/"+c+"_gs98_comparison.png")
-	# plottogether_csv(c, "Comparison plot of "+c+" b16", "New_Comparisons/"+c+"_b16_comparison.png")
+	# plottogether_csv(c, "Comparison plot of "+c+" gs98", "Comparison_Plots/"+c+"_gs98_comparison.pdf")
+	# plottogether_csv(c, "Comparison plot of "+c+" gs98", "New_Comparisons/"+c+"_gs98_comparison.pdf")
+	plottogether_csv(c, "Comparison plot of "+c+" b16", "New_Comparisons/"+c+"_b16_comparison.pdf")
