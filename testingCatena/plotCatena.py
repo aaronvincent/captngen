@@ -148,6 +148,6 @@ def plotcatena_csv(couplingConstant, title="Catena Plot", savefigname=None):
 couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 for c in couplingConstants:
-	plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
+	plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.pdf")
 # c = couplingConstants[2]
 # plotcatena_csv(c, "Copy of Catena Plot of "+c, "Catena_Plot_Copies/"+c+"_catena_copy.png")
