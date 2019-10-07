@@ -7,10 +7,6 @@
 # ignore .x files
 *.x
 
-# ignore .dat files (but not in the sub folders of testingCatnea)
-*.dat
-!/testingCatena/*/**/*.dat
-
 #ignore .png files (but not in the sub folders of testingCatnea)
 *.png
 !/testingCatena/*/**/*.png
