@@ -15,6 +15,12 @@ PROGRAM GENCAP
 
 	! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
 	modfile = "solarmodels/model_gs98_nohead.dat"
+
+	! from DarkSUSY:
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09_nohead.dat"
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09ph_nohead.dat"
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_gs98_nohead.dat"
 	call captn_init(modfile, 0.4d0, 270.d0, 220.d0, 540.d0)
 	call captn_init_oper()
 	call populate_array(1.65d-8, 1, 0)
