@@ -14,10 +14,10 @@ PROGRAM GENCAP
 											"Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"]
 
 	! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
-	modfile = "solarmodels/model_gs98_nohead.dat"
+	! modfile = "solarmodels/model_gs98_nohead.dat"
 
 	! from DarkSUSY:
-	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
+	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
 	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09_nohead.dat"
 	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09ph_nohead.dat"
 	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_gs98_nohead.dat"
@@ -40,7 +40,7 @@ PROGRAM GENCAP
 		end do
 		print*
 	end do
-	open(55,file = "testingCatena/Oper_factor_of_two_data/factortwotest_oper_c1-0_alliso-gs98.dat")!"testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
+	open(55,file = "testingCatena/Oper_data/captest_oper_c1-0_alliso-ags05.dat")!"testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
 	do i=1,21
 		write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
 									capped(5,i), capped(6,i), capped(7,i), capped(8,i), &
