@@ -12,9 +12,9 @@ def plotoper(couplingConstant, title="Operator Plot", savefigname=None):
 	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
 	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
 	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-b16.dat"
-	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-ags05.dat"
+	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-ags05.dat"
 	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-agss09.dat"
-	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-agss09ph.dat"
+	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-agss09ph.dat"
 
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
@@ -81,6 +81,6 @@ for c in couplingConstants:
 	# plotoper(c, "Oper results from "+c+" gs98", "Oper_plots/"+c+"_gs98_oper_plot.pdf")
 	# plotoper(c, "Oper results from "+c+" gs98", "Oper_factor_of_two_plots/"+c+"_gs98_oper_plot.pdf")
 	# plotoper(c, "Oper results from "+c+" b16", "Oper_factor_of_two_plots/"+c+"_b16_oper_plot.pdf")
-	plotoper(c, "Oper results from "+c+" ags05", "Oper_plots/"+c+"_ags05_oper_plot.pdf")
+	# plotoper(c, "Oper results from "+c+" ags05", "Oper_plots/"+c+"_ags05_oper_plot.pdf")
 	# plotoper(c, "Oper results from "+c+" agss09", "Oper_plots/"+c+"_agss09_oper_plot.pdf")
-	# plotoper(c, "Oper results from "+c+" agss09ph", "Oper_plots/"+c+"_agss09ph_oper_plot.pdf")
+	plotoper(c, "Oper results from "+c+" agss09ph", "Oper_plots/"+c+"_agss09ph_oper_plot.pdf")

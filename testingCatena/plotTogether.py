@@ -37,8 +37,9 @@ def plottogether(couplingConstant, title="Double Plot", savefigname=None):
 
 
 	# Read in the CaptnOper data
-	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
-	#filename = "../factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"#
+	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
+	# filename = "../factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
+
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
@@ -161,7 +162,11 @@ def plottogether_csv(couplingConstant, title="Catena Plot", savefigname=None):
 	# Read in the CaptnOper data
 	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-gs98.dat"
 	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-gs98.dat"
-	filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-b16.dat"
+	# filename = "Oper_factor_of_two_data/factortwotest_oper_"+couplingConstant+"_alliso-b16.dat"
+	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-ags05.dat"
+	# filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-agss09.dat"
+	filename = "Oper_data/captest_oper_"+couplingConstant+"_alliso-agss09ph.dat"
+
 	# read in the file's data outputed from captn
 	# organized into columns of DM mass (x axis), then 17 of isotope specific capture rates
 	file = open(filename,'r')
@@ -234,4 +239,7 @@ couplingConstants = ["c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", "c8-0", "c9
 for c in couplingConstants:
 	# plottogether_csv(c, "Comparison plot of "+c+" gs98", "Comparison_Plots/"+c+"_gs98_comparison.pdf")
 	# plottogether_csv(c, "Comparison plot of "+c+" gs98", "New_Comparisons/"+c+"_gs98_comparison.pdf")
-	plottogether_csv(c, "Comparison plot of "+c+" b16", "New_Comparisons/"+c+"_b16_comparison.pdf")
+	# plottogether_csv(c, "Comparison plot of "+c+" b16", "New_Comparisons/"+c+"_b16_comparison.pdf")
+	# plottogether_csv(c, "Comparison plot of "+c+" ags05", "Comparison_Plots/"+c+"_ags05_comparison.pdf")
+	# plottogether_csv(c, "Comparison plot of "+c+" agss09", "Comparison_Plots/"+c+"_agss09_comparison.pdf")
+	plottogether_csv(c, "Comparison plot of "+c+" agss09ph", "Comparison_Plots/"+c+"_agss09ph_comparison.pdf")
