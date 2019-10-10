@@ -246,7 +246,7 @@ module capmod
     ! many if statements used to check for terms excluded by choice of constants (c1,c3..c15) = 0
     function p_tot(w,vesc,i)
         double precision :: w,vesc, p_tot
-        double precision :: mu_T,GF
+        double precision :: m_T,mu_T,GF
         integer :: i,tau,taup
         integer :: c, v2, q2, v2q2, q4, v2q4
         double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2
@@ -339,7 +339,7 @@ module capmod
                         ((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0)).or. &
                         ((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
                     p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * w**2 * sumW(w,vesc,i,tau,taup,3,1)&
-                                - RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,2)
+                                -RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,2)
                 end if
                 ! c15,c15
                 if ((coupling_Array(14,tau).ne.0).and.(coupling_Array(14,taup).ne.0)) then
