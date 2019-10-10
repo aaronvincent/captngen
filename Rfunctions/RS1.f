@@ -43,7 +43,7 @@ c
          RS1 = 1/m_N**2 * (j_chi*(j_chi+1))/12. * c9*c9p
       else if (term.eq.v2q2) then
          RS1 = 1/c0**2 * 1/m_N**2 * (1/8. * c3*c3p +
-     &      (j_chi*(j_chi+1))/12. * 1/2. * (c14*c14p-c12*c15p-c15*c12p))
+     &      (j_chi*(j_chi+1))/24. * (c14*c14p - c12*c15p - c15*c12p))
       else if (term.eq.v2q4) then
          RS1 = 1/c0**2 * 1/m_N**4 * (j_chi*(j_chi+1))/24. * c15*c15p
       else
