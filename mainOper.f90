@@ -19,9 +19,9 @@ PROGRAM GENCAP
 	! modfile = "solarmodels/model_gs98_nohead.dat"
 
 	! from DarkSUSY:
-	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
 	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09_nohead.dat"
-	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09ph_nohead.dat"
+	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_agss09ph_nohead.dat"
 	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_gs98_nohead.dat"
 	
 	do cpl=1, 14
@@ -49,7 +49,7 @@ PROGRAM GENCAP
 			end do
 			print*
 		end do
-		filename = "testingCatena/Oper_mu_T_c0_update/captest_oper_"//trim(cplConsts(cpl))//"_alliso-ags05.dat"
+		filename = "testingCatena/Oper_mu_T_c0_update/captest_oper_"//trim(cplConsts(cpl))//"_alliso-agss09ph.dat"
 		open(55,file=filename)!"testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
 		do i=1,21
 			write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
