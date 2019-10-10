@@ -282,7 +282,7 @@ module capmod
                 ! c8,c8
                 if ((coupling_Array(7,tau).ne.0).and.(coupling_Array(7,taup).ne.0)) then
                     p_tot = p_tot + RM(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,0) &
-                                - RM(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,1) 
+                                - RM(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,1,1) 
                 end if
                 ! c11,c11
                 if ((coupling_Array(10,tau).ne.0).and.(coupling_Array(10,taup).ne.0)) then
@@ -291,7 +291,7 @@ module capmod
                 ! c5,c5
                 if ((coupling_Array(4,tau).ne.0).and.(coupling_Array(4,taup).ne.0)) then
                     p_tot = p_tot + RM(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,1) &
-                                - RM(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,1,2) 
+                                - RM(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,1,2) 
                 end if
                 
                 ! RS2 (c, v2, q2, v2q2, q4)
@@ -302,7 +302,7 @@ module capmod
                 ! c12,c12
                 if ((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0)) then
                     p_tot = p_tot + RS2(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,0) &
-                                - RS2(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,1)
+                                - RS2(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,2,1)
                 end if
                 ! c10,c10
                 if ((coupling_Array(9,tau).ne.0).and.(coupling_Array(9,taup).ne.0))then
@@ -311,7 +311,7 @@ module capmod
                 ! c13,c13
                 if ((coupling_Array(12,tau).ne.0).and.(coupling_Array(12,taup).ne.0)) then
                     p_tot = p_tot + RS2(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,1) &
-                                - RS2(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,2,2)
+                                - RS2(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,2,2)
                 end if
                 ! c6,c6
                 if ((coupling_Array(5,tau).ne.0).and.(coupling_Array(5,taup).ne.0)) then
@@ -327,7 +327,7 @@ module capmod
                 if (((coupling_Array(6,tau).ne.0).and.(coupling_Array(6,taup).ne.0)).or. &
                         ((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
                     p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,0) &
-                                - RS1(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,1)
+                                - RS1(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,1)
                 end if
                 ! c9,c9
                 if ((coupling_Array(8,tau).ne.0).and.(coupling_Array(8,taup).ne.0)) then
@@ -339,12 +339,12 @@ module capmod
                         ((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0)).or. &
                         ((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
                     p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * w**2 * sumW(w,vesc,i,tau,taup,3,1)&
-                                - RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,2)
+                                - RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,2)
                 end if
                 ! c15,c15
                 if ((coupling_Array(14,tau).ne.0).and.(coupling_Array(14,taup).ne.0)) then
                     p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2q4,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,2) &
-                                - RS1(mnuc,c0,tau,taup,v2q4,j_chi,coupling_Array) * 1./(4.*mu_N**2) * sumW(w,vesc,i,tau,taup,3,3) 
+                                - RS1(mnuc,c0,tau,taup,v2q4,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,3) 
                 end if
                 
                 ! RP2 (c, q2, q4)
