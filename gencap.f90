@@ -246,7 +246,7 @@ module capmod
     ! many if statements used to check for terms excluded by choice of constants (c1,c3..c15) = 0
     function p_tot(w,vesc,i)
         double precision :: w,vesc, p_tot
-        double precision :: mu_N,GF
+        double precision :: mu_T,GF
         integer :: i,tau,taup
         integer :: c, v2, q2, v2q2, q4, v2q4
         double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2
@@ -258,7 +258,10 @@ module capmod
         q4 = 4
         v2q4 = 5
 
-        mu_N = (mnuc*mdm)/(mnuc+mdm)
+        ! get the target nucleus mass m_T and the nucleus-dm reduced mass mu_T
+        m_T = mnuc * AtomicNumber_oper(i)
+        mu_T = (m_T*mdm)/(m_T+mdm)
+
         ! use GFFI_H for hydrogen or y~0
         ! do a check to see if y can simplify W to a constant
         
