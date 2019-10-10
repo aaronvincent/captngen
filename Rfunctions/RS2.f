@@ -33,7 +33,8 @@ c
       else if (term.eq.v2) then
          RS2 = 1/c0**2 * (j_chi*(j_chi+1))/12. * c12*c12p
       else if (term.eq.q2) then
-         RS2 = 1/m_N**2 * 1/4. * c10*c10p ! missing c6c4 term here
+         RS2 = 1/m_N**2 * (1/4. * c10*c10p +
+     &      (j_chi*(j_chi+1))/12. * (c4*c6p+c6*c4p))
       else if (term.eq.v2q2) then
          RS2 = 1/c0**2 * 1/m_N**2 * (j_chi*(j_chi+1))/12. * c13*c13p
       else if (term.eq.q4) then
