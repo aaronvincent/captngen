@@ -306,8 +306,8 @@ module capmod
                 end if
                 ! c10,c10 or c4,c6 or c6,c4
                 if (((coupling_Array(9,tau).ne.0).and.(coupling_Array(9,taup).ne.0)).or. &
-                        ((coupling_Array(4,tau).ne.0).and.(coupling_Array(5,taup).ne.0)).or. &
-                        ((coupling_Array(5,tau).ne.0).and.(coupling_Array(4,taup).ne.0))) then
+                        ((coupling_Array(3,tau).ne.0).and.(coupling_Array(5,taup).ne.0)).or. &
+                        ((coupling_Array(5,tau).ne.0).and.(coupling_Array(3,taup).ne.0))) then
                     p_tot = p_tot + RS2(mnuc,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,1)
                 end if
                 ! c13,c13
