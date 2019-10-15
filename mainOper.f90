@@ -49,7 +49,7 @@ PROGRAM GENCAP
 			end do
 			print*
 		end do
-		filename = "testingCatena/Oper_mu_T_c0_update/captest_oper_"//trim(cplConsts(cpl))//"_alliso-gs98.dat"
+		filename = "testingCatena/Oper_Usun_update/captest_oper_"//trim(cplConsts(cpl))//"_alliso-gs98.dat"
 		open(55,file=filename)!"testingCatena/Oper_data/captest_oper_c1-0_alliso-gs98.dat")
 		do i=1,21
 			write(55,*) 10**(.1*i + 0.9), capped(1,i), capped(2,i), capped(3,i), capped(4,i), &
