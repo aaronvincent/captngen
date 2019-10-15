@@ -25,7 +25,7 @@ PROGRAM GENCAP
 	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_gs98_nohead.dat"
 	
 	do cpl=1, 14
-		call captn_init(modfile, 0.4d0, 270.d0, 220.d0, 540.d0)
+		call captn_init(modfile, 0.4d0, 220.d0, 220.d0, 540.d0)
 		call captn_init_oper()
 		if (cpl==1) then
 			call populate_array(1.65d-8, cpl, 0)
