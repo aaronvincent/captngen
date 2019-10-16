@@ -38,10 +38,10 @@ c
                WP1 = -0.0003766815038380074
             else if (term.eq."y2") then
                WP1 = 0.00340250547302469
-C             else if (term.eq."y3") then
-C                WP1 = -4.747215506787354e-20
-C             else if (term.eq."y4") then
-C                WP1 = 2.4413135656776747e-36
+            else if (term.eq."y3") then
+               WP1 = -4.747215506787354e-20
+            else if (term.eq."y4") then
+               WP1 = 2.4413135656776747e-36
             else
                WP1 = 0.
             end if
@@ -52,10 +52,10 @@ C                WP1 = 2.4413135656776747e-36
                WP1 = -0.005633072474649519
             else if (term.eq."y2") then
                WP1 = 0.0044038530074910435
-C             else if (term.eq."y3") then
-C                WP1 = -7.126454225762893e-20
-C             else if (term.eq."y4") then
-C                WP1 = 2.3946974273275598e-36
+            else if (term.eq."y3") then
+               WP1 = -7.126454225762893e-20
+            else if (term.eq."y4") then
+               WP1 = 2.3946974273275598e-36
             else
                WP1 = 0.
             end if
@@ -66,10 +66,10 @@ C                WP1 = 2.3946974273275598e-36
                WP1 = 0.00298227900889512
             else if (term.eq."y2") then
                WP1 = 0.002815253422852913
-C             else if (term.eq."y3") then
-C                WP1 = 8.439579246990046e-20
-C             else if (term.eq."y4") then
-C                WP1 = -2.3946974273275598e-36
+            else if (term.eq."y3") then
+               WP1 = 8.439579246990046e-20
+            else if (term.eq."y4") then
+               WP1 = -2.3946974273275598e-36
             else
                WP1 = 0.
             end if
