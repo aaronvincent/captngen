@@ -1,11 +1,13 @@
 !   Capt'n Oper
+!   Module to house everying specific to captn operator
+!   Neal Avis Kozar 2020
 !   all units of distance: cm
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
 !   all units of time: seconds
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 
 
-module capoper
+module opercap
     implicit none
     double precision, parameter :: hbar=6.582d-25
     !this goes with the Serenelli table format
@@ -23,21 +25,6 @@ module capoper
     double precision :: W_array(8,16,2,2,7)
     
     contains
-
-    !   this is the function f_sun(u) in 1504.04378 eqn 2.2
-    !velocity distribution,
-    function get_vdist(u)
-        double precision :: u,get_vdist, f, normfact
-        f = (3./2.)**(3./2.)*4.*rho0*u**2/sqrt(pi)/mdm/u0**3 &
-            *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
-        !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
-        !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
-        !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
-        normfact = 1.
-        !print*,normfact
-        f = f/normfact
-        get_vdist=f
-    end function get_vdist
 
     function GFFI_H_oper(w,vesc,mq)
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
@@ -296,11 +283,10 @@ module capoper
             end do
         end if
     end function OMEGA_oper
-
-end module capoper
+end module opercap
 
 subroutine captn_init_oper()
-    use capoper
+    use opercap
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
@@ -368,7 +354,7 @@ end subroutine captn_init_oper
 
 !   this is the integral over R in eqn 2.3 in 1501.03729
 function integrand_oper(u)
-    use capoper
+    use opercap
     implicit none
     double precision :: u, w, vesc, integrand_oper, int
     vesc = tab_vesc(ri_for_omega)
@@ -380,7 +366,7 @@ end function integrand_oper
 
 !   Need to pass all the operators into the subroutine
 subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
-    use capoper
+    use opercap
     implicit none
     integer, intent(in):: niso_in, isotopeChosen
     integer i, ri
@@ -444,7 +430,7 @@ subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
-    use capoper
+    use opercap
     implicit none
     integer :: couple, isospin
     double precision :: val
