@@ -8,11 +8,12 @@
 
 
 module opercap
+    use sharedcap
     implicit none
     double precision, parameter :: hbar=6.582d-25
     !this goes with the Serenelli table format
     
-    integer :: niso, ri_for_omega, nlines, pickIsotope
+    integer :: pickIsotope
     double precision :: j_chi
 
     double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &

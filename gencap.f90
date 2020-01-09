@@ -14,6 +14,7 @@
 
 
 module capmod
+    use sharedcap
     implicit none
     double precision, parameter :: q0=0.04, v0=220.d5
     !this goes with the Serenelli table format
@@ -23,7 +24,7 @@ module capmod
                                                         54.93, 55.845, 58.933, 58.693/) !29 is the max niso, corresponding to Ni
     
     ! nq and nv can be -1, 0, 1, 2; this is set in the main program
-    integer :: nq, nv, niso, ri_for_omega, nlines
+    integer :: nq, nv
     double precision :: sigma_0
     
     contains

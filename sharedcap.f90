@@ -94,7 +94,7 @@ module sharedcap
     !this is to make sure the integrator does what it's supposed to
     function gaussinmod(x)
         double precision :: x,gaussinmod
-        gaussinmod = nq*exp(-x**2/2.d0)
+        gaussinmod = 1*exp(-x**2/2.d0)
     end function gaussinmod
 
 end module sharedcap
