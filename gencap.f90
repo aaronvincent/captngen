@@ -28,21 +28,6 @@ module capmod
     
     contains
 
-    !   this is the function f_sun(u) in 1504.04378 eqn 2.2
-    !velocity distribution,
-    function get_vdist(u)
-        double precision :: u,get_vdist, f, normfact
-        f = (3./2.)**(3./2.)*4.*rho0*u**2/sqrt(pi)/mdm/u0**3 &
-            *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
-        !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
-        !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
-        !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
-        normfact = 1.
-        !print*,normfact
-        f = f/normfact
-        get_vdist=f
-    end function get_vdist
-
     !   this is eqn 2.9 in 1504.04378
     !generalized form factor: hydrogen
     function GFFI_H(w,vesc)
@@ -108,76 +93,7 @@ module capmod
         end do
         Omega = Omega*2.d0/mdm/w
     end function omega
-
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !read in solar parameters from Aldo Serenelli-style files, with header removed
-    subroutine get_solar_params(filename,nlines)
-        character*300 :: filename
-        double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
-        double precision, allocatable :: phi(:) !this is used briefly
-        integer :: i,j, nlines,iostatus
-        !Get number of lines in the file
-        open(99,file=filename)
-        nlines=0
-        do
-            read(99,*, iostat=iostatus)
-            if(iostatus/=0) then ! to avoid end of file error.
-                exit
-            else
-                nlines=nlines+1
-            end if
-        end do
-        close(99)
-        nlines = nlines -1
-        !allocate the arrays
-        allocate(tab_mencl(nlines))
-        allocate(tab_r(nlines))
-        allocate(tab_starrho(nlines))
-        allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
-        allocate(tab_vesc(nlines))
-        allocate(phi(nlines))
-        allocate(tab_dr(nlines))
-        
-        allocate(tab_mfr_oper(nlines,16)) ! for the operator method
-
-        !now actually read in the file
-        open(99,file=filename)
-        do i=1,nlines
-            read(99,*) tab_mencl(i),tab_r(i), Temp, tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
-        end do
-        close(99)
-
-        !we calculate the escape velocity here since all the ingredients are ready
-        phi(nlines) = -GMoverR
-        tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
-        tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
-        do i = 1,nlines-1
-            j = nlines-i !trapezoid integral
-            phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
-            tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
-            tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
-        end do
-        return
-    end subroutine get_solar_params
-
-    !this is to make sure the integrator does what it's supposed to
-    function gaussinmod(x)
-        double precision :: x,gaussinmod
-        gaussinmod = nq*exp(-x**2/2.d0)
-    end function gaussinmod
-
 end module capmod
-
-
-
-!Some functions that have to be external, because of the integrator.
-function gausstest(x) !just a test for the integrator. Nothing to see here
-    use capmod
-    double precision :: x,gausstest
-    gausstest = gaussinmod(x)
-end function gausstest
-
 
 !   this is the integral over R in eqn 2.7 in 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
@@ -194,11 +110,6 @@ function integrand(u)
     end if
     integrand = int
 end function integrand
-
-function dummyf(x)
-    double precision :: x, dummyf
-    dummyf = 1.d0
-end function dummyf
 
 subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
     use capmod
@@ -269,21 +180,6 @@ subroutine captn_general(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
     ! end if
 end subroutine captn_general
 
-!   this is eqn 2.15 in 1504.04378
-!This is fine as long as the escape velocity is large enough
-subroutine captn_maxcap(mwimp_in,maxcap)
-    use capmod
-    implicit none
-    double precision maxcap
-    double precision, intent(in) :: mwimp_in
-    mdm = mwimp_in
-    maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
-        *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-        + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
-end subroutine captn_maxcap
-
-
-
 !! captn_specific calculates the capture rate for constant cross section.
 subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
     implicit none
@@ -293,26 +189,3 @@ subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
     call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
     call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
 end subroutine captn_specific
-
-!------!------!------!------!------INITIALIZATION FCT
-
-subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
-    !input velocities in km/s, not cm/s!!!
-    use capmod
-    use iso_c_binding, only: c_ptr
-    implicit none
-    character (len=300) solarmodel
-    double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
-    !common solarmodel
-    !external solarmodel
-
-    if  (.not. allocated(tab_r)) then
-        print*,"Capgen initializing from model: ",solarmodel
-        call get_solar_params(solarmodel,nlines)
-    end if
-    !print*,"Capgen tabulons already allocated, you might be overdoing it by calling the init function more than once."
-    usun = usun_in*1.d5
-    u0 =  u0_in*1.d5
-    rho0 =rho0_in
-    vesc_halo = vesc_in*1.d5
-end subroutine captn_init
