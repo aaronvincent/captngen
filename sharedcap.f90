@@ -6,7 +6,6 @@
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
 !   all units of time: seconds
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
-!   Reference q0 is 40 MeV, and v0 is 220 km/s.
 
 
 module sharedcap
@@ -92,6 +91,7 @@ module sharedcap
     end subroutine get_solar_params
 
     !this is to make sure the integrator does what it's supposed to
+    ! called by gausstest
     function gaussinmod(x)
         double precision :: x,gaussinmod
         gaussinmod = 1*exp(-x**2/2.d0)
