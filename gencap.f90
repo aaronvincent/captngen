@@ -15,23 +15,16 @@
 
 module capmod
     implicit none
-    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
-    double precision, parameter :: Rsun=69.57d9
-    double precision, parameter :: c0=2.99792458d10, mnuc=0.938, q0=0.04, v0=220.d5, hbar=6.582d-25
-    double precision, parameter :: eps=1d-10 !stops divisions by zero
-    !these are now set in captn_init
-    double precision :: usun , u0 ,rho0, vesc_halo
+    double precision, parameter :: q0=0.04, v0=220.d5
     !this goes with the Serenelli table format
     double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
                                                         18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
                                                         39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
                                                         54.93, 55.845, 58.933, 58.693/) !29 is the max niso, corresponding to Ni
-    !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
-
+    
     ! nq and nv can be -1, 0, 1, 2; this is set in the main program
-    integer :: nq, nv, niso, ri_for_omega, nlines, pickIsotope
-    double precision :: mdm, sigma_0, j_chi
+    integer :: nq, nv, niso, ri_for_omega, nlines
+    double precision :: sigma_0
     
     contains
 
