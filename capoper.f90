@@ -7,10 +7,12 @@
 
 module capoper
     implicit none
-    double precision, parameter :: AtomicNumber(29) = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
-                                                        18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
-                                                        39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
-                                                        54.93, 55.845, 58.933, 58.693/) !29 is the max niso, corresponding to Ni
+    double precision, parameter :: hbar=6.582d-25
+    !this goes with the Serenelli table format
+    
+    integer :: niso, ri_for_omega, nlines, pickIsotope
+    double precision :: j_chi
+
     double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
     character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
@@ -19,9 +21,23 @@ module capoper
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
-    double precision, allocatable :: tab_mfr_oper(:,:)
     
     contains
+
+    !   this is the function f_sun(u) in 1504.04378 eqn 2.2
+    !velocity distribution,
+    function get_vdist(u)
+        double precision :: u,get_vdist, f, normfact
+        f = (3./2.)**(3./2.)*4.*rho0*u**2/sqrt(pi)/mdm/u0**3 &
+            *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
+        !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
+        !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
+        !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
+        normfact = 1.
+        !print*,normfact
+        f = f/normfact
+        get_vdist=f
+    end function get_vdist
 
     function GFFI_H_oper(w,vesc,mq)
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
@@ -284,7 +300,7 @@ module capoper
 end module capoper
 
 subroutine captn_init_oper()
-    use capmod
+    use capoper
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
@@ -352,7 +368,7 @@ end subroutine captn_init_oper
 
 !   this is the integral over R in eqn 2.3 in 1501.03729
 function integrand_oper(u)
-    use capmod
+    use capoper
     implicit none
     double precision :: u, w, vesc, integrand_oper, int
     vesc = tab_vesc(ri_for_omega)
@@ -364,7 +380,7 @@ end function integrand_oper
 
 !   Need to pass all the operators into the subroutine
 subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
-    use capmod
+    use capoper
     implicit none
     integer, intent(in):: niso_in, isotopeChosen
     integer i, ri
@@ -428,7 +444,7 @@ subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
-    use capmod
+    use capoper
     implicit none
     integer :: couple, isospin
     double precision :: val
