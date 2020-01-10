@@ -372,7 +372,7 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
     integer, intent(in):: niso_in, isotopeChosen
     integer i, ri
     double precision, intent(in) :: mx_in, jx_in
-    double precision :: capped, maxcap !this is the output
+    double precision :: capped !this is the output
      ! array of coupling constants
     double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
