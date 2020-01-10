@@ -7,8 +7,8 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 
 
-module opercap
-    use sharedcap
+module opermod
+    use sharedmod
     implicit none
     double precision, parameter :: hbar=6.582d-25
     !this goes with the Serenelli table format
@@ -284,10 +284,10 @@ module opercap
             end do
         end if
     end function OMEGA_oper
-end module opercap
+end module opermod
 
 subroutine captn_init_oper()
-    use opercap
+    use opermod
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
@@ -355,7 +355,7 @@ end subroutine captn_init_oper
 
 !   this is the integral over R in eqn 2.3 in 1501.03729
 function integrand_oper(u)
-    use opercap
+    use opermod
     implicit none
     double precision :: u, w, vesc, integrand_oper, int
     vesc = tab_vesc(ri_for_omega)
@@ -367,7 +367,7 @@ end function integrand_oper
 
 !   Need to pass all the operators into the subroutine
 subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
-    use opercap
+    use opermod
     implicit none
     integer, intent(in):: niso_in, isotopeChosen
     integer i, ri
@@ -431,7 +431,7 @@ subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
-    use opercap
+    use opermod
     implicit none
     integer :: couple, isospin
     double precision :: val

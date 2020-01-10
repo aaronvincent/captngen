@@ -1,6 +1,7 @@
 !   Capt'n Shared
 !   Designed as a module to house shared vaiables and functions
 !   between both the General and Operator varients
+!   Most of this was already written by Aaron Vincent in the older gencap.f90 file
 !   Neal Avis Kozar 2020
 !   all units of distance: cm
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
@@ -8,7 +9,7 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 
 
-module sharedcap
+module sharedmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: Rsun=69.57d9
@@ -17,7 +18,8 @@ module sharedcap
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0, vesc_halo
     !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:), tab_mfr_oper(:,:)
+    double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision, allocatable :: tab_mfr_oper(:,:)
 
     integer :: niso, ri_for_omega, nlines
     double precision :: mdm
@@ -96,12 +98,11 @@ module sharedcap
         double precision :: x,gaussinmod
         gaussinmod = 1*exp(-x**2/2.d0)
     end function gaussinmod
-
-end module sharedcap
+end module sharedmod
 
 !Some functions that have to be external, because of the integrator.
 function gausstest(x) !just a test for the integrator. Nothing to see here
-    use sharedcap
+    use sharedmod
     double precision :: x,gausstest
     gausstest = gaussinmod(x)
 end function gausstest
@@ -114,7 +115,7 @@ end function dummyf
 !   this is eqn 2.15 in 1504.04378
 !This is fine as long as the escape velocity is large enough
 subroutine captn_maxcap(mwimp_in,maxcap)
-    use sharedcap
+    use sharedmod
     implicit none
     double precision maxcap
     double precision, intent(in) :: mwimp_in
@@ -129,7 +130,7 @@ end subroutine captn_maxcap
 
 subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     !input velocities in km/s, not cm/s!!!
-    use sharedcap
+    use sharedmod
     use iso_c_binding, only: c_ptr
     implicit none
     character (len=300) solarmodel

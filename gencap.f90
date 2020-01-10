@@ -6,6 +6,8 @@
 !   Future plans: add form factor handling (a la Catena & Schwabe)
 !   Made for GAMBIT, with marginal competence
 !   Aaron Vincent 2017
+!   Neal Avis Kozar 2018-2020
+!   This houses the module and functions specific to the v&q dependent capture
 !   all units of distance: cm
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
 !   all units of time: seconds
@@ -14,7 +16,7 @@
 
 
 module capmod
-    use sharedcap
+    use sharedmod
     implicit none
     double precision, parameter :: q0=0.04, v0=220.d5
     !this goes with the Serenelli table format
