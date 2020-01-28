@@ -1,5 +1,5 @@
 FC=gfortran
-FOPT= -O3
+FOPT= -O3 -fopenmp
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 WDIR = ./Wfunctions
@@ -16,7 +16,7 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
 
 
 gentest.x: $(MAIN) $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
-	${FC} -o gentest.x $(MAIN) $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
+	${FC} $(FOPT) -o gentest.x $(MAIN) $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 
 gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)

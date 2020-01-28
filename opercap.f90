@@ -378,6 +378,10 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
     double precision, allocatable :: u_int_res(:)
 
+    ! ! stuff for openmp testing
+    ! integer :: threadnums, threadid
+    ! integer, external :: omp_get_num_threads, omp_get_thread_num
+
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
     !external gausstest !this is just for testing
     external integrand_oper
@@ -408,6 +412,11 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
     capped = 0.d0
 
     ! completes integral (2.3) in paper 1501.03729 (gives dC/dV as fn of radius)
+    !$OMP parallel
+    ! threadnums = omp_get_num_threads()
+    ! threadid = omp_get_thread_num()
+    ! print *, "There are", threadnums, "lights!"
+    !$OMP do
     do ri=1,nlines !loop over the star
         result = 0.d0
         ri_for_omega = ri !accessed via the module
@@ -417,7 +426,8 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
         u_int_res(ri) = result
         capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
     end do
-
+    !$OMP end do
+    !$OMP end parallel
     !completes integral (2.4) of paper 1501.03729
     capped = 4.d0*pi*Rsun**3*capped
 
