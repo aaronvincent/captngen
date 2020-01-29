@@ -409,10 +409,10 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
 
     !As far as I can tell, the second argument (fofuoveru) does nothing in this integrator.
     !I've sent it to an inert dummy just in case.
-    capped = 0.d0
-
+    capped = 0.d0 
     ! completes integral (2.3) in paper 1501.03729 (gives dC/dV as fn of radius)
-    !$OMP parallel
+    !$OMP parallel default(none) shared(nlines, vesc_halo, epsabs, epsrel, limit, u_int_res, capped, tab_r, tab_dr) &
+    !$OMP private(ri, result, abserr, neval, ier, alist, blist, rlist, elist, iord, last)
     ! threadnums = omp_get_num_threads()
     ! threadid = omp_get_thread_num()
     ! print *, "There are", threadnums, "lights!"
