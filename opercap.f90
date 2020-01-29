@@ -24,7 +24,8 @@ module opermod
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
-    
+    integer :: ri_for_omega
+    !$OMP threadprivate(ri_for_omega)
     contains
 
     function GFFI_H_oper(w,vesc,mq)

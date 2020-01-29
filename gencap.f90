@@ -28,6 +28,7 @@ module capmod
     ! nq and nv can be -1, 0, 1, 2; this is set in the main program
     integer :: nq, nv
     double precision :: sigma_0
+    integer :: ri_for_omega
     
     contains
 
