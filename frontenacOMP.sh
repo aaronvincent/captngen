@@ -13,7 +13,7 @@ echo 'starting test job...'
 
 make clean
 make
-time gentest.x
+time ./gentest.x
 
 echo 'our job worked!'
 
