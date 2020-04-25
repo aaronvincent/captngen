@@ -1,11 +1,11 @@
 FC=gfortran
-FOPT= -O3 -fopenmp -fPIC
+FOPT= -O3 -fPIC
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = mainOper.o
+MAIN = mainTest.o #mainOper.o
 MFSHR = sharedcap.o
 MFOBJ = gencap.o
 MFCAP = opercap.o
