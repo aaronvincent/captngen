@@ -14,13 +14,13 @@ PROGRAM GENCAP
 											"c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 	
-	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
-	! modfile = "accuracytesting/Cut2_Serenelli-model_ags05.dat"
+	! modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
+	modfile = "accuracytesting/Cut100_Serenelli-model_ags05.dat"
 	niso = 16
 	jx = 0.5
 	iso = 0 !force captnoper to run and sum all isotopes
 	
-	filename = "accuracytesting/testacc_cut1-ags05.dat"
+	filename = "accuracytesting/testacc_cut100-ags05.dat"
 	open(55,file=filename)
 	do cpl=1, 14
 		write(55,*) cplConsts(cpl)
