@@ -10,14 +10,15 @@ PROGRAM GENCAP
 	double precision :: mx, jx, maxcapped
 	double precision :: capped
 	integer :: niso, i, iso, cpl
-	character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20", "Na23", "Mg24", &
-											"Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"]
 	character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
 											"c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
 	
 	modfile = "solarmodels/Models_From_DarkSUSY/Serenelli-model_ags05_nohead.dat"
-	! modfile = "Cut100_Serenelli-model_ags05.dat"
+	! modfile = "accuracytesting/Cut2_Serenelli-model_ags05.dat"
+	niso = 16
+	jx = 0.5
+	iso = 0 !force captnoper to run and sum all isotopes
 	
 	filename = "accuracytesting/testacc_cut1-ags05.dat"
 	open(55,file=filename)
@@ -31,8 +32,6 @@ PROGRAM GENCAP
 			call populate_array(1.65d-8, cpl+1, 0)
 		endif
 		
-		niso = 17
-		jx = 0.5
 		call captn_maxcap(mx, maxcapped)
 		print*, "Running coupling constant: ", cplConsts(cpl)
 		print*, "maximum captured", maxcapped
