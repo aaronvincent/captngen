@@ -15,7 +15,7 @@ PROGRAM GENCAP
 
 	
 	! modfile = "Aarons_Model_Cuts/struct_b16_agss09_nohead.dat"
-	modfile = "Aarons_Model_Cuts/struct_b15_aggs09_down_20log.dat"
+	modfile = "solarmodels/struct_b16_agss09_reduce10_nohead.dat"
 	niso = 16
 	jx = 0.5
 	iso = 0 !force captnoper to run and sum all isotopes
