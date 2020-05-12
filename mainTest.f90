@@ -20,7 +20,7 @@ PROGRAM GENCAP
 	jx = 0.5
 	iso = 0 !force captnoper to run and sum all isotopes
 	
-	filename = "accuracytesting/testacc_20log-agss09.dat"
+	filename = "testfile_multi"
 	open(55,file=filename)
 	do cpl=1, 14
 		write(55,*) cplConsts(cpl)
@@ -43,6 +43,11 @@ PROGRAM GENCAP
 		write(55,*) mx, capped
 
 		mx = 50
+		call captn_oper(mx,jx,niso,iso,capped)
+		print*, "mx: ",mx, "GeV, capped: ",capped
+		write(55,*) mx, capped
+
+		mx = 500
 		call captn_oper(mx,jx,niso,iso,capped)
 		print*, "mx: ",mx, "GeV, capped: ",capped
 		write(55,*) mx, capped
