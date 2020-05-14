@@ -18,7 +18,7 @@
     allocate(Etrans(nlines))
 
     niso = 1
-    nq = 0
+    nq = 2
     nv = 0
     mx = 3.d0
 
@@ -44,18 +44,18 @@
     nwimpsin = capped_sd(1)*3.d7*4.57d9
     print*,"passing ", nwimpsin
     call transgen(nwimpsin,1,etrans,Etranstot)
-    ! print*,Etrans
+    print*,Etrans
 
-    call fastevap(1.d0,28,EvapRate(i))
-    print*,"Evap rate: ", EvapRate(i)
+    ! call fastevap(1.d0,28,EvapRate(i))
+    ! print*,"Evap rate: ", EvapRate(i)
 
     end do
 
-    open(55,file = "evaptest.dat")
-    do i=1,50
-      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
-    end do
-    close(55)
+    ! open(55,file = "evaptest.dat")
+    ! do i=1,50
+    !   write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
+    ! end do
+    ! close(55)
     ! write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
     ! end do
     ! close(55)
