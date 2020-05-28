@@ -1,3 +1,3 @@
 make gencaplib.so
-cp -r ak_files ../DarkMesa/
-cp gencaplib.so ../DarkMesa/
+cp -r ak_files $DARKMESADIR
+cp gencaplib.so $DARKMESADIR
