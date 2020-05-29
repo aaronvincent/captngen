@@ -76,40 +76,82 @@ newtons_meth = x_3	! The solution to the nonlinear equation
 
 end function
 
-!subroutine s_p(n, Tx, intg, iflag, mp, mx, np, Tp, phi, r, nlines)
-! Wierd formatting to agree with minpack
-!integer(kind = 4) :: n=1
-!real(kind = 8) :: intg(n)
-!integer(kind = 4) :: iflag
-!real(kind = 8) :: Tx(n)
+function Etrans(T_x, T_p, n_x, n_p, m_x, m_p, sigma_x)
+implicit none
+double precision, intent(in) :: T_x, T_p, n_x, n_p, m_x, m_p, sigma_x
+double precision, parameter :: k=1.0, pi=3.1415962
+double precision :: Etrans
 
-!fvec = sp_integral(x, 1, 1)
+Etrans = 8*sqrt(2/pi)*n_x*n_p*(m_x*m_p)/((m_x+m_p)**2)*sqrt((m_p*k*T_x+m_x*k*T_p)/(m_x*m_p))*k*(T_p-T_x)
 
-!end subroutine
+return
+end function
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! The following reads in solar parameters. Copied from gencap, easier than using module
+! capmod while I'm testing
+! read in solar parameters from Aldo Serenelli-style files, with header removed
+    
+    subroutine get_nlines(filename, nlines)
+    character*300 :: filename
+    integer :: nlines, iostatus=0
+    
+    ! count number of lines
+    open(99,file=filename)
+    nlines=0
+    do
+    read(99,*, iostat=iostatus)
+    if(iostatus/=0) then ! to avoid end of file error.
+    exit
+    else
+    nlines=nlines+1
+    end if
+    end do
+    close(99)
+    nlines = nlines -1
+    
+    end subroutine
+    
+    
+    subroutine get_solar_params(filename, nlines, tab_r, tab_starrho, tab_T, tab_g, &
+	tab_mencl, phi, tab_mfr)
+    character*300 :: filename
+    double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
+    integer :: i,j, nlines,iostatus
+    double precision, parameter :: GMoverR=1.908e15, Rsun = 69.57d9 
+    double precision :: tab_r(nlines), tab_starrho(nlines), tab_T(nlines), tab_g(nlines), &
+	tab_mencl(nlines), phi(nlines), tab_mfr(nlines, 29)
+    
+    print *, "nlines = ", nlines
+    print *, "tab_r(1967) = ", tab_r(1967)
+    print *, "tab_r(1968) = ", tab_r(1968)
 
+    !now actually read in the file
+    open(99,file=filename)
+    do i=1,nlines
+    if (i==1) print *, "Loop started"
+    if (i>=nlines) print *, "i>=nlines = ", i
+    read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+    end do
+    print *, "Loop ended"
+    close(99)
+    
+	phi(nlines) = -GMoverR
+    do i = 1,nlines-1
+    j = nlines-i !trapezoid integral
+    phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
+    end do
+    tab_g(nlines) = tab_g(nlines-1)
+    return
+    end
 
-!function wimp_temp(r, integrand, nlines)
+!end get_solar_params
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! integrand must be an array dependent only on Tx
-! r, integrand are 1d arrays of length nlines
-!implicit none
-
-!integer :: nlines 
-!double precision :: r(nlines), integrand(nlines)
-!double precision :: lhs, Tx=1.d4, tol=1.d-6, info=0, fvec(1)	! Initial guess for Tx is 10^4
-!integer :: lwa=8	! Length of wa - required by hybrd1
-!double precision :: wa(lwa)	! Also required by hybrd1
-!double precision :: wimp_temp
-
-!lhs = trapz(r, integrand, flen)	! We want Tx such that lhs=0
-
-!call hybrd1(lhs, 1, Tx, fvec, tol, info, wa, lwa)	! MINPACK function to solve integral(integrand(Tx))=0
-!wimp_temp = Tx
-
-!end function wimp_temp
 
 end module TWIMP
+
+
 
 program tests
 use TWIMP
@@ -117,54 +159,80 @@ implicit none
 
 double precision :: Tx, mp, mx, integral, xy_int, guess_1, guess_2, tolerance
 integer :: nlines, i
-double precision :: np(1000), Tp(1000), phi(1000), r(1000), x(1000), y(1000)
+double precision, allocatable :: tab_r(:), tab_starrho(:), tab_T(:), tab_g(:), tab_mencl(:), phi(:), tab_mfr(:,:)
+!double precision :: np(1000), Tp(1000), phi(1000), r(1000), x(1000), y(1000)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Make sure sp_integral works
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Make sure sp_integral works 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-nlines = 1000
-mp = 0.1
-mx = 0.2
+!call get_nlines("/home/luke/summer_2020/mesa/captngen/solarmodels/model_agss09ph_nohead.dat", nlines)
+
+!mp = 
+!mx = 0.2
 !Tx = 1.0
 
-guess_1 = 10 
-guess_2 = 20
-tolerance = 1.0e-6
+!guess_1 = 10 
+!guess_2 = 20
+!tolerance = 1.0e-6
 
-print *, "Variables declared."
 
-! Set everything to 1 to make sure function works
-do i=1,nlines
-	np(i) = 1.0/i
-	Tp(i) = 1.0e4
-	phi(i) = 1.0*i
-	r(i) = dble(i)/nlines
-!	print *, i, r(i), Tp(i)
-	cycle
-enddo
+!! Set everything to 1 to make sure function works
+!do i=1,nlines
+!	np(i) = 1.0/i
+!	Tp(i) = 1.0e4
+!	phi(i) = 1.0*i
+!	r(i) = dble(i)/nlines
+!!	print *, i, r(i), Tp(i)
+!	cycle
+!enddo
 
-print *, "Values assigned."
+!print *, "Values assigned."
 
 !integral = sp_integral(Tx, nlines, mx, mp, np, Tp, phi, r)
 !print *, "First integral evaluated. Value: ", integral, ".", "Analytical result:", -1/exp(1.0)/3, "."
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Test Gauss-Newton solver
+! Test Newton's Method 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Plot the function to get an idea
-open(1, file="sp_int.txt")
+!! Plot the function
+!open(1, file="sp_int.txt")
 
-do i=0,1000,1
-	Tx = dble(i)
-	write(1,*) Tx, sp_integral(Tx, nlines, mx, mp, np, Tp, phi, r)
-enddo
-close(1)
+!do i=0,1000,1
+!	Tx = dble(i)
+!	write(1,*) Tx, sp_integral(Tx, nlines, mx, mp, np, Tp, phi, r)
+!enddo
+!close(1)
 
-Tx = newtons_meth(sp_integral, nlines, mx, mp, np, Tp, phi, r, guess_1, guess_2, tolerance)
+!Tx = newtons_meth(sp_integral, nlines, mx, mp, np, Tp, phi, r, guess_1, guess_2, tolerance)
+!print *,  "The result for Tx: ", Tx
 
-print *,  "The result for Tx: ", Tx
+call get_nlines("/home/luke/summer_2020/mesa/captngen/solarmodels/model_agss09ph_nohead.dat", nlines)
+print *, "The number of lines in the solar model file:", nlines
+
+allocate(tab_r(nlines))
+allocate(tab_starrho(nlines))
+allocate(tab_T(nlines))
+allocate(tab_g(nlines))
+allocate(tab_mencl(nlines))
+allocate(phi(nlines))
+allocate(tab_mfr(nlines, 29))
+
+call get_solar_params("/home/luke/summer_2020/mesa/captngen/solarmodels/model_agss09ph_nohead.dat", &
+nlines, tab_r, tab_starrho, tab_T, tab_g, tab_mencl, phi, tab_mfr)
+
+tab_r = tab_r*6.96340d8	! Convert to metres
+tab_starrho = tab_starrho/(1.6726219d-24)	! Convert to number density
+phi = phi/1.d4	! convert to SI
+mp = 1.2726219d-27
+mx = mp*(5./4.)
+
+guess_1 = 1.d8
+guess_2 = 2.d8
+Tx = newtons_meth(sp_integral, nlines, mx, mp, tab_starrho, tab_T, phi, tab_r, guess_1, guess_2, tolerance)
+
+print *, "The wimp temperature: T_x = ", Tx
 
 end program tests
