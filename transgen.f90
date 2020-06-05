@@ -15,14 +15,16 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(Nwimps,niso_in,etrans,EtransTot)
+subroutine transgen(Nwimps,niso_in,nonlocal,etrans,EtransTot)
 !mdm is stored in capmod
 use capmod
 use akmod
+use nonlocalmod
 implicit none
 !nlines might be redundant
 integer, intent(in):: niso_in
 double precision, intent(in) :: Nwimps
+logical, intent(in) :: nonlocal
 integer, parameter :: decsize = 180 !this should be done a bit more carefully
 integer i, ri
 double precision :: epso,EtransTot
@@ -37,6 +39,7 @@ double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlin
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
+double precision :: Tx ! The one zone WIMP temperature
 
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
@@ -60,6 +63,7 @@ phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
 
+if (not(nonlocal)) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
@@ -237,6 +241,9 @@ EtransTot = trapz(tab_r,abs(dLdR),nlines)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+elseif (nonlocal) ! if nonlocal=true, use Spergel & Press regime to calculate transport
+! the functions of interest are in nonlocalmod
+Tx = newtons_meth(Tx_integral, nlines, mxg, mp, tab_starrho, tab_T, phi, r, 1000000, 1100000, 1.d-6)
 
 
 
