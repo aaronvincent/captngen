@@ -1,12 +1,13 @@
 ! Test program to calculate the WIMP temperature according to Spergel and Press
 
-module nonlocal
+module nonlocalmod
+use capmod, only:trapz
 implicit none
 
 contains
 
 
-function Etrans(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
+function Etrans_nl(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
 implicit none
 ! Calculates Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 integer, intent(in) :: nlines, niso
@@ -16,7 +17,7 @@ double precision, intent(in) :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
 double precision, parameter :: k=1.38064852d-23, pi=3.1415962
 double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
-double precision :: Etrans(nlines)
+double precision :: Etrans_nl(nlines)
 integer :: i
 
 n_0 = 0.4*1.78266192d-27*1.0d6/m_x ! DM number density in m^-3
@@ -29,7 +30,7 @@ do i=1,niso
 species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/(m_x+m_nuc(i))**2*sqrt(T_star/m_nuc(i)+T_x/m_x)
 enddo
 !print *, "species_dep = ", species_dep(1)
-Etrans = species_indep*species_dep
+Etrans_nl = species_indep*species_dep
 !print *, "species_indep = ", species_indep(1)
 return
 end function
@@ -51,7 +52,7 @@ double precision :: k=1.38064852d-23 ! Boltzmann constant
 !print *, "integral params:", T_x, r(nlines), T_star(nlines), phi(nlines), rho_star(nlines), m_x, &
 !	n_nuc(1,nlines), m_nuc(1), sigma_nuc(2), nlines, niso
 !print *, "phi = ", phi(int(nlines)/2)
-integrand = r**2*Etrans(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
+integrand = r**2*Etrans_nl(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
 !print *, "integrand = ", integrand
 Tx_integral = trapz(r, integrand, nlines)
 
@@ -92,7 +93,7 @@ newtons_meth = x_3	! The solution to the nonlinear equation
 return
 end function
 
-end module nonlocal
+end module nonlocalmod
 
 
 

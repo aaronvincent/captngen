@@ -6,7 +6,7 @@ QAGDIR = ./aux/dqag
 
 MAIN = main.o
 MFOBJ = gencap.o
-TRGOBJ = alphakappamod.o transgen.o fastevap.o
+TRGOBJ = alphakappamod.o transgen.o fastevap.o nonlocalmod.o
 NUMOBJ =  dgamic.o d1mach.o
 AUXOBJ = sgolay.o spline.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
@@ -38,8 +38,6 @@ $(TRGOBJ): %.o: %.f90
 
 $(MAIN): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
-
-
 
 
 clean:

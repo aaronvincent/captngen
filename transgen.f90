@@ -39,7 +39,8 @@ double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlin
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx ! The one zone WIMP temperature
+double precision :: Tx, starrho_SI, phi_SI, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
+print *, "transgen called"
 
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
@@ -62,8 +63,8 @@ if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in tra
 phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
-
-if (not(nonlocal)) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
+print *, "nonlocal = ", nonlocal
+if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
@@ -221,6 +222,7 @@ end if
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
+return
 
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
@@ -241,12 +243,25 @@ EtransTot = trapz(tab_r,abs(dLdR),nlines)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-elseif (nonlocal) ! if nonlocal=true, use Spergel & Press regime to calculate transport
+else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate transport
 ! the functions of interest are in nonlocalmod
-Tx = newtons_meth(Tx_integral, nlines, mxg, mp, tab_starrho, tab_T, phi, r, 1000000, 1100000, 1.d-6)
 
+guess_1 = 1.0d6 ! Change these to better guesses later?
+guess_2 = 1.1d6
+tolerance = 1.0d-6
 
+! Convert to SI
+sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
+phi_SI = phi*1.0d-4 ! Convert to m^2s^-2
+starrho_SI = tab_starrho*1.0d3	! Convert to kg/m^3
 
+Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi_SI, starrho_SI, mxg, nabund, AtomicNumber*mnucg, & 
+	sigma_0*sigma_N, nlines, niso, guess_1, guess_2, tolerance)
+Etrans = Etrans_nl(Tx, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, sigma_0*sigma_N, nlines, niso)
+Etrans = Etrans/(starrho_SI)*1.0d4 ! erg/g/s
+EtransTot = trapz(tab_r,tab_r**2*Etrans,nlines)
 return
+
+endif
 
 end subroutine transgen
