@@ -6,7 +6,7 @@ implicit none
 contains
 
 
-function Etrans(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
+function Etrans_nl(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
 implicit none
 ! Calculates Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 integer, intent(in) :: nlines, niso
@@ -16,7 +16,7 @@ double precision, intent(in) :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
 double precision, parameter :: k=1.38064852d-23, pi=3.1415962
 double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
-double precision :: Etrans(nlines)
+double precision :: Etrans_nl(nlines)
 integer :: i
 
 n_0 = 0.4*1.78266192d-27*1.0d6/m_x ! DM number density in m^-3
@@ -29,7 +29,7 @@ do i=1,niso
 species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/(m_x+m_nuc(i))**2*sqrt(T_star/m_nuc(i)+T_x/m_x)
 enddo
 !print *, "species_dep = ", species_dep(1)
-Etrans = species_indep*species_dep
+Etrans_nl = species_indep*species_dep
 !print *, "species_indep = ", species_indep(1)
 return
 end function
@@ -51,7 +51,7 @@ double precision :: k=1.38064852d-23 ! Boltzmann constant
 !print *, "integral params:", T_x, r(nlines), T_star(nlines), phi(nlines), rho_star(nlines), m_x, &
 !	n_nuc(1,nlines), m_nuc(1), sigma_nuc(2), nlines, niso
 !print *, "phi = ", phi(int(nlines)/2)
-integrand = r**2*Etrans(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
+integrand = r**2*Etrans_nl(T_x, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, nlines, niso)
 !print *, "integrand = ", integrand
 Tx_integral = trapz(r, integrand, nlines)
 
@@ -260,7 +260,7 @@ sigma_N = sigma_N*sigma_0
 Tx = 8000000
 h = int(nlines/2) ! half
 !print*, Tx, tab_r(h), tab_T(h), phi(h), tab_starrho(h), mx, n_nuc(1,h), m_nuc(1), sigma_N(1), nlines, niso
-!print*, "Etrans = ", Etrans(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
+!print*, "Etrans = ", Etrans_nl(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
 
 ! Newton's method
 guess_1 = 12000000
@@ -273,7 +273,7 @@ print *, "Newton's integral: ", Tx_integral(Tx, tab_r, tab_T, phi, tab_starrho, 
 	nlines, niso)
 
 ! Calculate luminosity at r (this is what is fed to MESA)
-eps = Etrans(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
+eps = Etrans_nl(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
 L_xtot = trapz(tab_r, eps*tab_r**2, nlines)
 print *, "The total wimp luminosity according to Newton: L_xtot = ", L_xtot
 
@@ -284,7 +284,7 @@ n_x = n_0*exp(mx*phi(nlines)/kB/Tx)*exp(-mx*phi/kB/Tx) ! At the edge of the star
 open(1, file="sp_int.txt")
 do i= 1.125e7,1.175e7,1000
 	Tx = dble(i)
-	eps = Etrans(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
+	eps = Etrans_nl(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
 	L_xtot = trapz(tab_r, eps*tab_r**2, nlines)
 	write(1,*) Tx, L_xtot
 enddo
@@ -292,7 +292,7 @@ close(1)
 
 ! Plot the potential, heat tranfer, and DM density
 open(2, file="grav_potential.txt")
-eps = Etrans(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
+eps = Etrans_nl(Tx, tab_T, phi, tab_starrho, mx, n_nuc, m_nuc, sigma_N, nlines, niso)
 do i=1,nlines
 	write(2,*) tab_r(i), phi(i), eps(i), n_x(i)
 enddo
