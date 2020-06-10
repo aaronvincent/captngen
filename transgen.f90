@@ -31,7 +31,8 @@ double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
-double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso_in,nlines),sigma_N(niso_in)
+double precision :: phi(nlines), phi_SI(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines), &
+	nabund(niso_in,nlines),sigma_N(niso_in), starrho_SI(nlines)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
 double precision :: muarray(niso_in),alpha(niso_in),kappa(niso_in),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1
@@ -39,8 +40,8 @@ double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlin
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx, starrho_SI, phi_SI, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
-print *, "transgen called"
+double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
+!print *, "transgen called"
 
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
@@ -63,9 +64,6 @@ if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in tra
 phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
-print *, "nonlocal = ", nonlocal
-if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
-
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 
@@ -79,10 +77,12 @@ do i = 1,niso
      call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
 
      !get weighted alpha and kappa vs r
-
-
 end do
     alphaofR = alphaofR/(sigma_N*sum(nabund,1))
+
+
+!print *, "within transgen: nonlocal = ", nonlocal
+if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
 !compute mean free path
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
@@ -245,23 +245,25 @@ return
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate transport
 ! the functions of interest are in nonlocalmod
+!print *, "calculating spergel press"
+guess_1 = 1.0d7 ! Change these to better guesses later?
+guess_2 = 1.01d7
+tolerance = 1.0d1
 
-guess_1 = 1.0d6 ! Change these to better guesses later?
-guess_2 = 1.1d6
-tolerance = 1.0d-6
+!! Convert to SI
+!sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
+!phi_SI = phi*1.0d-4 ! Convert to m^2s^-2
+!starrho_SI = tab_starrho*1.0d3	! Convert to kg/m^3
 
-! Convert to SI
-sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
-phi_SI = phi*1.0d-4 ! Convert to m^2s^-2
-starrho_SI = tab_starrho*1.0d3	! Convert to kg/m^3
-
-Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi_SI, starrho_SI, mxg, nabund, AtomicNumber*mnucg, & 
+Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
 	sigma_0*sigma_N, nlines, niso, guess_1, guess_2, tolerance)
+!print *, "Transgen: Tx = ", Tx, "niso = ", niso
 Etrans = Etrans_nl(Tx, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, sigma_0*sigma_N, nlines, niso)
-Etrans = Etrans/(starrho_SI)*1.0d4 ! erg/g/s
-EtransTot = trapz(tab_r,tab_r**2*Etrans,nlines)
+Etrans = Etrans/(tab_starrho) ! erg/g/s
+EtransTot = trapz(tab_r*Rsun,(tab_r*Rsun)**2*Etrans*tab_starrho,nlines)
+!print *, "Transgen: total transported energy = ", trapz(tab_r*Rsun,(tab_r*Rsun)**2*Etrans*tab_starrho,nlines)
 return
 
 endif
-
+!print *, "Transgen finished"
 end subroutine transgen
