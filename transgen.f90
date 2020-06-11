@@ -222,6 +222,30 @@ end if
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
+
+! Check input units
+open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
+write(3,*) "--------tab_r---------"
+do i=1, nlines
+	write(3,*) i, tab_r(i)
+enddo
+
+write(3,*) "--------tab_T---------"
+do i=1, nlines
+	write(3,*) i, tab_T(i)
+enddo
+
+write(3,*) "--------phi---------"
+do i=1, nlines
+	write(3,*) i, phi(i)
+enddo
+
+write(3,*) "--------tab_starrho---------"
+do i=1, nlines
+	write(3,*) i, tab_starrho(i)
+enddo
+close(3)
+
 return
 
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
@@ -240,6 +264,7 @@ return
 ! end do
 ! close(55)
 
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -248,7 +273,7 @@ else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press reg
 !print *, "calculating spergel press"
 guess_1 = 1.0d7 ! Change these to better guesses later?
 guess_2 = 1.01d7
-tolerance = 1.0d1
+tolerance = 1.0d0
 
 !! Convert to SI
 !sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
@@ -257,11 +282,12 @@ tolerance = 1.0d1
 
 Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
 	sigma_0*sigma_N, nlines, niso, guess_1, guess_2, tolerance)
-!print *, "Transgen: Tx = ", Tx, "niso = ", niso
 Etrans = Etrans_nl(Tx, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, sigma_0*sigma_N, nlines, niso)
+print *, "Transgen: Tx = ", Tx, "niso = ", niso
 Etrans = Etrans/(tab_starrho) ! erg/g/s
 EtransTot = trapz(tab_r*Rsun,(tab_r*Rsun)**2*Etrans*tab_starrho,nlines)
-!print *, "Transgen: total transported energy = ", trapz(tab_r*Rsun,(tab_r*Rsun)**2*Etrans*tab_starrho,nlines)
+print *, "Transgen: total transported energy = ", trapz(tab_r*Rsun,(tab_r*Rsun)**2*Etrans*tab_starrho,nlines)
+
 return
 
 endif

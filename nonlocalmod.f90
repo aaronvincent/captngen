@@ -20,10 +20,8 @@ double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0
 double precision :: Etrans_nl(nlines)
 integer :: i, half
 half = int(nlines/2)
-!open(2, file="/home/luke/summer_2020/mesa/captngen/params.txt")
-!write(2,*) T_x, T_star(half), phi(half), rho_star(half), m_x, n_nuc(1,half), m_nuc, sigma_nuc(1), nlines, niso
-!close(2)
 
+!!!!!!!!!!!!!!!!!!!!!improve n0 calulation!!!!!!!!!!!!!!!!!!!!
 n_0 = 0.4*1.78266192d-24/m_x ! DM number density in cm^-3
 n_x = n_0*exp(m_x*phi(nlines)/k/T_x)*exp(-m_x*phi/k/T_x) ! At the edge of the star, set n_x=local galactic DM density
 
@@ -118,7 +116,7 @@ double precision :: newtons_meth
 x_1 = guess_1
 x_2 = guess_2
 error = tolerance + 1
-!print *, "Entering Newton's loop"
+print *, "Entering Newton's loop"
 i=0
 half = int(nlines/2)
 do while (error > tolerance)
@@ -130,12 +128,12 @@ do while (error > tolerance)
 	x_1 = x_2
 	x_2 = x_3
 	i = i + 1
-!	print *, f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,nlines,niso)
-!	print *, f(x_1,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,nlines,niso)
-!	print *, "x_3=", x_3
-!	print *, "i=", i
+	print *, f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,nlines,niso)
+	print *, f(x_1,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,nlines,niso)
+	print *, "x_3=", x_3
+	print *, "i=", i
 enddo
-!print *, "Newton's loop finished"
+print *, "Newton's loop finished"
 newtons_meth = x_3	! The solution to the nonlinear equation
 return
 end function
