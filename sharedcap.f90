@@ -21,7 +21,7 @@ module sharedmod
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:)
 
-    integer :: niso, nlines
+    integer :: niso, ri_for_omega, nlines
     double precision :: mdm
     
     contains
