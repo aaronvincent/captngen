@@ -207,9 +207,9 @@
       do i = 2,flen-1
         trapz = trapz + y(i)*(x(i)-x(i-1))
 
-        if (trapz .lt. 0.d0) then
-          print*, "negative encountered in trapz: i = ", i
-        end if
+!        if (trapz .lt. 0.d0) then
+!          print*, "negative encountered in trapz: i = ", i
+!        end if
       end do
 
 
