@@ -7,7 +7,9 @@
     double precision :: mx, sigma_0, capped,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250)
     double precision :: maxcapped, nwimpsin, evapRate(50)
-    double precision, allocatable :: Etrans(:)
+    double precision, allocatable :: Etrans(:), Etrans_all(:,:), tab_mencl(:), tab_r(:), tab_starrho(:), &
+    	tab_mfr(:,:), tab_vesc(:), phi(:), tab_dr(:), tab_T(:), tab_g(:)
+    double precision :: Pres, Lumi
     double precision :: EtransTot
     integer :: niso, nq, nv, i,nlines
    ! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
@@ -15,7 +17,26 @@
     ! modfile = "solarmodels/model_gs98_nohead.dat"
     call captn_init(modfile,0.4d0,220.d0,220.d0,600.d0)
     call getnlines(nlines)
+    
     allocate(Etrans(nlines))
+    allocate(Etrans_all(nlines,50))
+	allocate(tab_mencl(nlines))
+    allocate(tab_r(nlines))
+    allocate(tab_starrho(nlines))
+    allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
+    allocate(tab_vesc(nlines))
+    allocate(phi(nlines))
+    allocate(tab_dr(nlines))
+    allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
+    allocate(tab_g(nlines))
+
+
+    !now actually read in the file
+    open(99,file=modfile)
+    do i=1,nlines
+    read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+    end do
+    close(99)
 
     niso = 1
     nq = 0
@@ -43,8 +64,9 @@
     print*,"calling transgen"
     nwimpsin = capped_sd(1)*3.d7*4.57d9
     print*,"passing ", nwimpsin
-    call transgen(nwimpsin,1,etrans,Etranstot)
-    ! print*,Etrans
+    call transgen(nwimpsin,1,.true.,etrans,Etranstot)
+!    print*, "Etrans = ", Etrans
+    Etrans_all(:, i) = Etrans
 
     call fastevap(1.d0,28,EvapRate(i))
     print*,"Evap rate: ", EvapRate(i)
@@ -59,6 +81,10 @@
     ! write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
     ! end do
     ! close(55)
-
+    open(56, file="Etrans_test.dat")
+	do i=1,nlines
+		write(56,*) tab_r(i), Etrans_all(i,:)
+	enddo
+	close(56)
     END PROGRAM GENCAP
 !
