@@ -41,14 +41,15 @@
     niso = 1
     nq = 0
     nv = 0
-    mx = 3.d0
+    mx = 5.d0
 
 
     call get_alpha_kappa(nq,nv)
     call captn_maxcap(mx,maxcapped)
-    ! sigma_0 = 1.0d-37 !cm^2
+     sigma_0 = 1.0d-37 !cm^2
     do i = 1,50
-      sigma_0 = 10d0**(-42+dble(i)/5.)
+    sigma_0 = 10d0**(-42+dble(i)/5.)
+	sigma_0 = 1.0d-36
 
     ! mx = 10**(.02*i - 0.02)
 !    print*,mx
@@ -64,8 +65,9 @@
     print*,"calling transgen"
     nwimpsin = capped_sd(1)*3.d7*4.57d9
     print*,"passing ", nwimpsin
-    call transgen(nwimpsin,1,.true.,etrans,Etranstot)
-!    print*, "Etrans = ", Etrans
+    print *, "nw = ", nwimpsin, "etrans = ", etrans(10), "Etranstot = ", Etranstot
+    call transgen(nwimpsin,1,.false.,etrans,Etranstot)
+    print*, "Etrans = ", Etrans(10)
     Etrans_all(:, i) = Etrans
 
     call fastevap(1.d0,28,EvapRate(i))

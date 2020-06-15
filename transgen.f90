@@ -171,7 +171,7 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 ! nx = nxIso
 nx = fgoth*nx + (1.-fgoth)*nxIso
 
-
+print *, "cumint=", cumint(1), cumint(int(nlines/2)), cumint(nlines), "nx=", nx(5)
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
 !get derivative of luminosity - same nonsense as with the temperature
@@ -218,6 +218,8 @@ end if
 !
 ! dLdr(nlines) = 0.d0
 ! dLdr = dLdr/Rsun
+
+print *, "r=", tab_r(int(nlines/2)), "epso=", epso, "rho=", tab_starrho(int(nlines/2)), "Rsun=", Rsun, "dLdR=", dLdR(int(nlines/2))
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
