@@ -147,14 +147,20 @@ do i = 1,nlines
   kappaofR(i) = 1./kappaofR(i)
   !perform the integral inside the nx integral
 integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
+
+! print*, alphaofR(i),mxg
+
 if (i > 1) then
 cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
 end if
-nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(cumint(i))
+
+nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
+
 ! print*,nx(i)
 cumNx = cumNx + 4.*pi*tab_r(i)**2*tab_dr(i)*nx(i)*Rsun**3.
 
 nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
+! print*,tab_r(i), nxIso(i)
 ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
 nx = nx/cumNx*nwimps !normalize density
@@ -216,16 +222,18 @@ end if
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
+! print*, Etrans
+
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
 
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
 ! Some testing bits:
-! open(55,file = "captranstest.dat")
-! do i=1,nlines
-! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
-! end do
-! close(55)
+open(55,file = "captranstest.dat")
+do i=1,nlines
+write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i),tab_dr(i)
+end do
+close(55)
 !
 ! open(55,file = "smallarrays.dat")
 ! do i=1,decsize

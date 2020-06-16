@@ -15,7 +15,7 @@
 
     module capmod
     implicit none
-    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15
+    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15,GNewt = 6.672d-8
     double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
     double precision, parameter :: eps = 1d-10 !stops divisions by zero
     !these are now set in captn_init
@@ -124,6 +124,7 @@
     !Get number of lines in the file
 
     Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
+    ! Msun = 1.98d33
 
     open(99,file=filename)
     nlines=0
@@ -165,9 +166,11 @@
     phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
     tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
     tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
-    tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
+    tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
     end do
-    tab_g(nlines) = tab_g(nlines-1)
+    
+    tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
+    ! print*,GNewt, tab_mencl(nlines),tab_r(nlines), tab_g(nlines)
 
     open(55,file = "tab_serenelli.dat")
     do i=1,nlines
