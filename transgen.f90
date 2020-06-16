@@ -225,8 +225,14 @@ Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
 
+open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_gr.txt")
+do i=1,nlines
+	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), nx(i), tab_T(i)
+enddo
+close(10)
+
 ! Check input units
-open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
+!open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
 !write(3,*) "--------tab_r---------"
 !do i=1, nlines
 !	write(3,*) i, tab_r(i)
@@ -247,10 +253,10 @@ open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
 !	write(3,*) i, tab_starrho(i)
 !enddo
 
-do i=1, nlines
-	write(3,*) tab_r(i), Etrans(i)
-enddo
-close(3)
+!do i=1, nlines
+!	write(3,*) tab_r(i), Etrans(i)
+!enddo
+!close(3)
 
 return
 
@@ -289,19 +295,25 @@ tolerance = 1.0d-2
 Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
 	sigma_0*sigma_N, Nwimps, nlines, niso, guess_1, guess_2, tolerance)
 ! Etrans in erg/g/s
-Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, sigma_0*sigma_N, &
-	Nwimps, nlines, niso)
+Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, &
+	 sigma_0*sigma_N, Nwimps, nlines, niso)
 print *, "Transgen: Tx = ", Tx, "niso = ", niso
 
 EtransTot = trapz(tab_r*Rsun, 4*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
 print *, "Transgen: total transported energy = ", EtransTot
 
-open(10, file="transgen_info.txt")
-write(10, *) Tx
-do i=10,nlines
-	write(10, *) tab_r(i), tab_T(i)
+open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_sp.txt")
+do i=1,nlines
+	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), tab_T(i), sum(nabund(:,1))*mnucg
 enddo
 close(10)
+open(10, file="/home/luke/summer_2020/mesa/captngen/nuclear_abundances.txt")
+write(10, *) "niso =", niso
+do i=1,nlines
+	write(10,*) nabund(:,i)
+enddo
+close(10)
+
 return
 
 endif
