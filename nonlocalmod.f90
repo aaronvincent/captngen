@@ -13,47 +13,44 @@ implicit none
 integer, intent(in) :: nlines, niso
 double precision, intent(in) :: T_x, m_x, Nwimps
 double precision, intent(in) :: T_star(nlines), phi(nlines), rho_star(nlines), r(nlines)
-double precision, intent(in) :: n_nuc(niso, nlines)
+double precision :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
-double precision, parameter :: k=1.38064852d-16, pi=3.1415962 ! kB in cgs
+double precision, parameter :: k=1.38064852d-16, pi=3.1415962, m_p=1.6726219d-24  ! kB in cgs
 double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
 double precision :: Etrans_nl(nlines)
 integer :: i, half
-!print *, "In Etrans"
-half = int(nlines/2)
 
 n_x = exp(-m_x*phi/k/T_x) 
 n_0 = Nwimps/trapz(r, 4*pi*r**2*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
 n_x = n_0*n_x
 
-species_indep = 8*sqrt(2/pi)*k**(3/2)/rho_star*n_x*(T_x-T_star) ! The species independent part
+species_indep = 8*sqrt(2/pi)*k**(3/2)*n_x*(T_x-T_star)/rho_star ! The species independent part
 ! Now sum over species to get the species dependent factor
 species_dep=0
 !print *, "Entering species loop"
 do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/(m_x+m_nuc(i))**2 * & 
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/((m_x+m_nuc(i))**2) * & 
 		sqrt(T_star/m_nuc(i) + T_x/m_x)
 enddo
-!print *, "Species loop finished"
+
+
+! To avoid an error I encountered where nabund/mnucg /= rho_star when niso=1
+if (niso==1) then
+	n_nuc(1, :) = rho_star/m_p
+	species_dep = sigma_nuc(1)*n_nuc(1,:)*m_x*m_p/((m_x+m_p)**2)*sqrt(T_star/m_p + T_x/m_x)
+	print *, "sigma_nuc = ", sigma_nuc(1)
+endif
+
 Etrans_nl = species_indep*species_dep ! erg/g/s
+
 if (isnan(T_x) .eqv. .false.) then
 	open(1, file="/home/luke/summer_2020/mesa/captngen/Etrans.txt")
-	write(1,*) "params: T_x=", T_x, "phi=", phi(2), "m_x=", m_x, "kB=", k, &
+	write(1,*) "params: T_x=", T_x, "phi=", phi(nlines), "m_x=", m_x, "kB=", k, &
 		"m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1)
 		
 	write(1,*) "--------Etrans---------"
 	do i=1, nlines
 		write(1,*) i, Etrans_nl(i)
-	enddo
-	
-	write(1,*) "--------species_indep---------"
-	do i=1, nlines
-		write(1,*) i, species_indep(i)
-	enddo
-	
-	write(1,*) "--------species_dep---------"
-	do i=1, nlines
-		write(1,*) i, species_dep(i)
 	enddo
 	
 	write(1,*) "--------m_x*(phi(nlines)-phi)/(kB*T_x)---------"
@@ -66,12 +63,13 @@ if (isnan(T_x) .eqv. .false.) then
 		write(1,*) i, n_nuc(1,i)
 	enddo
 	
-	write(1,*) "--------rho_star---------"
-	do i=1, nlines
-		write(1,*) i, rho_star(i)
-	enddo
 	close(1)
 endif
+open(1, file="/home/luke/summer_2020/mesa/captngen/nx_sp.txt")
+do i=1, nlines
+	write(1,*) i, n_x(i)
+enddo
+close(1)
 return
 end function
 
