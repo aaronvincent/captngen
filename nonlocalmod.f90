@@ -15,31 +15,25 @@ double precision, intent(in) :: T_x, m_x, Nwimps
 double precision, intent(in) :: T_star(nlines), phi(nlines), rho_star(nlines), r(nlines)
 double precision :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
-double precision, parameter :: k=1.38064852d-16, pi=3.1415962, m_p=1.6726219d-24  ! kB in cgs
+double precision, parameter :: k=1.38064852d-16, pi=3.1415962d0 ! kB in cgs
 double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
 double precision :: Etrans_nl(nlines)
 integer :: i, half
+! m_x and m_p in grams, T_x, T_star in Kelvin, sigma in cm^2, n_nuc, n_x in cm^-3
+
 
 n_x = exp(-m_x*phi/k/T_x) 
-n_0 = Nwimps/trapz(r, 4*pi*r**2*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
+n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
 n_x = n_0*n_x
 
-species_indep = 8*sqrt(2/pi)*k**(3/2)*n_x*(T_x-T_star)/rho_star ! The species independent part
+species_indep = 8.0d0*sqrt(2.d0/pi)*k**(3.d0/2.d0)*n_x*(T_x-T_star)/rho_star ! The species independent part
+
 ! Now sum over species to get the species dependent factor
-species_dep=0
-!print *, "Entering species loop"
+species_dep=0.d0
 do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/((m_x+m_nuc(i))**2) * & 
 		sqrt(T_star/m_nuc(i) + T_x/m_x)
 enddo
-
-
-! To avoid an error I encountered where nabund/mnucg /= rho_star when niso=1
-if (niso==1) then
-	n_nuc(1, :) = rho_star/m_p
-	species_dep = sigma_nuc(1)*n_nuc(1,:)*m_x*m_p/((m_x+m_p)**2)*sqrt(T_star/m_p + T_x/m_x)
-	print *, "sigma_nuc = ", sigma_nuc(1)
-endif
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
 

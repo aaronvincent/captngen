@@ -12,10 +12,11 @@
     double precision :: Pres, Lumi
     double precision :: EtransTot
     integer :: niso, nq, nv, i,nlines
+    logical :: nonlocal
    ! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
    modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temeperature smoothed to not nonsense
     ! modfile = "solarmodels/model_gs98_nohead.dat"
-    call captn_init(modfile,0.4d0,220.d0,220.d0,600.d0)
+    call captn_init(modfile,4d-1,220.d0,220.d0,600.d0)
     call getnlines(nlines)
     
     allocate(Etrans(nlines))
@@ -49,7 +50,7 @@
      sigma_0 = 1.0d-37 !cm^2
     do i = 1,50
     sigma_0 = 10d0**(-42+dble(i)/5.)
-	sigma_0 = 1.0d-36
+!	sigma_0 = 1.0d-36
 
     ! mx = 10**(.02*i - 0.02)
 !    print*,mx
@@ -62,11 +63,13 @@
     call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec(i),capped_si_spec(i))
 
 
+	nonlocal = .false.
+
     print*,"calling transgen"
     nwimpsin = capped_sd(1)*3.d7*4.57d9
     print*,"passing ", nwimpsin
     print *, "nw = ", nwimpsin, "etrans = ", etrans(10), "Etranstot = ", Etranstot
-    call transgen(nwimpsin,1,.false.,etrans,Etranstot)
+    call transgen(nwimpsin,1,nonlocal,etrans,Etranstot)
     print*, "Etrans = ", Etrans(10)
     Etrans_all(:, i) = Etrans
 
@@ -83,10 +86,18 @@
     ! write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
     ! end do
     ! close(55)
-    open(56, file="Etrans_test.dat")
-	do i=1,nlines
-		write(56,*) tab_r(i), Etrans_all(i,:)
-	enddo
-	close(56)
+    if (nonlocal) then
+    	open(56, file="etrans_test_sp.dat")
+		do i=1,nlines
+			write(56,*) tab_r(i), Etrans_all(i,:)
+		enddo
+		close(56)
+	else if (nonlocal .eqv. .false.) then
+		open(56, file="etrans_test_gr.dat")
+		do i=1,nlines
+			write(56,*) tab_r(i), Etrans_all(i,:)
+		enddo
+		close(56)
+	endif
     END PROGRAM GENCAP
 !
