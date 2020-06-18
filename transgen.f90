@@ -168,8 +168,17 @@ fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
 
+! Check nx_LTE
+open(55,file = "/home/luke/summer_2020/mesa/captngen/nx_LTE_change.dat")
+ do i=1,nlines
+ write(55,*) tab_r(i), nx(i), cumint(i), tab_T(i), dTdR(i), tab_g(i), dphidr(i)
+ end do
+ close(55)
+
+
 ! nx = nxIso
 nx = fgoth*nx + (1.-fgoth)*nxIso
+print *, "fgoth = ", fgoth
 
 print *, "cumint=", cumint(1), cumint(int(nlines/2)), cumint(nlines), "nx=", nx(5)
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
@@ -231,6 +240,15 @@ do i=1,nlines
 enddo
 close(10)
 
+! Some testing bits:
+ open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
+ do i=1,nlines
+ write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i), dTdR(i), dLdR(i), tab_starrho(i), tab_g(i), dphidr(i)
+ end do
+ close(55)
+
+print *, "Nwimps = ", Nwimps
+
 ! Check input units
 !open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
 !write(3,*) "--------tab_r---------"
@@ -262,12 +280,6 @@ return
 
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
-! Some testing bits:
-! open(55,file = "captranstest.dat")
-! do i=1,nlines
-! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
-! end do
-! close(55)
 !
 ! open(55,file = "smallarrays.dat")
 ! do i=1,decsize
@@ -285,7 +297,7 @@ else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press reg
 !print *, "calculating spergel press"
 guess_1 = 1.0d7 ! Change these to better guesses later?
 guess_2 = 1.01d7
-tolerance = 1.0d-2
+tolerance = 1.0d-4
 
 !! Convert to SI
 !sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
@@ -313,6 +325,8 @@ do i=1,nlines
 	write(10,*) nabund(:,i)
 enddo
 close(10)
+
+print *, "Nwimps = ", Nwimps
 
 return
 
