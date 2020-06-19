@@ -1,5 +1,5 @@
 FC=gfortran
-FOPT= -O3 -fPIC
+FOPT= -O3 -fPIC #-Wall -fbounds-check
 AUXDIR = ./numerical
 QAGDIR = ./numerical/dqag
 

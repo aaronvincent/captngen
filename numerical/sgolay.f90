@@ -6,7 +6,7 @@ subroutine sgolay(xin,xlen,n,order,xout)
   !order: 0 = smooth the function, 1 = first derivative
   !xout: output
   integer, intent(in) :: n, order,xlen
-  double precision :: xin(xlen), xout(xlen), xbig(xlen+2*n)
+  double precision :: xin(xlen), xout(xlen), xbig(xlen+2*n+1)
   double precision :: coeffs(-n:n), norm
   integer ::  ii, jj
 
