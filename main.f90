@@ -16,7 +16,7 @@
    ! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
    modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temeperature smoothed to not nonsense
     ! modfile = "solarmodels/model_gs98_nohead.dat"
-    call captn_init(modfile,4d-1,220.d0,220.d0,600.d0)
+    call captn_init(modfile,1.d3,220.d0,220.d0,600.d0)
     call getnlines(nlines)
     
     allocate(Etrans(nlines))
@@ -42,14 +42,14 @@
     niso = 1
     nq = 0
     nv = 0
-    mx = 5.d0
+    mx = 10.d0
 
 
     call get_alpha_kappa(nq,nv)
     call captn_maxcap(mx,maxcapped)
      sigma_0 = 1.0d-37 !cm^2
     do i = 1,50
-    sigma_0 = 10d0**(-42+dble(i)/5.)
+    sigma_0 = 10.d0**(-42.+dble(i)/5.)
 !	sigma_0 = 1.0d-36
 
     ! mx = 10**(.02*i - 0.02)
@@ -63,7 +63,7 @@
     call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec(i),capped_si_spec(i))
 
 
-	nonlocal = .false.
+	nonlocal = .true.
 
     print*,"calling transgen"
     nwimpsin = capped_sd(1)*3.d7*4.57d9

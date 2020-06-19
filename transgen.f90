@@ -155,7 +155,7 @@ integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 if (i > 1) then
 cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
 end if
-nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(cumint(i))
+nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
 ! print*,nx(i)
 cumNx = cumNx + 4.*pi*tab_r(i)**2*tab_dr(i)*nx(i)*Rsun**3.
 
