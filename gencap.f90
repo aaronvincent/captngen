@@ -453,7 +453,7 @@
     tab_starrho = rhomesa
     tab_vesc = mesavesc
     tab_T = tmesa
-    tab_g = mesag
+    tab_g = -mesag
     do i= 1,8
     tab_mfr(:,i) = mfrmesa(i,:)
   end do
