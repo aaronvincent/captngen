@@ -11,16 +11,15 @@ function Etrans_nl(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, 
 implicit none
 ! Calculates Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 integer, intent(in) :: nlines, niso
-double precision, intent(in) :: T_x, m_x, Nwimps
+double precision, intent(in) :: T_x, m_x
 double precision, intent(in) :: T_star(nlines), phi(nlines), rho_star(nlines), r(nlines)
 double precision :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
 double precision, parameter :: k=1.38064852d-16, pi=3.1415962d0 ! kB in cgs
-double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
+double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0, Nwimps ! Internal variables
 double precision :: Etrans_nl(nlines)
 integer :: i, half
 ! m_x and m_p in grams, T_x, T_star in Kelvin, sigma in cm^2, n_nuc, n_x in cm^-3
-
 
 n_x = exp(-m_x*phi/k/T_x) 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
@@ -36,6 +35,14 @@ do i=1,niso
 enddo
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
+
+open(55, file="/home/luke/summer_2020/mesa/captngen/Etrans_nl_params.txt")
+write(55,*) "scalar params: T_x=", T_x, "m_x=", m_x, "m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1), &
+	 "Nwimps=", Nwimps, "nlines=", nlines, "niso=", niso
+do i=1,nlines
+	write(55,*) r(i), T_star(i), n_x(i), rho_star(i), n_nuc(1,i), species_indep(i), species_dep(i), Etrans_nl(i)
+enddo
+close(55)
 
 if (isnan(T_x) .eqv. .false.) then
 	open(1, file="/home/luke/summer_2020/mesa/captngen/Etrans.txt")
