@@ -40,8 +40,7 @@ double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlin
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
-!print *, "transgen called"
+double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal schemeF
 
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
@@ -53,7 +52,6 @@ mxg = mdm*1.78d-24
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
 niso = niso_in
-! print*, "Nwimps in ", Nwimps
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
@@ -81,7 +79,6 @@ end do
     alphaofR = alphaofR/(sigma_N*sum(nabund,1))
 
 
-!print *, "within transgen: nonlocal = ", nonlocal
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
 !compute mean free path
@@ -156,14 +153,11 @@ if (i > 1) then
 cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
 end if
 nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
-! print*,nx(i)
 cumNx = cumNx + 4.*pi*tab_r(i)**2*tab_dr(i)*nx(i)*Rsun**3.
 
 nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
-! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
 nx = nx/cumNx*nwimps !normalize density
-! print*, "niso 1 ", NxIso(1), tab_r(1), Nwimps, 1./(pi**(3./2.)*rchi**3)
 fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
@@ -175,12 +169,9 @@ open(55,file = "/home/luke/summer_2020/mesa/captngen/nx_LTE_change.dat")
  end do
  close(55)
 
-
 ! nx = nxIso
 nx = fgoth*nx + (1.-fgoth)*nxIso
-print *, "fgoth = ", fgoth
 
-print *, "cumint=", cumint(1), cumint(int(nlines/2)), cumint(nlines), "nx=", nx(5)
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
 !get derivative of luminosity - same nonsense as with the temperature
@@ -228,57 +219,20 @@ end if
 ! dLdr(nlines) = 0.d0
 ! dLdr = dLdr/Rsun
 
-print *, "r=", tab_r(int(nlines/2)), "epso=", epso, "rho=", tab_starrho(int(nlines/2)), "Rsun=", Rsun, "dLdR=", dLdR(int(nlines/2))
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
 
-open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_gr.txt")
-do i=1,nlines
-	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), nx(i), tab_T(i)
-enddo
-close(10)
-
-! Some testing bits:
- open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
- do i=1,nlines
- write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i), dTdR(i), dLdR(i), tab_starrho(i), tab_g(i), dphidr(i)
- end do
- close(55)
-
-print *, "Nwimps = ", Nwimps
-
-! Check input units
-!open(3, file="/home/luke/summer_2020/mesa/captngen/unit_check.txt")
-!write(3,*) "--------tab_r---------"
-!do i=1, nlines
-!	write(3,*) i, tab_r(i)
-!enddo
-
-!write(3,*) "--------tab_T---------"
-!do i=1, nlines
-!	write(3,*) i, tab_T(i)
-!enddo
-
-!write(3,*) "--------phi---------"
-!do i=1, nlines
-!	write(3,*) i, phi(i)
-!enddo
-
-!write(3,*) "--------tab_starrho---------"
-!do i=1, nlines
-!	write(3,*) i, tab_starrho(i)
-!enddo
-
-!do i=1, nlines
-!	write(3,*) tab_r(i), Etrans(i)
-!enddo
-!close(3)
+! Write Etrans to file
+! open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
+! do i=1,nlines
+! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i), dTdR(i), dLdR(i), tab_starrho(i), tab_g(i), dphidr(i)
+! end do
+! close(55)
 
 return
 
-! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
 !
 ! open(55,file = "smallarrays.dat")
@@ -292,44 +246,35 @@ return
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate transport
-! the functions of interest are in nonlocalmod
+else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
+! The nonlocal transport scheme: http://articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
+! the functions of interest are in nonlocalmod. These also use https://arxiv.org/pdf/0809.1871.pdf
 !print *, "calculating spergel press"
 guess_1 = 1.0d7 ! Change these to better guesses later?
 guess_2 = 1.01d7
 tolerance = 1.0d-4
 
-!! Convert to SI
-!sigma_0 = sigma_0*1.0d-4 ! Convert sigma to m^2
-!phi_SI = phi*1.0d-4 ! Convert to m^2s^-2
-!starrho_SI = tab_starrho*1.0d3	! Convert to kg/m^3
-
+! Tx is the Spergel & Press one-zone WIMP temperature
 Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
 	sigma_0*sigma_N, Nwimps, nlines, niso, guess_1, guess_2, tolerance)
+
 ! Etrans in erg/g/s
 Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, &
-	 sigma_0*sigma_N, Nwimps, nlines, niso)
-print *, "Transgen: Tx = ", Tx, "niso = ", niso
+	 sigma_0*sigma_N, Nwimps, nlines, niso) ! erg/g/s
+print *, "Transgen: Tx = ", Tx
 
 EtransTot = trapz(tab_r*Rsun, 4*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
 print *, "Transgen: total transported energy = ", EtransTot
 
-open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_sp.txt")
-do i=1,nlines
-	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), tab_T(i), sum(nabund(:,1))*mnucg
-enddo
-close(10)
-open(10, file="/home/luke/summer_2020/mesa/captngen/nuclear_abundances.txt")
-write(10, *) "niso =", niso
-do i=1,nlines
-	write(10,*) nabund(:,i)
-enddo
-close(10)
-
-print *, "Nwimps = ", Nwimps
+! Write Etrans to file
+!open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_sp.txt")
+!do i=1,nlines
+!	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), tab_T(i), sum(nabund(:,1))*mnucg
+!enddo
+!close(10)
 
 return
 
 endif
-!print *, "Transgen finished"
+
 end subroutine transgen
