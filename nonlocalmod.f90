@@ -1,4 +1,9 @@
-! Test program to calculate the WIMP temperature according to Spergel and Press
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Nonlocal WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Contains the functions used in the Spergel Press section of transgen.f90. These are:
+! 	-Etrans_nl: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
+!	-Tx_integral: to be used in newtons_meth
+!	-newtons_meth: solves Tx_integral=0 which defines Tx 
 
 module nonlocalmod
 use capmod, only:trapz
@@ -9,7 +14,7 @@ contains
 
 function Etrans_nl(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, Nwimps, nlines, niso)
 implicit none
-! Calculates Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
+! Calculates WIMP Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 integer, intent(in) :: nlines, niso
 double precision, intent(in) :: T_x, m_x
 double precision, intent(in) :: T_star(nlines), phi(nlines), rho_star(nlines), r(nlines)
@@ -25,6 +30,7 @@ n_x = exp(-m_x*phi/k/T_x)
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
 n_x = n_0*n_x
 
+! Separate calc into species dependent and independent factors for convenience
 species_indep = 8.0d0*sqrt(2.d0/pi)*k**(3.d0/2.d0)*n_x*(T_x-T_star)/rho_star ! The species independent part
 
 ! Now sum over species to get the species dependent factor
@@ -36,67 +42,37 @@ enddo
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
 
-open(55, file="/home/luke/summer_2020/mesa/captngen/Etrans_nl_params.txt")
-write(55,*) "scalar params: T_x=", T_x, "m_x=", m_x, "m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1), &
-	 "Nwimps=", Nwimps, "nlines=", nlines, "niso=", niso
-do i=1,nlines
-	write(55,*) r(i), T_star(i), n_x(i), rho_star(i), n_nuc(1,i), species_indep(i), species_dep(i), Etrans_nl(i)
-enddo
-close(55)
+!open(55, file="/home/luke/summer_2020/mesa/captngen/Etrans_nl_params.txt")
+!write(55,*) "scalar params: T_x=", T_x, "m_x=", m_x, "m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1), &
+!	 "Nwimps=", Nwimps, "nlines=", nlines, "niso=", niso
+!do i=1,nlines
+!	write(55,*) r(i), T_star(i), n_x(i), rho_star(i), n_nuc(1,i), species_indep(i), species_dep(i), Etrans_nl(i)
+!enddo
+!close(55)
 
-if (isnan(T_x) .eqv. .false.) then
-	open(1, file="/home/luke/summer_2020/mesa/captngen/Etrans.txt")
-	write(1,*) "params: T_x=", T_x, "phi=", phi(nlines), "m_x=", m_x, "kB=", k, &
-		"m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1)
-		
-	write(1,*) "--------Etrans---------"
-	do i=1, nlines
-		write(1,*) i, Etrans_nl(i)
-	enddo
-	
-	write(1,*) "--------m_x*(phi(nlines)-phi)/(kB*T_x)---------"
-	do i=1, nlines
-		write(1,*) i, m_x*(phi(nlines)-phi(i))/(k*T_x)
-	enddo
-	
-	write(1,*) "--------n_nuc(1,:)---------"
-	do i=1, nlines
-		write(1,*) i, n_nuc(1,i)
-	enddo
-	
-	close(1)
-endif
-open(1, file="/home/luke/summer_2020/mesa/captngen/nx_sp.txt")
-do i=1, nlines
-	write(1,*) i, n_x(i)
-enddo
-close(1)
 return
 end function
 
 
-function Tx_integral(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, Nwimps, nlines, niso)
+function Tx_integral(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma, Nwimps, nlines, niso)
 implicit none
-! Calculates the Tx defining integral, equation (4.10) in Spergel&Press "Effect of hypothetical, WIMPs on E transport..."
+! Calculates the Tx defining integral 
+! T_x, T_star in K, r in cm, phi in erg/g, rho_star in g/cm^3, m_x and m_nuc in g, n_nuc in cm^-3, sigma in cm^2
 
 double precision, intent(in) :: T_x	! The independent variable. All others are params (for Newton's method)
 integer, intent(in) :: nlines, niso
 double precision, intent(in) :: m_x, Nwimps
 double precision, intent(in) :: r(nlines), T_star(nlines), phi(nlines), rho_star(nlines)
-double precision, intent(in) :: n_nuc(niso, nlines), m_nuc(niso), sigma_nuc(niso)
+double precision, intent(in) :: n_nuc(niso, nlines), m_nuc(niso), sigma(niso)
 double precision :: integrand(nlines)
 double precision :: Tx_integral
 double precision :: k=1.38064852d-16, pi=3.14159265 ! Boltzmann constant in cgs
 
-!print *, "In Tx_integral"
-
-!print *, "integral params:", T_x, r(nlines), T_star(nlines), phi(nlines), rho_star(nlines), m_x, &
-!	n_nuc(1,nlines), m_nuc(1), sigma_nuc(2), nlines, niso
-!print *, "phi = ", phi(int(nlines)/2)
 ! integrand units: erg/cm/s
-integrand = 4*pi*r**2*rho_star*Etrans_nl(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, & 
+integrand = 4*pi*r**2*rho_star*Etrans_nl(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma, & 
 	Nwimps, nlines, niso)
-!print *, "integrand = ", integrand
+
+! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(r, integrand, nlines)
 
 return
@@ -105,10 +81,11 @@ end function
 
 function newtons_meth(f, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, Nwimps, nlines, niso, &
 	guess_1, guess_2, tolerance)
-!Performs gradient descent to solve sp_int=0.
+! Performs Newton's method to solve Tx_integral(T_x)=0 for T_x (the function returns T_x)
+! The parameter f is the Tx_integral function
 implicit none
 
-double precision :: f ! sp_integral
+double precision :: f ! Tx_integral
 double precision, intent(in) :: tolerance, guess_1, guess_2
 integer, intent(in) :: nlines, niso
 integer :: i, half
@@ -119,39 +96,25 @@ double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
 double precision :: x_1, x_2, x_3, error
 double precision :: newtons_meth
 
+! x_1 and x_2 are temperatures (K)
 x_1 = guess_1
 x_2 = guess_2
-error = tolerance + 1
-!print *, "Entering Newton's loop"
-i=0
-half = int(nlines/2)
+error = tolerance + 1	! So that the first iteration is executed
+
+! Newton's method loop
 do while (error > tolerance)
 	! Update x_3 using Newton's method formula
-!	print *, "Calculating x_3 ..."
 	x_3 = x_2 - f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso)*(x_2-x_1) &
-	/(f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso) - &
-	f(x_1,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso))
+		/(f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso) - &
+		f(x_1,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso))
 	error = abs(x_3-x_2)
-!	print *, "error = ", error
 	x_1 = x_2
-!	print *, "x_1 = ", x_1
 	x_2 = x_3
-!	print *, "x_2 = ", x_2
-	i = i + 1
-!	print *, "i = ", i
-	newtons_meth = f(x_2,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso)
-!	print *, "f(x_2) finished"
-	newtons_meth = f(x_1,r,T_star,phi,rho_star,m_x,n_nuc,m_nuc,sigma_nuc,Nwimps,nlines,niso)
-!	print *, "f(x_1) finished"
-!	print *, "x_3=", x_3
-!	print *, "i=", i
 enddo
-!print *, "Newton's loop finished"
-newtons_meth = x_3	! The solution to the nonlinear equation
+
+newtons_meth = x_3 ! The solution to the nonlinear equation
+
 return
 end function
 
 end module nonlocalmod
-
-
-

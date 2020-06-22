@@ -229,11 +229,9 @@ end if
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
-! print*, Etrans
-
 EtransTot = trapz(tab_r,abs(dLdR),nlines)
+print *, "Transgen: total G&R transported energy = ", EtransTot
 
-<<<<<<< HEAD
 ! Write Etrans to file
 ! open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
 ! do i=1,nlines
@@ -256,14 +254,17 @@ return
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
-! The nonlocal transport scheme: http://articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
-! the functions of interest are in nonlocalmod. These also use https://arxiv.org/pdf/0809.1871.pdf
+! The nonlocal transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
+! The functions of interest are in nonlocalmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 !print *, "calculating spergel press"
-guess_1 = 1.0d7 ! Change these to better guesses later?
+
+! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual
+! Tx, so I just hard set them here.
+guess_1 = 1.0d7
 guess_2 = 1.01d7
 tolerance = 1.0d-4
 
-! Tx is the Spergel & Press one-zone WIMP temperature
+! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin
 Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
 	sigma_0*sigma_N, Nwimps, nlines, niso, guess_1, guess_2, tolerance)
 
@@ -272,8 +273,9 @@ Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicN
 	 sigma_0*sigma_N, Nwimps, nlines, niso) ! erg/g/s
 print *, "Transgen: Tx = ", Tx
 
+! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
 EtransTot = trapz(tab_r*Rsun, 4*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
-print *, "Transgen: total transported energy = ", EtransTot
+print *, "Transgen: total S&P transported energy = ", EtransTot
 
 ! Write Etrans to file
 !open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_sp.txt")

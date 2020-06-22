@@ -10,13 +10,16 @@
     double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250)
     double precision :: maxcap, nwimpsin, evapRate(50)
-    double precision, allocatable :: Etrans(:)
+    double precision, allocatable :: Etrans(:), Etrans_all(:,:)
     double precision :: EtransTot
     integer :: nq, nv, i, nlines
+    logical :: nonlocal
 
     ! Choose velocity and momentum transfer powers in differential cross-section
-    nq = 1
+    nq = 0
     nv = 0
+   	mx = 5.d0
+   	nonlocal = .true.
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
@@ -24,17 +27,18 @@
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
     ! Initialise capture calculations
-    call captn_init(modfile,0.4d0,220.d0,220.d0,600.d0)
+    call captn_init(modfile,4.d-1,220.d0,220.d0,600.d0)
 
     ! Initialise transport calculations
     call getnlines(nlines)
     allocate(etrans(nlines))
+    allocate(Etrans_all(nlines,10))
     call get_alpha_kappa(nq,nv)
 
     do i = 1,10
-
-      mx = 10**(.19*dble(i))
-      sigma_0 = 1d-40 !10d0**(-42+dble(i)/5.)
+    
+!      mx = 10**(.19*dble(i))
+      sigma_0 = 10d0**(-42+dble(i))
       print*
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 
@@ -54,8 +58,9 @@
 
       nwimpsin = capped_sd(i)*3.d7*4.57d9
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
-      call transgen(sigma_0,nwimpsin,1,Etrans,Etranstot)
+      call transgen(sigma_0,nwimpsin,1,nonlocal,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
+      Etrans_all(:,i) = Etrans
 
       print*,"Calling fastevap."
       call fastevap(sigma_0,1.d0,28,EvapRate(i))
@@ -64,11 +69,14 @@
     end do
 
     !Output results to file
-    !open(55,file = "gencap.dat")
-    !do i=1,50
-    !  write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
-    !  write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
-    !end do
-    !close(55)
+    open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest.dat")
+	do i=1,nlines
+		write(55,*) Etrans_all(i,:)
+	enddo
+!    do i=1,50
+!      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
+!      write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
+!    end do
+    close(55)
 
     END PROGRAM GENCAP
