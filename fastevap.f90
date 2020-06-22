@@ -3,15 +3,15 @@
 !Don't trust in the LTE limit you will underestimate the evaporation rate
 !Also needs to be properly generalized to SD scattering (heavier than H)
 
-subroutine fastevap(Nwimps,niso_in,EvapRate)
+subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
   use capmod
   ! use akmod
   implicit none
-  integer, intent(in):: niso_in
-  double precision, intent(in) :: Nwimps
+  integer, intent(in):: niso
+  double precision, intent(in) :: sigma_0, Nwimps
   double precision, intent(out) :: EvapRate
-  double precision :: Earg(nlines), muarray(niso_in),nabund(niso_in,nlines),sigma_N(niso_in)
+  double precision :: Earg(nlines), muarray(niso),nabund(niso,nlines),sigma_N(niso)
   double precision :: suparg,Knud,rchi
   double precision :: mdmg,mnucg, Tc, rhoc,mn, Tw,nin,escFrac(nlines),vescc(nlines),nxIso(nlines),mfp(nlines),scatrate(nlines)
   double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
@@ -22,19 +22,18 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
 
   Tc = tab_T(1)
   rhoc = tab_starrho(1)
-  niso = niso_in
   vescc = tab_vesc/c0
 
   ! print*,"attempting to evaporate, Nwimps = ", Nwimps
 
 
-  do i = 1,niso_in
+  do i = 1,niso
   muarray(i) = mdm/AtomicNumber(i)/mnuc
   sigma_N(i) = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2 !not yet multiplied by sigma_0
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/AtomicNumber(i)/mnucg
   end do
 
-  call Twimp(nabund,niso_in,Tw)
+  call Twimp(nabund,niso,Tw)
   Tw = Tw*Tc*kBeV*1.d-9
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
@@ -87,14 +86,14 @@ subroutine fastevap(Nwimps,niso_in,EvapRate)
 end subroutine fastevap
 
 !Returns WIMP temperature over central temperature
-!knows about nv, nq, niso (which controls SI/SD here) via capmod module
-subroutine Twimp(nabund,niso_in,Tw)
+!knows about nv, nq, via capmod module
+subroutine Twimp(nabund,niso,Tw)
   use capmod
   implicit none
-  integer, intent(in) :: niso_in
+  integer, intent(in) :: niso
   double precision :: sv(nlines),TGeV(nlines), TcGeV,Tw, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
   double precision :: Tw_out_num(niso), Tw_out_denom(niso),nxIso(nlines)
-  double precision mu,nabund(niso_in,nlines)
+  double precision nabund(niso,nlines)
   double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
   integer i,j
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
@@ -113,7 +112,6 @@ subroutine Twimp(nabund,niso_in,Tw)
 
     do i=1,Niso
       mN = AtomicNumber(i)*mnuc
-      mu = mdm/mN
       beta = AtomicNumber(i)*mnuc*(mdm + mnuc)/mnuc/(mdm + AtomicNumber(i)*mnuc);
 
       sigmaN = beta**2.*Atomicnumber(i)**2
@@ -121,7 +119,7 @@ subroutine Twimp(nabund,niso_in,Tw)
       call sigmav(2*nv,2*nq,Tw/mdm,TGeV/mn,nlines,sv)
       ! print*,sv
       if (nq .ne. 0) then
-          sv = sv*(2.*mdm**2)**(nq)/(1.+mu)**(2.*nq)/q0**(2*nq)
+          sv = sv*(2.*mdm**2)**(nq)/(1.+mdm/mN)**(2.*nq)/q0**(2*nq)
       elseif (nv .ne. 0) then
           sv = sv/v0**(2*nv)
       end if
