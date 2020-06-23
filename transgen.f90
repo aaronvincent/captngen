@@ -15,13 +15,13 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nv_in,nq_in,etrans,EtransTot)
 !mdm is stored in capmod
 use capmod
 use akmod
 implicit none
 !nlines might be redundant
-integer, intent(in):: niso
+integer, intent(in):: niso, nv_in, nq_in
 double precision, intent(in) :: sigma_0, Nwimps
 integer, parameter :: decsize = 180 !this should be done a bit more carefully
 integer i, ri
@@ -29,7 +29,7 @@ double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
-double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso_in,nlines),sigma_N(niso_in)
+double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
@@ -47,7 +47,6 @@ biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,
 mxg = mdm*1.78d-24
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
-niso = niso_in
 nq = nq_in
 nv = nv_in
 
