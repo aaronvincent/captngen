@@ -16,39 +16,43 @@ function Etrans_nl(T_x, r, T_star, phi, rho_star, m_x, n_nuc, m_nuc, sigma_nuc, 
 implicit none
 ! Calculates WIMP Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 integer, intent(in) :: nlines, niso
-double precision, intent(in) :: T_x, m_x
+double precision, intent(in) :: T_x, m_x, Nwimps
 double precision, intent(in) :: T_star(nlines), phi(nlines), rho_star(nlines), r(nlines)
 double precision :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
 double precision, parameter :: k=1.38064852d-16, pi=3.1415962d0 ! kB in cgs
-double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0, Nwimps ! Internal variables
+double precision :: species_indep(nlines), species_dep(nlines), n_x(nlines), n_0 ! Internal variables
 double precision :: Etrans_nl(nlines)
-integer :: i, half
+integer :: i
 ! m_x and m_p in grams, T_x, T_star in Kelvin, sigma in cm^2, n_nuc, n_x in cm^-3
 
+! A better nxIso estimate than in Transgen
 n_x = exp(-m_x*phi/k/T_x) 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
 n_x = n_0*n_x
+
+!print *, "In Etrans_nl: n_x = ", n_x(10)
 
 ! Separate calc into species dependent and independent factors for convenience
 species_indep = 8.0d0*sqrt(2.d0/pi)*k**(3.d0/2.d0)*n_x*(T_x-T_star)/rho_star ! The species independent part
 
 ! Now sum over species to get the species dependent factor
 species_dep=0.d0
-do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/((m_x+m_nuc(i))**2) * & 
-		sqrt(T_star/m_nuc(i) + T_x/m_x)
-enddo
+species_dep = sigma_nuc(1)*n_nuc(1,:)*m_x*m_nuc(1)/((m_x+m_nuc(1))**2)*sqrt(T_star/m_nuc(1) + T_x/m_x)
+!do i=1,niso
+!	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*m_x*m_nuc(i)/((m_x+m_nuc(i))**2) * & 
+!		sqrt(T_star/m_nuc(i) + T_x/m_x)
+!enddo
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
 
-!open(55, file="/home/luke/summer_2020/mesa/captngen/Etrans_nl_params.txt")
-!write(55,*) "scalar params: T_x=", T_x, "m_x=", m_x, "m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1), &
-!	 "Nwimps=", Nwimps, "nlines=", nlines, "niso=", niso
-!do i=1,nlines
-!	write(55,*) r(i), T_star(i), n_x(i), rho_star(i), n_nuc(1,i), species_indep(i), species_dep(i), Etrans_nl(i)
-!enddo
-!close(55)
+open(55, file="/home/luke/summer_2020/mesa/test_files/Etrans_nl_params.txt")
+write(55,*) "scalar params: T_x=", T_x, "m_x=", m_x, "m_nuc=", m_nuc(1), "sigma_nuc=", sigma_nuc(1), &
+	"nlines=", nlines, "niso=", niso
+do i=1,nlines
+	write(55,*) r(i), T_star(i), n_x(i), rho_star(i), n_nuc(1,i), species_indep(i), species_dep(i), Etrans_nl(i)
+enddo
+close(55)
 
 return
 end function
@@ -64,7 +68,7 @@ integer, intent(in) :: nlines, niso
 double precision, intent(in) :: m_x, Nwimps
 double precision, intent(in) :: r(nlines), T_star(nlines), phi(nlines), rho_star(nlines)
 double precision, intent(in) :: n_nuc(niso, nlines), m_nuc(niso), sigma(niso)
-double precision :: integrand(nlines)
+double precision :: integrand(nlines), n_x(nlines)
 double precision :: Tx_integral
 double precision :: k=1.38064852d-16, pi=3.14159265 ! Boltzmann constant in cgs
 
@@ -93,7 +97,7 @@ double precision, intent(in) :: m_x, Nwimps
 double precision, intent(in) :: r(nlines), T_star(nlines), phi(nlines), rho_star(nlines)
 double precision, intent(in) :: n_nuc(niso, nlines)
 double precision, intent(in) :: m_nuc(niso), sigma_nuc(niso)
-double precision :: x_1, x_2, x_3, error
+double precision :: x_1, x_2, x_3, error, n_x(nlines)
 double precision :: newtons_meth
 
 ! x_1 and x_2 are temperatures (K)
