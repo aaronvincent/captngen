@@ -9,17 +9,18 @@
     character*300 :: modfile
     double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250)
-    double precision :: maxcap, nwimpsin, evapRate(50)
+    double precision :: maxcap, nwimpsin, evapRate(50), Tx
     double precision, allocatable :: Etrans(:), Etrans_all(:,:)
     double precision :: EtransTot
     integer :: nq, nv, i, nlines
     logical :: nonlocal
+    double precision, allocatable :: tab_mencl(:), tab_r(:), tab_T(:), tab_starrho(:), tab_mfr(:,:)
+    double precision :: Pres, Lumi
 
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = 0
     nv = 0
-   	mx = 5.d0
-   	nonlocal = .true.
+	nonlocal = .true.
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
@@ -27,18 +28,31 @@
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
     ! Initialise capture calculations
-    call captn_init(modfile,4.d-1,220.d0,220.d0,600.d0)
+    call captn_init(modfile,1.d3,220.d0,220.d0,600.d0)
 
     ! Initialise transport calculations
     call getnlines(nlines)
     allocate(etrans(nlines))
     allocate(Etrans_all(nlines,10))
     call get_alpha_kappa(nq,nv)
-
-    do i = 1,10
     
-!      mx = 10**(.19*dble(i))
-      sigma_0 = 10d0**(-42+dble(i))
+    allocate(tab_mencl(nlines))
+    allocate(tab_r(nlines))
+    allocate(tab_T(nlines))
+    allocate(tab_starrho(nlines))
+    allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
+
+    !now actually read in the file
+    open(99,file=modfile)
+    do i=1,nlines
+    	read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+    end do
+    close(99)
+
+    do i = 1,1
+    
+      mx = 3.d0 !2.d0+dble(i)
+      sigma_0 = 1.d-37 !10d0**(-42+dble(i))
       print*
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 
@@ -56,9 +70,10 @@
       call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec(i),capped_si_spec(i))
       print*, "Capture rates (SI, SD): (", capped_si_spec(i), capped_sd_spec(i), ") s^-1"
 
-      nwimpsin = capped_sd(i)*3.d7*4.57d9
+!      nwimpsin = capped_sd(i)*3.d7*4.57d9
+	  nwimpsin = 5.d47
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
-      call transgen(sigma_0,nwimpsin,1,nonlocal,Etrans,Etranstot)
+      call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
       Etrans_all(:,i) = Etrans
 
@@ -69,9 +84,13 @@
     end do
 
     !Output results to file
-    open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest.dat")
+    if (nonlocal) then 
+    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_sp.dat")
+    else if (.not. nonlocal) then 
+    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_gr.dat")
+    endif
 	do i=1,nlines
-		write(55,*) Etrans_all(i,:)
+		write(55,*) tab_r(i), Etrans_all(i,:)
 	enddo
 !    do i=1,50
 !      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)

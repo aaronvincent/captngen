@@ -15,8 +15,9 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,nonlocal,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nonlocal,Tx,etrans,EtransTot)
 !mdm is stored in capmod
+! Tx is unchanged in the LTE scheme, and is the output one-zone WIMP temp in the nonlocal scheme
 use capmod
 use akmod
 use nonlocalmod
@@ -32,14 +33,14 @@ double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnuc
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
-double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
+double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal schemeF
+double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
 
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
@@ -77,9 +78,6 @@ end do
 ! creates memory corruption(!) It also looks like it is only here by accident...
 !    alphaofR = alphaofR/(sigma_N*sum(nabund,1))
 
-
-if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
-
 !compute mean free path
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
@@ -91,7 +89,6 @@ end if
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 
 K = mfp(1)/rchi;
-
 
 !smooth T
 !some gymnastics are necessary, because the temperature is not smooth at all
@@ -138,7 +135,6 @@ dTdR = dTdR/Rsun*dble(decsize-1)
 cumint(1) = 0.d0
 cumNx = 0.d0
 
-
 do i = 1,nlines
 
 ! 1) get alpha & kappa averages
@@ -163,6 +159,8 @@ do i = 1,nlines
   ! print*,tab_r(i), nxIso(i)
   ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
+
+if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
 nx = nx/cumNx*nwimps !normalize density
 fgoth = 1./(1.+(K/.4)**2)
@@ -253,7 +251,7 @@ return
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-else if (nonlocal .eqv. .true.) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
+else if (nonlocal) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
 ! The nonlocal transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 ! The functions of interest are in nonlocalmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 !print *, "calculating spergel press"
@@ -274,15 +272,17 @@ Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicN
 print *, "Transgen: Tx = ", Tx
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(tab_r*Rsun, 4*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
+EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
 print *, "Transgen: total S&P transported energy = ", EtransTot
 
 ! Write Etrans to file
-!open(10, file="/home/luke/summer_2020/mesa/captngen/Etrans_sp.txt")
-!do i=1,nlines
-!	write(10, *) tab_r(i), Etrans(i), tab_starrho(i), tab_T(i), sum(nabund(:,1))*mnucg
-!enddo
-!close(10)
+open(10, file="/home/luke/summer_2020/mesa/test_files/Etrans_sp_new.dat")
+do i=1,nlines
+	write(10, *) tab_r(i), tab_T(i), phi(i), tab_starrho(i), nabund(1,i), nxIso(i), Etrans(i)
+enddo
+close(10)
+
+!print *, "Transgen: integral(nx) = ", trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*nxIso, nlines)
 
 return
 
