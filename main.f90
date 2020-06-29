@@ -15,7 +15,7 @@
     integer :: nq, nv, i, nlines
 
     ! Choose velocity and momentum transfer powers in differential cross-section
-    nq = 1
+    nq = 0
     nv = 0
 
     ! Choose solar model file
@@ -54,7 +54,7 @@
 
       nwimpsin = capped_sd(i)*3.d7*4.57d9
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
-      call transgen(sigma_0,nwimpsin,1,Etrans,Etranstot)
+      call transgen(sigma_0,nwimpsin,1,nq,nv,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
 
       print*,"Calling fastevap."

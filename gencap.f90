@@ -241,7 +241,7 @@
     subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,capped)
     use capmod
     implicit none
-    integer, intent(in):: nq_in, niso, nv_in
+    integer, intent(in):: nq_in, nv_in, niso
     integer eli, ri, limit
     double precision, intent(in) :: mx_in, sigma_0
     double precision :: capped !this is the output

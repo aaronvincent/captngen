@@ -15,7 +15,7 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,nv_in,nq_in,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,etrans,EtransTot)
 !mdm is stored in capmod
 use capmod
 use akmod
@@ -80,8 +80,8 @@ end do
 
 !need separate zeta factors for q- and v- dependent interactions
 do i = 1,nlines
-  zeta_v(i) = v0/(sqrt(2*kB*tab_T(i)/mxg))
   zeta_q(i) = q0/c0/(mxg*sqrt(2*kB*tab_T(i)/mxg))
+  zeta_v(i) = v0/(sqrt(2*kB*tab_T(i)/mxg))
 end do
 
 ! mean free path calcs for each nq,nv case here
