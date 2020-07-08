@@ -24,10 +24,11 @@ use nonlocalmod
 implicit none
 !nlines might be redundant
 logical, intent(in) :: nonlocal
+logical splinelog !for PCHIP
 integer, intent(in):: niso
 double precision, intent(in) :: sigma_0, Nwimps
 integer, parameter :: decsize = 180 !this should be done a bit more carefully
-integer i, ri
+integer i, ri,ierr
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
@@ -35,13 +36,17 @@ double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
-double precision :: fgoth, hgoth(nlines), dLdR(nlines), dLdR_test(nlines), isplined1
+double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
+integer lwk !for pchip
+double precision :: pchipScratch(3*nlines) !for pchip
+
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
 double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
 
+lwk = 3*nlines !This is the length of pchipScratch. don't redefine this without also changing pchipScratch
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
 smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i, i=1,decsize /)
@@ -63,6 +68,8 @@ dphidr = -tab_g
 
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
+
+print*,'niso = ', niso
 
 do i = 1,niso
     !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
@@ -108,9 +115,11 @@ rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 
 K = mfp(1)/rchi;
 
-!smooth T
-!some gymnastics are necessary, because the temperature is not smooth at all
-!first build a cubic spline fit
+!T derivatives
+! smooth T
+! some gymnastics are necessary, because the temperature is not smooth at all
+! a simple spline -> derivative doesn't help.
+! first build a cubic spline fit
 call spline(biggrid, tab_R, brcoeff, crcoeff, drcoeff, nlines)
 call spline(tab_R, tab_T, bcoeff, ccoeff, dcoeff, nlines)
 
@@ -137,8 +146,8 @@ dTdR = dTdR/Rsun*dble(decsize-1)
 ! call spline(tab_r, tab_T, bcoeff, ccoeff, dcoeff, nlines)
 ! dTdR = bcoeff/Rsun
 ! call sgolay(dTdR,nlines,3,0,dTdR) !don't ask
-! take derivative (for more fun)
-! Get derivative of T
+! ! take derivative (for more fun)
+! ! Get derivative of T
 ! call sgolay(tab_T,nlines,3,1,dTdr)
 ! dTdr = dTdr/Rsun/tab_dr
 
@@ -220,32 +229,32 @@ if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
 
 !get derivative of luminosity - same nonsense as with the temperature
 !I'm going to reuse the temperature array, don't get confused :-)
-call spline(tab_R, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
-do i= 1,decsize
-    smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
-end do
-call sgolay(smallL,decsize,4,1,smalldL) !Take the derivative
-! smalldL(1) = 0.d0
-! smalldL(1) = smalldL(2)
-smalldL(decsize) = 0.d0
-call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
-do i= 1,nlines
-  dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
-end do
 
-dLdR_test = dLdR
-dLdR = dLdR/Rsun*dble(decsize-1)
+! call spline(tab_R, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
+! do i= 1,decsize
+!     smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
+! end do
+! call sgolay(smallL,decsize,4,1,smalldL) !Take the derivative
+! ! smalldL(1) = 0.d0
+! ! smalldL(1) = smalldL(2)
+! smalldL(decsize) = 0.d0
+! call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
+! do i= 1,nlines
+!   dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
+! end do
 
-if (any(abs(dLdR) .gt. 1.d100)) then
-  open(55,file = "crashsmallarrays.dat")
-  do i=1,decsize
-    write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
-  write(55,*)
-  end do
-  close(55)
-  stop "Infinite luminosity derivative encountered"
-
-end if
+! dLdR = dLdR/Rsun*dble(decsize-1)
+!
+! if (any(abs(dLdR) .gt. 1.d100)) then
+!   open(55,file = "crashsmallarrays.dat")
+!   do i=1,decsize
+!     write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
+!   write(55,*)
+!   end do
+!   close(55)
+!   stop "Infinite luminosity derivative encountered"
+!
+! end if
 
 if (any(isnan(dLdR))) then
 	print *, "NAN in luminosity derivative"
@@ -259,12 +268,21 @@ endif
 ! ! dLdr(1)= 0.d0
 ! call sgolay(dLdr,nlines,4,0,dLdr)
 
+
+!Cubic hermite polynomial
+splinelog = .false.
+call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+if (ierr .lt. 0) then
+  print*, 'DPCHEZ interpolant failed with error ', IERR
+  return
+ENDIF
+
 ! do i = 2,nlines
-!   dLdr(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i) !does this kind of indexing work?
+!   dLdRscratch(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i)/Rsun
 ! end do
 !
-! dLdr(nlines) = 0.d0
-! dLdr = dLdr/Rsun
+! dLdRscratch(nlines) = 0.d0
+dLdr = dLdr/Rsun
 
 print *, "decsize=", decsize
 print *, "epso=", epso
@@ -274,10 +292,10 @@ print *, "epso=", epso
 !end do
 !dLdr(nlines) = 0.d0
 
+Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
-Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
+EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 
-EtransTot = trapz(tab_r*Rsun,abs(dLdR),nlines)
 print *, "Transgen: total G&R transported energy = ", EtransTot
 
 print *, "m_x=", mxg, "kB=", kB, "fogth=", fgoth
