@@ -27,7 +27,7 @@ integer, parameter :: decsize = 180 !this should be done a bit more carefully
 integer i, ri
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
-double precision :: mxg, rchi, Tc,rhoc,K, integrand
+double precision :: mxg, q0_cgs, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
@@ -45,6 +45,7 @@ smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i,
 biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,nlines/)
 
 mxg = mdm*1.78d-24
+q0_cgs = q0*5.344d-14
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
 nq = nq_in
@@ -80,39 +81,39 @@ end do
 
 !need separate zeta factors for q- and v- dependent interactions
 do i = 1,nlines
-  zeta_q(i) = q0/c0/(mxg*sqrt(2*kB*tab_T(i)/mxg))
-  zeta_v(i) = v0/(sqrt(2*kB*tab_T(i)/mxg))
+  zeta_q(i) = q0_cgs/(mxg*sqrt(2.d0*kB*tab_T(i)/mxg))
+  zeta_v(i) = v0/(sqrt(2.d0*kB*tab_T(i)/mxg))
 end do
 
 ! mean free path calcs for each nq,nv case here
 ! equations from 1311.2074 (eqns 69 to 74 on arxiv copy)
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
+    mfp(i) = 1./sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
   end do
 else if ((nq .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q**2))/sigma_0/2.
+    mfp(i) = 1./sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2))/sigma_0/2.
   end do
 else if ((nq .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q**4))/sigma_0/2.
+    mfp(i) = 1./sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4))/sigma_0/2.
   end do
 else if ((nq .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q**2)/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2)/sigma_0/2.
   end do
 else if ((nv .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v**2))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))/sigma_0/2.
   end do
 else if ((nv .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v**4))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))/sigma_0/2.
   end do
 else if ((nv .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(nabund(:,i)*sigma_N*2*zeta_v**2/(1.+muarray))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))/sigma_0/2.
   end do
 end if
 
@@ -170,10 +171,23 @@ cumNx = 0.d0
 
 
 do i = 1,nlines
-
   !get alpha & kappa averages
   alphaofR(i) = sum(alpha*sigma_N*nabund(:,i))/sum(sigma_N*nabund(:,i))
-  kappaofR(i) = mfp(i)*sum(sigma_0*sigma_N*nabund(:,i)/kappa)
+  if ((nq .eq. 0) .and. (nv .eq. 0)) then
+    kappaofR(i) = mfp(i)*sum(sigma_0*sigma_N*nabund(:,i)/kappa)
+  else if ((nq .eq. 1)) then
+    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_0*sigma_N/(1.+muarray)/(zeta_q**2)/kappa)
+  else if ((nq .eq. 2)) then
+    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_0*sigma_N/((1.+muarray)**2)/(zeta_q**4)/kappa)
+  else if ((nq .eq. -1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*(1.+muarray)*zeta_q**2/kappa)
+  else if ((nv .eq. 1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*(1.+muarray)*3./2./(zeta_v**2)/kappa)
+  else if ((nv .eq. 2)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*((1.+muarray)**2)*15./4./(zeta_v**4)/kappa)
+  else if ((nv .eq. -1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*2*zeta_v**2/(1.+muarray)/kappa)
+  end if
   kappaofR(i) = 1./kappaofR(i)
 
   !perform the integral inside the nx integral
@@ -237,7 +251,7 @@ Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
 ! print*, Etrans
 
-EtransTot = trapz(tab_r,abs(dLdR),nlines)
+EtransTot = Rsun*trapz(tab_r,abs(dLdR),nlines)
 
 return
 
