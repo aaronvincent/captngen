@@ -35,7 +35,7 @@ double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
-double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1
+double precision :: fgoth, hgoth(nlines), dLdR(nlines), dLdR_test(nlines), isplined1
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
@@ -73,6 +73,24 @@ do i = 1,niso
     call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
     call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
 end do
+
+open(55, file="/home/luke/summer_2020/mesa/test_files/nabund.dat")
+do i=1,nlines
+	write(55,*) nabund(:,i)
+enddo
+close(55)
+
+open(55, file="/home/luke/summer_2020/mesa/test_files/mfr.dat")
+do i=1,nlines
+	write(55,*) tab_mfr(i,:5)
+enddo
+close(55)
+
+open(55, file="/home/luke/summer_2020/mesa/test_files/starrho.dat")
+do i=1,nlines
+	write(55,*) tab_starrho(i)
+enddo
+close(55)
 
 ! PS: I've commented out the following line -- the array bounds don't match, so it
 ! creates memory corruption(!) It also looks like it is only here by accident...
@@ -134,6 +152,9 @@ dTdR = dTdR/Rsun*dble(decsize-1)
 !this loop does a number of things
 cumint(1) = 0.d0
 cumNx = 0.d0
+print *, "sigma_N=", sigma_N
+print *, "sigma_0=", sigma_0
+print *, "max(abs(nabund))=", maxval(abs(nabund))
 
 do i = 1,nlines
 
@@ -159,6 +180,13 @@ do i = 1,nlines
   ! print*,tab_r(i), nxIso(i)
   ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
+if (any(isnan(dphidr))) print *, "NAN encountered in dphidr"
+if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
+if (any(isnan(kappaofR))) print *, "NAN encountered in kappa"
+if (any(isnan(alphaofR))) print *, "NAN encountered in alpha"
+if (any(isnan(cumint))) print *, "NAN encountered in cumint"
+print *, "T_c=", Tc
+
 
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
@@ -175,9 +203,20 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 ! close(55)
 
 ! nx = nxIso
+if (any(isnan(nx))) print *, "NAN encountered in nx_LTE"
+if (any(isnan(nxIso))) print *, "NAN encountered in nx_ISO"
+if (isnan(fgoth)) print *, "fgoth=NAN"
+
 nx = fgoth*nx + (1.-fgoth)*nxIso
 
-Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
+if (any(isnan(hgoth))) print *, "NAN encountered in hgoth"
+if (any(isnan(tab_r))) print *, "NAN encountered in tab_r"
+if (any(isnan(nx))) print *, "NAN encountered in nx"
+if (any(isnan(mfp))) print *, "NAN encountered in mfp"
+if (any(isnan(tab_T))) print *, "NAN encountered in tab_T"
+if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
 
 !get derivative of luminosity - same nonsense as with the temperature
 !I'm going to reuse the temperature array, don't get confused :-)
@@ -194,6 +233,7 @@ do i= 1,nlines
   dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
 end do
 
+dLdR_test = dLdR
 dLdR = dLdR/Rsun*dble(decsize-1)
 
 if (any(abs(dLdR) .gt. 1.d100)) then
@@ -207,7 +247,9 @@ if (any(abs(dLdR) .gt. 1.d100)) then
 
 end if
 
-
+if (any(isnan(dLdR))) then
+	print *, "NAN in luminosity derivative"
+endif
 
 ! call sgolay(Ltrans,nlines,4,1,Ltrans)
 ! call sgolay(Ltrans,nlines,3,1,dLdr)
@@ -224,11 +266,33 @@ end if
 ! dLdr(nlines) = 0.d0
 ! dLdr = dLdr/Rsun
 
+print *, "decsize=", decsize
+print *, "epso=", epso
+
+!do i = 2,nlines
+!	dLdr(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i)/Rsun
+!end do
+!dLdr(nlines) = 0.d0
+
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2;
 
-EtransTot = trapz(tab_r,abs(dLdR),nlines)
+EtransTot = trapz(tab_r*Rsun,abs(dLdR),nlines)
 print *, "Transgen: total G&R transported energy = ", EtransTot
+
+print *, "m_x=", mxg, "kB=", kB, "fogth=", fgoth
+
+! Check Ltrans
+open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_gr.dat")
+do i=1,nlines
+	write(55,*) tab_r(i), Ltrans(i), Etrans(i), 4.*kB**(3./2.)*pi*(tab_r(i)+epso)**2.*Rsun**2., kappaofR(i), hgoth(i), & 
+		nx(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), dLdR(i), &
+		1/(4.*pi*(tab_r(i)+epso)**2.*Rsun**2.*tab_starrho(i))
+end do
+close(55)
+open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_gr.dat", access="APPEND")
+write(55,*) mfp(1), maxval(-Ltrans)
+close(55)
 
 ! Write Etrans to file
 ! open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
@@ -276,11 +340,27 @@ EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines
 print *, "Transgen: total S&P transported energy = ", EtransTot
 
 ! Write Etrans to file
-open(10, file="/home/luke/summer_2020/mesa/test_files/Etrans_sp_new.dat")
-do i=1,nlines
-	write(10, *) tab_r(i), tab_T(i), phi(i), tab_starrho(i), nabund(1,i), nxIso(i), Etrans(i)
-enddo
+!open(10, file="/home/luke/summer_2020/mesa/test_files/Etrans_sp_new.dat")
+!do i=1,nlines
+!	write(10, *) tab_r(i), tab_T(i), phi(i), tab_starrho(i), nabund(1,i), nxIso(i), Etrans(i)
+!enddo
 close(10)
+
+! Calculate Ltrans
+do i=1,nlines
+	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+enddo
+
+! Check Ltrans
+open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_sp.dat")
+do i=1,nlines
+	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i)
+end do
+close(55)
+
+open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
+write(55,*) mfp(1), maxval(-Ltrans)
+close(55)
 
 !print *, "Transgen: integral(nx) = ", trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*nxIso, nlines)
 
