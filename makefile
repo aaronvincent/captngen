@@ -12,7 +12,7 @@ QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 
 
 gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
-	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
+	${FC} -o gentest.x $(MFOBJ) $(MAIN) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
 #	rm $(MFOBJ) $(NUMOBJ) $(QAG)
 
 
