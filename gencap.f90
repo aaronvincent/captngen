@@ -128,13 +128,14 @@
         tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
         do i = 1,nlines-1
           j = nlines-i !trapezoid integral
-          phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2. &
-            *(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
+          phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
           tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
           tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
-          tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
+          ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
+          tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
         end do
-        tab_g(nlines) = tab_g(nlines-1)
+        ! tab_g(nlines) = tab_g(nlines-1)
+        tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
 
         open(55,file = "tab_serenelli.dat")
         do i=1,nlines

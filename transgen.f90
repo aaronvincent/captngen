@@ -66,7 +66,7 @@ phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
 !remember, nq and nv are set in darkInputs.txt for DarkMESA or if not, just in main
-call get_alpha_kappa(nq,nv)
+! call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 
@@ -291,11 +291,11 @@ EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 ! print*,Ltrans(1),Etrans(1), dLdR(1),tab_r(1)
 
 ! Some testing bits:
-open(55,file = "captranstest.dat")
-do i=1,nlines
-write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
-end do
-close(55)
+! open(55,file = "captranstest.dat")
+! do i=1,nlines
+! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i),dTdR(i),dLdR(i),tab_starrho(i),tab_g(i),dphidr(i)
+! end do
+! close(55)
 !
 ! open(55,file = "smallarrays.dat")
 ! do i=1,decsize
