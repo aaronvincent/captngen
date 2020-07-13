@@ -93,10 +93,10 @@
     ! Total number of baryons:
     Nbar = trapz(tab_r*Rsun, msum*tab_starrho/mnucg*4*pi*(tab_r*Rsun)**2, nlines)
 
-    do i = 1,50
+    do i = 1,1
       
-      mx = 10.d0 !2.d0+dble(i)
-      sigma_0 = 10d0**(-40+dble(i)/5.d0)
+      mx = 5.d0 !2.d0+dble(i)
+      sigma_0 = 1.d-37 !10.d0**(-40+dble(i)/5.d0)
       print*
       print *, "i=", i
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
@@ -116,7 +116,8 @@
       print*, "Capture rates (SI, SD): (", capped_si_spec(i), capped_sd_spec(i), ") s^-1"
 
 !      nwimpsin = capped_sd(i)*3.d7*4.57d9
-	  nwimpsin = 1.d-15*Nbar
+!	  nwimpsin = 1.d-15*Nbar
+	  nwimpsin = 4.8267971276458977d44
 	  print*, "Total number of baryons: Nbar=", Nbar
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
       call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,Etrans,Etranstot)

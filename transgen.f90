@@ -27,7 +27,7 @@ logical, intent(in) :: nonlocal
 logical splinelog !for PCHIP
 integer, intent(in):: niso
 double precision, intent(in) :: sigma_0, Nwimps
-integer, parameter :: decsize = 180 !this should be done a bit more carefully
+integer, parameter :: decsize = 780 !this should be done a bit more carefully
 integer i, ri,ierr
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
@@ -125,13 +125,16 @@ call spline(tab_R, tab_T, bcoeff, ccoeff, dcoeff, nlines)
 
 !now build a lower resolution array: this effectively smooths to relevant scales
 !the smallR is to ensure the adaptive grid is preserved
+print *, "splining T and r"
 do i= 1,decsize
 smallR(i) = ispline(smallgrid(i),biggrid,tab_R,brcoeff, crcoeff, drcoeff, nlines)
 smallT(i) = ispline(smallr(i),tab_R,tab_T,bcoeff,ccoeff,dcoeff,nlines)
 end do
+print *, "taking dT/dr"
 call sgolay(smallT,decsize,4,1,smalldT) !differentiate
 smalldT(decsize) = 0.d0
 smalldT(1) = 0.d0
+print *, "splining derivative"
 call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
 !Re-expand to the full array size
 do i= 1,nlines
@@ -140,7 +143,6 @@ end do
 dTdR(1) = 0.d0
 dTdR(nlines) = 0.d0
 dTdR = dTdR/Rsun*dble(decsize-1)
-
 
 ! call sgolay(tab_T,nlines,3,0,tab_T)
 ! call spline(tab_r, tab_T, bcoeff, ccoeff, dcoeff, nlines)
@@ -151,11 +153,19 @@ dTdR = dTdR/Rsun*dble(decsize-1)
 ! call sgolay(tab_T,nlines,3,1,dTdr)
 ! dTdr = dTdr/Rsun/tab_dr
 
+!splinelog = .false.
+!call DPCHEZ( nlines, tab_r*Rsun, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
+!if (ierr .lt. 0) then
+!  print*, 'DPCHEZ interpolant failed with error ', IERR
+!  return
+!ENDIF
 
-! do i = 2,nlines
-!   dTdr(i) = (tab_T(i)-tab_T(i-1))/tab_dr(i) !does this kind of indexing work?
-! end do
-! dTdr(nlines) = 0.d0
+if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
+
+!do i = 2,nlines-1
+!	dTdr(i) = (tab_T(i+1)-tab_T(i-1))/((tab_dr(i+1)+tab_dr(i))*Rsun) !does this kind of indexing work?
+!end do
+!dTdr(nlines) = 0.d0
 
 
 !this loop does a number of things
@@ -189,13 +199,9 @@ do i = 1,nlines
   ! print*,tab_r(i), nxIso(i)
   ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
-if (any(isnan(dphidr))) print *, "NAN encountered in dphidr"
-if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
-if (any(isnan(kappaofR))) print *, "NAN encountered in kappa"
-if (any(isnan(alphaofR))) print *, "NAN encountered in alpha"
-if (any(isnan(cumint))) print *, "NAN encountered in cumint"
-print *, "T_c=", Tc
 
+print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
+print *, "max(abs(cumint))=", maxval(abs(cumint))
 
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
@@ -211,21 +217,11 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 ! end do
 ! close(55)
 
-! nx = nxIso
-if (any(isnan(nx))) print *, "NAN encountered in nx_LTE"
-if (any(isnan(nxIso))) print *, "NAN encountered in nx_ISO"
-if (isnan(fgoth)) print *, "fgoth=NAN"
-
 nx = fgoth*nx + (1.-fgoth)*nxIso
 
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
-if (any(isnan(hgoth))) print *, "NAN encountered in hgoth"
-if (any(isnan(tab_r))) print *, "NAN encountered in tab_r"
-if (any(isnan(nx))) print *, "NAN encountered in nx"
-if (any(isnan(mfp))) print *, "NAN encountered in mfp"
-if (any(isnan(tab_T))) print *, "NAN encountered in tab_T"
-if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
 
 !get derivative of luminosity - same nonsense as with the temperature
 !I'm going to reuse the temperature array, don't get confused :-)
@@ -256,10 +252,6 @@ if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
 !
 ! end if
 
-if (any(isnan(dLdR))) then
-	print *, "NAN in luminosity derivative"
-endif
-
 ! call sgolay(Ltrans,nlines,4,1,Ltrans)
 ! call sgolay(Ltrans,nlines,3,1,dLdr)
 ! ! call spline(tab_r, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
@@ -267,6 +259,7 @@ endif
 ! ! dLdr = dLdr/Rsun/tab_dr
 ! ! dLdr(1)= 0.d0
 ! call sgolay(dLdr,nlines,4,0,dLdr)
+
 
 
 !Cubic hermite polynomial
@@ -292,7 +285,7 @@ print *, "epso=", epso
 !end do
 !dLdr(nlines) = 0.d0
 
-Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2 ! Take out the zero !!!!!!!!!!!!!!!!!!!!!
 
 EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 
