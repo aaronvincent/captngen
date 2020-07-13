@@ -19,13 +19,13 @@ PROGRAM GENCAP
 	niso = 16
 	jx = 0.5
 	iso = 0 !force captnoper to run and sum all isotopes
-	
-	filename = "testfile_multi"
+
+	call captn_init(modfile, 0.4d0, 220.d0, 220.d0, 540.d0)
+	call captn_init_oper()
+	filename = "testfile_oper"
 	open(55,file=filename)
 	do cpl=1, 14
 		write(55,*) cplConsts(cpl)
-		call captn_init(modfile, 0.4d0, 220.d0, 220.d0, 540.d0)
-		call captn_init_oper()
 		if (cpl==1) then
 			call populate_array(1.65d-8, cpl, 0)
 		else
@@ -52,6 +52,11 @@ PROGRAM GENCAP
 		print*, "mx: ",mx, "GeV, capped: ",capped
 		write(55,*) mx, capped
 		write(55,*)
+		if (cpl==1) then
+			call populate_array(0, cpl, 0)
+		else
+			call populate_array(0, cpl+1, 0)
+		endif
 	end do
 	close(55)
 END PROGRAM GENCAP
