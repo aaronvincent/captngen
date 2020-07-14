@@ -32,26 +32,31 @@ PROGRAM GENCAP
 			call populate_array(1.65d-8, cpl+1, 0)
 		endif
 		
-		call captn_maxcap(mx, maxcapped)
 		print*, "Running coupling constant: ", cplConsts(cpl)
-		print*, "maximum captured", maxcapped
 		print*
 
 		mx = 5
+		call captn_maxcap(mx, maxcapped)
 		call captn_oper(mx,jx,niso,iso,capped)
-		print*, "mx: ",mx, "GeV, capped: ",capped
-		write(55,*) mx, capped
+		print*, "mx: ",mx, "maximum captured", maxcapped
+		print*, "GeV, capped: ",capped
+		write(55,*) mx, maxcapped, capped
 
 		mx = 50
+		call captn_maxcap(mx, maxcapped)
 		call captn_oper(mx,jx,niso,iso,capped)
-		print*, "mx: ",mx, "GeV, capped: ",capped
-		write(55,*) mx, capped
+		print*, "mx: ",mx, "maximum captured", maxcapped
+		print*, "GeV, capped: ",capped
+		write(55,*) mx, maxcapped, capped
 
 		mx = 500
+		call captn_maxcap(mx, maxcapped)
 		call captn_oper(mx,jx,niso,iso,capped)
-		print*, "mx: ",mx, "GeV, capped: ",capped
-		write(55,*) mx, capped
+		print*, "mx: ",mx, "maximum captured", maxcapped
+		print*, "GeV, capped: ",capped
+		write(55,*) mx, maxcapped, capped
 		write(55,*)
+		
 		if (cpl==1) then
 			call populate_array(0, cpl, 0)
 		else
