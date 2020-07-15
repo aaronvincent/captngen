@@ -8,7 +8,7 @@ MAIN = main.o
 MFOBJ = gencap.o
 TRGOBJ = alphakappamod.o nonlocalmod.o transgen.o fastevap.o
 NUMOBJ =  dgamic.o d1mach.o
-AUXOBJ = sgolay.o spline.o pchip.o
+AUXOBJ = sgolay.o spline.o pchip.o fftpack5.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 
 

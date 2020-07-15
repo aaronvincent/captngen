@@ -24,22 +24,26 @@ use nonlocalmod
 implicit none
 !nlines might be redundant
 logical, intent(in) :: nonlocal
-logical splinelog !for PCHIP
+logical splinelog, DCT !for PCHIP
 integer, intent(in):: niso
 double precision, intent(in) :: sigma_0, Nwimps
-integer, parameter :: decsize = 780 !this should be done a bit more carefully
-integer i, ri,ierr
+integer, parameter :: decsize = 75 !this should be done a bit more carefully
+integer i, ri, ierr
+integer (kind=4) :: lensav 
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
+double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
+double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2)
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
 integer lwk !for pchip
 double precision :: pchipScratch(3*nlines) !for pchip
+double precision, allocatable :: wsave(:)
 
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
@@ -130,19 +134,21 @@ do i= 1,decsize
 smallR(i) = ispline(smallgrid(i),biggrid,tab_R,brcoeff, crcoeff, drcoeff, nlines)
 smallT(i) = ispline(smallr(i),tab_R,tab_T,bcoeff,ccoeff,dcoeff,nlines)
 end do
-print *, "taking dT/dr"
-call sgolay(smallT,decsize,4,1,smalldT) !differentiate
-smalldT(decsize) = 0.d0
-smalldT(1) = 0.d0
-print *, "splining derivative"
-call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
-!Re-expand to the full array size
-do i= 1,nlines
-dTdR(i) = ispline(tab_R(i),smallR,smalldT,bdcoeff,cdcoeff,ddcoeff,decsize)
-end do
-dTdR(1) = 0.d0
-dTdR(nlines) = 0.d0
-dTdR = dTdR/Rsun*dble(decsize-1)
+
+!! dT/dr using sgolay
+!print *, "taking dT/dr"
+!call sgolay(smallT,decsize,4,1,smalldT) differentiate
+!smalldT(decsize) = 0.d0
+!smalldT(1) = 0.d0
+!print *, "splining derivative"
+!call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) spline for derivative
+!!Re-expand to the full array size
+!do i= 1,nlines
+!dTdR(i) = ispline(tab_R(i),smallR,smalldT,bdcoeff,cdcoeff,ddcoeff,decsize)
+!end do
+!dTdR(1) = 0.d0
+!dTdR(nlines) = 0.d0
+!dTdR = dTdR/Rsun*dble(decsize-1)
 
 ! call sgolay(tab_T,nlines,3,0,tab_T)
 ! call spline(tab_r, tab_T, bcoeff, ccoeff, dcoeff, nlines)
@@ -153,20 +159,127 @@ dTdR = dTdR/Rsun*dble(decsize-1)
 ! call sgolay(tab_T,nlines,3,1,dTdr)
 ! dTdr = dTdr/Rsun/tab_dr
 
-!splinelog = .false.
-!call DPCHEZ( nlines, tab_r*Rsun, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
+! Take dT/dr with pchip
+splinelog = .false.
+call DPCHEZ( nlines, tab_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
+if (ierr .lt. 0) then
+  print*, 'DPCHEZ interpolant failed with error ', IERR
+  return
+ENDIF
+
+!print *, "max(dTdr)=", maxval(abs(dTdr))
+
+!! Smooth by regridding dTdr
+!! Make lower resolution T(r)
+!call DPCHEV(nlines, tab_r, tab_T, dTdr, decsize, smallR, smallT, smalldT, IERR)
 !if (ierr .lt. 0) then
-!  print*, 'DPCHEZ interpolant failed with error ', IERR
+!  print*, 'Making smallT, DPCHEV interpolant failed with error ', IERR
+!  return
+!ENDIF
+!! Now remake high resolution T(r) from low resolution T(r)
+!call DPCHEV(decsize, smallR, smallT, smalldT, nlines, tab_r, tab_T, dTdr, IERR)
+!if (ierr .lt. 0) then
+!  print*, 'DPCHEV interpolant failed with error ', IERR
 !  return
 !ENDIF
 
 if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
 
+! Smooth dTdr with FFT
+DCT = .true. ! If DCT=true, use discrete cosine transform. If DCT=false, use discrete Fourier transform.
+
+! First build evenly spaced r and dTdr arrays
+do i=1,nlines
+r_even(i) =  i*1./dble(nlines)
+enddo
+
+! Make evenly spaced dTdr array
+call DPCHEV(nlines, tab_r, tab_T, dTdr, nlines, r_even, T_even, dTdr_even, IERR)
+if (ierr .lt. 0) then
+  print*, 'Making T_even, DPCHEV interpolant failed with error ', IERR
+  return
+endif
+
+if (DCT .eqv. .false.) then
+	
+	lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
+	allocate(wsave(lensav))
+
+	! Compute FFT of dTdr
+	call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
+	if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+	print *, "FFT initialized"
+
+	call dfft1f(nlines, 1, dTdr_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
+	if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+	! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
+	print *, "FFT Taken"
+
+	! Cut out top 95% of Fourier components
+	do i=1,nlines
+		if (i > int(0.05*nlines)) then
+			dTdr_even(i) = 0.d0
+		endif
+	enddo
+
+	! Rebuild dTdr with high frequency components cut out
+	call dfft1b(nlines, 1, dTdr_even, nlines, wsave, lensav, work, nlines, ierr)
+	if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+	print *, "Inverse FFT Taken"
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+else if (DCT .eqv. .true.) then
+	
+	lensav = 4*nlines + int(log(real(2*nlines))) + 4 ! Minimum length for fftpack
+	allocate(wsave(lensav))
+
+	! Mirror dTdr so it is an even function (so we can use the cosine transform)
+	dTdr_mirror(1:nlines) = dTdr_even
+	dTdr_mirror(nlines+1:2*nlines-2) = dTdr_even(nlines-1:2)
+	print *, "dT/dr mirrored"
+
+	! Compute FFT of dTdr
+	call dcost1i (2*nlines-2, wsave, lensav, ierr) !Initialize (required by fftpack)
+	if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+	print *, "FFT initialized"
+
+	call dcost1f (2*nlines-2, 1, dTdr_mirror, 2*nlines-2, wsave, lensav, work, 2*nlines, ierr) ! Take DCT
+	if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+	! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
+	print *, "FFT Taken"
+
+	! Cut out top 95% of Fourier components
+	do i=1,2*nlines-2
+		if (i > int(0.05*nlines)) then
+			dTdr_mirror(i) = 0.d0
+		endif
+	enddo
+
+	! Rebuild dTdr with high frequency components cut out
+	call dcost1b (2*nlines-2, 1, dTdr_mirror, 2*nlines-2, wsave, lensav, work, 2*nlines, ierr) ! Take inverse DCT
+	if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+	print *, "Inverse FFT Taken"
+
+	dTdr_even = dTdr_mirror(1:nlines)
+	dTdr(:) = 0.d0 ! Keeping the old dTdr had been messing things up
+endif
+
+! Evaluate dTdr on MESA grid (ie go convert dTdr_even --> dTdr)
+dTdr(:) = 0.d0 ! Keeping the old dTdr had been messing things up
+call spline(r_even, dTdr_even, bcoeff, ccoeff, dcoeff, nlines)
+do i=1,nlines
+	dTdr(i) = ispline(tab_r(i), r_even, dTdr_even, bcoeff, ccoeff, dcoeff, nlines)
+enddo
+
+dTdr = dTdr/Rsun
+
+print *, "dT/dr evaluated on MESA grid"
+
+! Simple central difference dT/dr
 !do i = 2,nlines-1
 !	dTdr(i) = (tab_T(i+1)-tab_T(i-1))/((tab_dr(i+1)+tab_dr(i))*Rsun) !does this kind of indexing work?
 !end do
 !dTdr(nlines) = 0.d0
-
 
 !this loop does a number of things
 cumint(1) = 0.d0
@@ -199,9 +312,10 @@ do i = 1,nlines
   ! print*,tab_r(i), nxIso(i)
   ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
-
+print *, "min(abs(tab_T))=", minval(tab_T)
 print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
 print *, "max(abs(cumint))=", maxval(abs(cumint))
+if (any(isnan(nx))) print *, "NAN encountered in nxLTE"
 
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
@@ -221,6 +335,11 @@ nx = fgoth*nx + (1.-fgoth)*nxIso
 
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
+if (any(isnan(tab_r))) print *, "NAN encountered in tab_r"
+if (any(isnan(kappaofR))) print *, "NAN encountered in kappa"
+if (any(isnan(hgoth))) print *, "NAN encountered in hgoth"
+if (any(isnan(nx))) print *, "NAN encountered in nx"
+if (any(isnan(tab_T))) print *, "NAN encountered in tab_T"
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
 !get derivative of luminosity - same nonsense as with the temperature
