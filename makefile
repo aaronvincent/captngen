@@ -50,4 +50,4 @@ $(MAIN): %.o: %.f90
 
 
 clean:
-	rm -f *.o *.so gentest.x
+	rm -f *.o *.mod *.so gentest.x
