@@ -6,7 +6,7 @@
 !	-newtons_meth: solves Tx_integral=0 which defines Tx 
 
 module nonlocalmod
-use capmod, only:trapz
+use capmod
 implicit none
 
 contains
@@ -120,5 +120,49 @@ newtons_meth = x_3 ! The solution to the nonlinear equation
 
 return
 end function
+
+subroutine fourier_smooth(x, y, x_even, y_even, cutoff, nlines, lensav, ierr)
+integer, intent(in) :: nlines, lensav
+integer :: ierr, i
+double precision, intent(in) :: x(nlines), x_even(nlines), cutoff
+double precision, intent(inout) :: y(nlines)
+double precision :: y_even(nlines), work(nlines), wsave(lensav), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines)
+double precision :: ispline
+
+! Make evenly spaced y array
+call spline(x, y, bcoeff, ccoeff, dcoeff, nlines)
+do i=1,nlines
+	y_even(i) = ispline(x_even(i), x, y, bcoeff, ccoeff, dcoeff, nlines)
+enddo
+
+! Compute FFT of y
+call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
+if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+print *, "FFT initialized"
+
+call dfft1f(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
+if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
+print *, "FFT Taken"
+
+! Cut out top 95% of Fourier components
+do i=1,nlines
+	if (i > int(cutoff*nlines)) then
+		y_even(i) = 0.d0
+	endif
+enddo
+
+! Rebuild y with high frequency components cut out
+call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
+if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+print *, "Inverse FFT Taken"
+
+! Evaluate y on original grid (ie go convert y_even --> y)
+call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
+do i=1,nlines
+	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
+enddo
+
+end subroutine
 
 end module nonlocalmod
