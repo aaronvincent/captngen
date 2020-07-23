@@ -37,6 +37,8 @@ double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
+! More evenly spaced arrays for FFT
+double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_nosmooth(nlines) 
 double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2)
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
@@ -122,164 +124,30 @@ K = mfp(1)/rchi;
 !T derivatives
 ! smooth T
 ! some gymnastics are necessary, because the temperature is not smooth at all
-! a simple spline -> derivative doesn't help.
-! first build a cubic spline fit
-call spline(biggrid, tab_R, brcoeff, crcoeff, drcoeff, nlines)
-call spline(tab_R, tab_T, bcoeff, ccoeff, dcoeff, nlines)
-
-!now build a lower resolution array: this effectively smooths to relevant scales
-!the smallR is to ensure the adaptive grid is preserved
-print *, "splining T and r"
-do i= 1,decsize
-smallR(i) = ispline(smallgrid(i),biggrid,tab_R,brcoeff, crcoeff, drcoeff, nlines)
-smallT(i) = ispline(smallr(i),tab_R,tab_T,bcoeff,ccoeff,dcoeff,nlines)
-end do
-
-!! dT/dr using sgolay
-!print *, "taking dT/dr"
-!call sgolay(smallT,decsize,4,1,smalldT) differentiate
-!smalldT(decsize) = 0.d0
-!smalldT(1) = 0.d0
-!print *, "splining derivative"
-!call spline(smallR, smalldT, bdcoeff, cdcoeff, ddcoeff, decsize) spline for derivative
-!!Re-expand to the full array size
-!do i= 1,nlines
-!dTdR(i) = ispline(tab_R(i),smallR,smalldT,bdcoeff,cdcoeff,ddcoeff,decsize)
-!end do
-!dTdR(1) = 0.d0
-!dTdR(nlines) = 0.d0
-!dTdR = dTdR/Rsun*dble(decsize-1)
-
-! call sgolay(tab_T,nlines,3,0,tab_T)
-! call spline(tab_r, tab_T, bcoeff, ccoeff, dcoeff, nlines)
-! dTdR = bcoeff/Rsun
-! call sgolay(dTdR,nlines,3,0,dTdR) !don't ask
-! ! take derivative (for more fun)
-! ! Get derivative of T
-! call sgolay(tab_T,nlines,3,1,dTdr)
-! dTdr = dTdr/Rsun/tab_dr
+! a simple spline -> derivative doesn't help. Fourier method works better
 
 ! Take dT/dr with pchip
 splinelog = .false.
 call DPCHEZ( nlines, tab_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
-  print*, 'DPCHEZ interpolant failed with error ', IERR
-  return
+	print*, 'DPCHEZ interpolant failed with error ', IERR
+	return
 ENDIF
-
-!print *, "max(dTdr)=", maxval(abs(dTdr))
-
-!! Smooth by regridding dTdr
-!! Make lower resolution T(r)
-!call DPCHEV(nlines, tab_r, tab_T, dTdr, decsize, smallR, smallT, smalldT, IERR)
-!if (ierr .lt. 0) then
-!  print*, 'Making smallT, DPCHEV interpolant failed with error ', IERR
-!  return
-!ENDIF
-!! Now remake high resolution T(r) from low resolution T(r)
-!call DPCHEV(decsize, smallR, smallT, smalldT, nlines, tab_r, tab_T, dTdr, IERR)
-!if (ierr .lt. 0) then
-!  print*, 'DPCHEV interpolant failed with error ', IERR
-!  return
-!ENDIF
 
 if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
 
 ! Smooth dTdr with FFT
-DCT = .true. ! If DCT=true, use discrete cosine transform. If DCT=false, use discrete Fourier transform.
-
 ! First build evenly spaced r and dTdr arrays
 do i=1,nlines
 r_even(i) =  i*1./dble(nlines)
 enddo
 
-! Make evenly spaced dTdr array
-call DPCHEV(nlines, tab_r, tab_T, dTdr, nlines, r_even, T_even, dTdr_even, IERR)
-if (ierr .lt. 0) then
-  print*, 'Making T_even, DPCHEV interpolant failed with error ', IERR
-  return
-endif
+lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 
-if (DCT .eqv. .false.) then
-	
-	lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
-	allocate(wsave(lensav))
-
-	! Compute FFT of dTdr
-	call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
-	if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
-	print *, "FFT initialized"
-
-	call dfft1f(nlines, 1, dTdr_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
-	if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
-	! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
-	print *, "FFT Taken"
-
-	! Cut out top 95% of Fourier components
-	do i=1,nlines
-		if (i > int(0.05*nlines)) then
-			dTdr_even(i) = 0.d0
-		endif
-	enddo
-
-	! Rebuild dTdr with high frequency components cut out
-	call dfft1b(nlines, 1, dTdr_even, nlines, wsave, lensav, work, nlines, ierr)
-	if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
-	print *, "Inverse FFT Taken"
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-else if (DCT .eqv. .true.) then
-	
-	lensav = 4*nlines + int(log(real(2*nlines))) + 4 ! Minimum length for fftpack
-	allocate(wsave(lensav))
-
-	! Mirror dTdr so it is an even function (so we can use the cosine transform)
-	dTdr_mirror(1:nlines) = dTdr_even
-	dTdr_mirror(nlines+1:2*nlines-2) = dTdr_even(nlines-1:2)
-	print *, "dT/dr mirrored"
-
-	! Compute FFT of dTdr
-	call dcost1i (2*nlines-2, wsave, lensav, ierr) !Initialize (required by fftpack)
-	if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
-	print *, "FFT initialized"
-
-	call dcost1f (2*nlines-2, 1, dTdr_mirror, 2*nlines-2, wsave, lensav, work, 2*nlines, ierr) ! Take DCT
-	if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
-	! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
-	print *, "FFT Taken"
-
-	! Cut out top 95% of Fourier components
-	do i=1,2*nlines-2
-		if (i > int(0.05*nlines)) then
-			dTdr_mirror(i) = 0.d0
-		endif
-	enddo
-
-	! Rebuild dTdr with high frequency components cut out
-	call dcost1b (2*nlines-2, 1, dTdr_mirror, 2*nlines-2, wsave, lensav, work, 2*nlines, ierr) ! Take inverse DCT
-	if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
-	print *, "Inverse FFT Taken"
-
-	dTdr_even = dTdr_mirror(1:nlines)
-	dTdr(:) = 0.d0 ! Keeping the old dTdr had been messing things up
-endif
-
-! Evaluate dTdr on MESA grid (ie go convert dTdr_even --> dTdr)
-dTdr(:) = 0.d0 ! Keeping the old dTdr had been messing things up
-call spline(r_even, dTdr_even, bcoeff, ccoeff, dcoeff, nlines)
-do i=1,nlines
-	dTdr(i) = ispline(tab_r(i), r_even, dTdr_even, bcoeff, ccoeff, dcoeff, nlines)
-enddo
-
+! Call Fourier smoothing routine. the subroutine fourier_smooth is located in nonlocalmod.f90
+call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, nlines, lensav, ierr) ! keep 5% of components
 dTdr = dTdr/Rsun
-
 print *, "dT/dr evaluated on MESA grid"
-
-! Simple central difference dT/dr
-!do i = 2,nlines-1
-!	dTdr(i) = (tab_T(i+1)-tab_T(i-1))/((tab_dr(i+1)+tab_dr(i))*Rsun) !does this kind of indexing work?
-!end do
-!dTdr(nlines) = 0.d0
 
 !this loop does a number of things
 cumint(1) = 0.d0
@@ -305,19 +173,22 @@ do i = 1,nlines
 
   nx(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
 
-  ! print*,nx(i)
   cumNx = cumNx + 4.*pi*tab_r(i)**2*tab_dr(i)*nx(i)*Rsun**3.
 
   nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
-  ! print*,tab_r(i), nxIso(i)
-  ! print*,exp(-Rsun**2*tab_r(i)**2/rchi**2)
 end do
 print *, "min(abs(tab_T))=", minval(tab_T)
 print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
 print *, "max(abs(cumint))=", maxval(abs(cumint))
 if (any(isnan(nx))) print *, "NAN encountered in nxLTE"
 
+
+
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Gould Raffelt section
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 nx = nx/cumNx*nwimps !normalize density
 fgoth = 1./(1.+(K/.4)**2)
@@ -342,70 +213,19 @@ if (any(isnan(nx))) print *, "NAN encountered in nx"
 if (any(isnan(tab_T))) print *, "NAN encountered in tab_T"
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
-!get derivative of luminosity - same nonsense as with the temperature
-!I'm going to reuse the temperature array, don't get confused :-)
+!get derivative of luminosity - also needs smoothing. Fourier method doesn't work as well here
+!Hermite polynomial interpolation seems to work ok.
 
-! call spline(tab_R, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
-! do i= 1,decsize
-!     smallL(i) = ispline(smallr(i),tab_R,Ltrans,bcoeff,ccoeff,dcoeff,nlines)
-! end do
-! call sgolay(smallL,decsize,4,1,smalldL) !Take the derivative
-! ! smalldL(1) = 0.d0
-! ! smalldL(1) = smalldL(2)
-! smalldL(decsize) = 0.d0
-! call spline(smallR, smalldL, bdcoeff, cdcoeff, ddcoeff, decsize) !spline for derivative
-! do i= 1,nlines
-!   dLdR(i) = ispline(tab_R(i),smallR,smalldL,bdcoeff,cdcoeff,ddcoeff,decsize)
-! end do
-
-! dLdR = dLdR/Rsun*dble(decsize-1)
-!
-! if (any(abs(dLdR) .gt. 1.d100)) then
-!   open(55,file = "crashsmallarrays.dat")
-!   do i=1,decsize
-!     write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
-!   write(55,*)
-!   end do
-!   close(55)
-!   stop "Infinite luminosity derivative encountered"
-!
-! end if
-
-! call sgolay(Ltrans,nlines,4,1,Ltrans)
-! call sgolay(Ltrans,nlines,3,1,dLdr)
-! ! call spline(tab_r, Ltrans, bcoeff, ccoeff, dcoeff, nlines)
-! ! dLdr = bcoeff/Rsun
-! ! dLdr = dLdr/Rsun/tab_dr
-! ! dLdr(1)= 0.d0
-! call sgolay(dLdr,nlines,4,0,dLdr)
-
-
-
-!Cubic hermite polynomial
+!Cubic hermite polynomial to smooth dLdr
 splinelog = .false.
 call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
   print*, 'DPCHEZ interpolant failed with error ', IERR
   return
 ENDIF
-
-! do i = 2,nlines
-!   dLdRscratch(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i)/Rsun
-! end do
-!
-! dLdRscratch(nlines) = 0.d0
 dLdr = dLdr/Rsun
 
-print *, "decsize=", decsize
-print *, "epso=", epso
-
-!do i = 2,nlines
-!	dLdr(i) = (Ltrans(i)-Ltrans(i-1))/tab_dr(i)/Rsun
-!end do
-!dLdr(nlines) = 0.d0
-
-Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2 ! Take out the zero !!!!!!!!!!!!!!!!!!!!!
-
+Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 
 print *, "Transgen: total G&R transported energy = ", EtransTot
@@ -424,35 +244,20 @@ open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_gr.dat", access="APPE
 write(55,*) mfp(1), maxval(-Ltrans)
 close(55)
 
-! Write Etrans to file
-! open(55,file = "/home/luke/summer_2020/mesa/captngen/captranstest.dat")
-! do i=1,nlines
-! write(55,*) tab_r(i), nx(i), tab_T(i), Ltrans(i), Etrans(i), dTdR(i), dLdR(i), tab_starrho(i), tab_g(i), dphidr(i)
-! end do
-! close(55)
-
 return
 
-!
-! open(55,file = "smallarrays.dat")
-! do i=1,decsize
-!   write(55,*) smallR(i), smallT(i), smalldT(i), smallL(i), smalldL(i)
-! write(55,*)
-! end do
-! close(55)
 
+else if (nonlocal) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-else if (nonlocal) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
 ! The nonlocal transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 ! The functions of interest are in nonlocalmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
-!print *, "calculating spergel press"
 
 ! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual
 ! Tx, so I just hard set them here.
-guess_1 = 1.0d7
+guess_1 = 1.0d7 ! ***** A possible source of error for exotic situations (eg large mass stars) *****
 guess_2 = 1.01d7
 tolerance = 1.0d-4
 
@@ -469,19 +274,12 @@ print *, "Transgen: Tx = ", Tx
 EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
 print *, "Transgen: total S&P transported energy = ", EtransTot
 
-! Write Etrans to file
-!open(10, file="/home/luke/summer_2020/mesa/test_files/Etrans_sp_new.dat")
-!do i=1,nlines
-!	write(10, *) tab_r(i), tab_T(i), phi(i), tab_starrho(i), nabund(1,i), nxIso(i), Etrans(i)
-!enddo
-close(10)
-
 ! Calculate Ltrans
 do i=1,nlines
 	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
 enddo
 
-! Check Ltrans
+! Write things to file
 open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_sp.dat")
 do i=1,nlines
 	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i)
@@ -491,8 +289,6 @@ close(55)
 open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
 write(55,*) mfp(1), maxval(-Ltrans)
 close(55)
-
-!print *, "Transgen: integral(nx) = ", trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*nxIso, nlines)
 
 return
 
