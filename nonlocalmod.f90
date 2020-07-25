@@ -31,8 +31,6 @@ n_x = exp(-m_x*phi/k/T_x)
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
 n_x = n_0*n_x
 
-!print *, "In Etrans_nl: n_x = ", n_x(10)
-
 ! Separate calc into species dependent and independent factors for convenience
 species_indep = 8.0d0*sqrt(2.d0/pi)*k**(3.d0/2.d0)*n_x*(T_x-T_star)/rho_star ! The species independent part
 
@@ -121,13 +119,16 @@ newtons_meth = x_3 ! The solution to the nonlinear equation
 return
 end function
 
-subroutine fourier_smooth(x, y, x_even, y_even, cutoff, nlines, lensav, ierr)
+subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, nlines, lensav, ierr)
+! Cuts out the high frequency components of y
+! Also returns a "noise indicator" - The sum of the frequency components above the cutoff
 integer, intent(in) :: nlines, lensav
 integer :: ierr, i
 double precision, intent(in) :: x(nlines), x_even(nlines), cutoff
 double precision, intent(inout) :: y(nlines)
+double precision, intent(out) :: noise_indicator
 double precision :: y_even(nlines), work(nlines), wsave(lensav), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines)
-double precision :: ispline
+double precision :: ispline, denominator
 
 ! Make evenly spaced y array
 call spline(x, y, bcoeff, ccoeff, dcoeff, nlines)
@@ -138,12 +139,20 @@ enddo
 ! Compute FFT of y
 call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
 if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
-print *, "FFT initialized"
 
 call dfft1f(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
 if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
 ! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
-print *, "FFT Taken"
+
+noise_indicator = 0.d0
+! Take the ratio of high frequency components to low frequency components as a measure of how noisy the data is
+do i=int(cutoff*nlines),nlines
+	noise_indicator = noise_indicator + abs(y_even(i))
+enddo
+do i=1,int(cutoff*nlines)
+	denominator = denominator + abs(y_even(i))
+enddo
+noise_indicator = noise_indicator/denominator
 
 ! Cut out top 95% of Fourier components
 do i=1,nlines
@@ -155,7 +164,6 @@ enddo
 ! Rebuild y with high frequency components cut out
 call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
 if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
-print *, "Inverse FFT Taken"
 
 ! Evaluate y on original grid (ie go convert y_even --> y)
 call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)

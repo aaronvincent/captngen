@@ -15,7 +15,7 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,nonlocal,Tx,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nonlocal,Tx,noise_indicator,etrans,EtransTot)
 !mdm is stored in capmod
 ! Tx is unchanged in the LTE scheme, and is the output one-zone WIMP temp in the nonlocal scheme
 use capmod
@@ -27,6 +27,7 @@ logical, intent(in) :: nonlocal
 logical splinelog, DCT !for PCHIP
 integer, intent(in):: niso
 double precision, intent(in) :: sigma_0, Nwimps
+double precision, intent(out) :: noise_indicator
 integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, ri, ierr
 integer (kind=4) :: lensav 
@@ -38,7 +39,7 @@ double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabun
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
 ! More evenly spaced arrays for FFT
-double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_nosmooth(nlines) 
+double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines)
 double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2)
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
@@ -61,7 +62,6 @@ biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,
 mxg = mdm*1.78d-24
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
-! print*, "Nwimps in ", Nwimps
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
@@ -74,8 +74,6 @@ dphidr = -tab_g
 
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
-
-print*,'niso = ', niso
 
 do i = 1,niso
     !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
@@ -144,17 +142,14 @@ enddo
 
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 
-! Call Fourier smoothing routine. the subroutine fourier_smooth is located in nonlocalmod.f90
-call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, nlines, lensav, ierr) ! keep 5% of components
+! Cut out high frequency components. The subroutine fourier_smooth is located in nonlocalmod.f90
+! Keep 5% of components
+call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/Rsun
-print *, "dT/dr evaluated on MESA grid"
 
 !this loop does a number of things
 cumint(1) = 0.d0
 cumNx = 0.d0
-print *, "sigma_N=", sigma_N
-print *, "sigma_0=", sigma_0
-print *, "max(abs(nabund))=", maxval(abs(nabund))
 
 do i = 1,nlines
 
@@ -177,10 +172,10 @@ do i = 1,nlines
 
   nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 end do
-print *, "min(abs(tab_T))=", minval(tab_T)
-print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
-print *, "max(abs(cumint))=", maxval(abs(cumint))
-if (any(isnan(nx))) print *, "NAN encountered in nxLTE"
+!print *, "min(abs(tab_T))=", minval(tab_T)
+!print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
+!print *, "max(abs(cumint))=", maxval(abs(cumint))
+!if (any(isnan(nx))) print *, "NAN encountered in nxLTE"
 
 
 
@@ -226,11 +221,13 @@ ENDIF
 dLdr = dLdr/Rsun
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+! Etrans_test is to check how the noise in Etrans
+Etrans_test = Etrans
+call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 
 print *, "Transgen: total G&R transported energy = ", EtransTot
-
-print *, "m_x=", mxg, "kB=", kB, "fogth=", fgoth
+print *, "fogth=", fgoth
 
 ! Check Ltrans
 open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_gr.dat")
