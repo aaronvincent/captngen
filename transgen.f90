@@ -225,7 +225,6 @@ Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 Etrans_test = Etrans
 call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
-
 print *, "Transgen: total G&R transported energy = ", EtransTot
 print *, "fogth=", fgoth
 
@@ -270,6 +269,11 @@ print *, "Transgen: Tx = ", Tx
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
 EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
 print *, "Transgen: total S&P transported energy = ", EtransTot
+
+! Check the noise in Etrans (same as GR scheme) - note that dTdr_even is just a work array, I'm not actually using 
+! anything about dTdr in the noise calculation
+Etrans_test = Etrans
+call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
 ! Calculate Ltrans
 do i=1,nlines
