@@ -37,7 +37,7 @@
     character*300 :: modfile
     double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250), AtomicNumber(29)
-    double precision :: maxcap, nwimpsin, evapRate(50), Tx, Nbar
+    double precision :: maxcap, nwimpsin, evapRate(50), Tx, Nbar, noise_indicator
     double precision, allocatable :: Etrans(:), Etrans_all(:,:), msum(:)
     double precision :: EtransTot
     integer :: nq, nv, i, nlines
@@ -96,7 +96,7 @@
     do i = 1,1
       
       mx = 5.d0 !2.d0+dble(i)
-      sigma_0 = 1.d-37 !10.d0**(-40+dble(i)/5.d0)
+      sigma_0 = 1.d-40 !10.d0**(-40+dble(i)/2.d0)
       print*
       print *, "i=", i
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
@@ -120,7 +120,7 @@
 	  nwimpsin = 4.8267971276458977d44
 	  print*, "Total number of baryons: Nbar=", Nbar
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
-      call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,Etrans,Etranstot)
+      call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,noise_indicator,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
       Etrans_all(:,i) = Etrans
 
