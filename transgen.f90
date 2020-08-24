@@ -32,17 +32,18 @@ integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, ri, ierr
 integer (kind=4) :: lensav 
 double precision :: epso,EtransTot
-double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
+double precision, parameter :: GN = 6.674d-8, kB = 1.38064852d-16,kBeV=8.617e-5,mnucg=1.6726219e-24
 double precision :: mxg, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
 ! More evenly spaced arrays for FFT
-double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines)
-double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2)
+double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines), Ltrans_cond(nlines)
+double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2), r_mesa(1999)
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
-double precision :: fgoth, hgoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
+double precision :: fgoth, hgoth(nlines), ggoth_mesa(1999), ggoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
+double precision :: dggothdr_mesa(1999), dggothdr(nlines), test_array(2000)
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
 integer lwk !for pchip
 double precision :: pchipScratch(3*nlines) !for pchip
@@ -172,12 +173,32 @@ do i = 1,nlines
 
   nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 end do
+!Tx = 11909918.053644724
+!nxIso = exp(-mxg*phi/kB/Tx) 
+!n_0 = Nwimps/trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*nxIso, nlines) ! Normalize so that integral(nx) = Nwimps
+!nxIso = n_0*nxIso
+
+nx = nx/cumNx*nwimps !normalize density
+fgoth = 1./(1.+(K/.4)**2)
+hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
+hgoth(1) = 0.d0 !some floating point shenanigans.
+
+nx = fgoth*nx + (1.-fgoth)*nxIso
+
+guess_1 = 1.0d7  !***** A possible source of error for exotic situations (eg large mass stars) *****
+guess_2 = 1.01d7
+tolerance = 1.0d0
+Tx = newtons_meth(Tx_integral, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, mxg, &
+	 nabund, AtomicNumber*mnucg, sigma_N, sigma_0, alpha, kappa, Nwimps, K, nlines, niso, guess_1, guess_2, tolerance)
+
+nx = nx_func(Tx, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, nabund, sigma_N, sigma_0, &
+	alpha, kappa, Nwimps, mxg, K, niso, nlines)
+
+
 !print *, "min(abs(tab_T))=", minval(tab_T)
 !print *, "max(abs(dT/dr))=", maxval(abs(dTdr))
 !print *, "max(abs(cumint))=", maxval(abs(cumint))
 !if (any(isnan(nx))) print *, "NAN encountered in nxLTE"
-
-
 
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
@@ -185,21 +206,8 @@ if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime
 ! Gould Raffelt section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-nx = nx/cumNx*nwimps !normalize density
-fgoth = 1./(1.+(K/.4)**2)
-hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
-hgoth(1) = 0.d0 !some floating point shenanigans.
-
-! Check nx_LTE
-!open(55,file = "/home/luke/summer_2020/mesa/captngen/nx_LTE_change.dat")
-! do i=1,nlines
-! write(55,*) tab_r(i), nx(i), cumint(i), tab_T(i), dTdR(i), tab_g(i), dphidr(i)
-! end do
-! close(55)
-
-nx = fgoth*nx + (1.-fgoth)*nxIso
-
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+print *, "In transgen: mnuc=", AtomicNumber(1)*mnucg, "mx=", mxg
 
 if (any(isnan(tab_r))) print *, "NAN encountered in tab_r"
 if (any(isnan(kappaofR))) print *, "NAN encountered in kappa"
@@ -231,9 +239,7 @@ print *, "fogth=", fgoth
 ! Check Ltrans
 open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_gr.dat")
 do i=1,nlines
-	write(55,*) tab_r(i), Ltrans(i), Etrans(i), 4.*kB**(3./2.)*pi*(tab_r(i)+epso)**2.*Rsun**2., kappaofR(i), hgoth(i), & 
-		nx(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), dLdR(i), &
-		1/(4.*pi*(tab_r(i)+epso)**2.*Rsun**2.*tab_starrho(i))
+	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), nx(i)
 end do
 close(55)
 open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_gr.dat", access="APPEND")
@@ -255,16 +261,63 @@ else if (nonlocal) then ! if nonlocal=true, use Spergel & Press regime to calcul
 ! Tx, so I just hard set them here.
 guess_1 = 1.0d7 ! ***** A possible source of error for exotic situations (eg large mass stars) *****
 guess_2 = 1.01d7
-tolerance = 1.0d-4
+tolerance = 1.0d-1
+
+!open(1, file="/home/luke/summer_2020/mesa/test_files/Etranstot.dat")
+!do i=1,1000
+!	Tx = 1.4d7 + dble(i)/1.d3*2.0d6
+!	Etrans = Etrans_nl(Tx, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, mxg, &
+!		nabund, AtomicNumber*mnucg, sigma_N, sigma_0, alpha, kappa, Nwimps, K, nlines, niso)
+!	Etranstot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
+!	write(1,*) Tx, Etranstot
+!enddo
+!close(55)
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin
-Tx = newtons_meth(Tx_integral, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, & 
-	sigma_0*sigma_N, Nwimps, nlines, niso, guess_1, guess_2, tolerance)
+Tx = newtons_meth(Tx_integral, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, mxg, &
+	 nabund, AtomicNumber*mnucg, sigma_N, sigma_0, alpha, kappa, Nwimps, K, nlines, niso, guess_1, guess_2, tolerance)
+	
+nx = nx_func(Tx, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, nabund, sigma_N, sigma_0, &
+	alpha, kappa, Nwimps, mxg, K, niso, nlines)
 
-! Etrans in erg/g/s
-Etrans = Etrans_nl(Tx, tab_r*Rsun, tab_T, phi, tab_starrho, mxg, nabund, AtomicNumber*mnucg, &
-	 sigma_0*sigma_N, Nwimps, nlines, niso) ! erg/g/s
+! Etrans in erg/g/s (according to Spergel Press)
+Etrans = Etrans_nl(Tx, Tc, tab_r*Rsun, tab_T, phi, tab_starrho, tab_dr*Rsun, dTdr, dphidr, mfp, mxg, nabund, &
+	AtomicNumber*mnucg, sigma_N, sigma_0, alpha, kappa, Nwimps, K, nlines, niso) ! erg/g/s
 print *, "Transgen: Tx = ", Tx
+
+! Now convert Etrans_sp to Etrans_gr (by multiplying Ltrans by ggoth, a conversion factor). 
+! Easier to work with Ltrans than Etrans because Ltrans is always positive in both schemes.
+
+! Calculate Ltrans
+do i=1,nlines
+	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+enddo
+
+!! Gilliland interpolation
+!Ltrans_cond = 4.d0*pi*(tab_r*Rsun)**2.d0*nxIso*sqrt(kB*tab_T/mxg)*kB*dTdr/&
+!	(nabund(1,:)*sigma_0*sqrt((3.d0*mxg+mnucg)/(mxg+mnucg)))
+!Ltrans = (Ltrans_cond*Ltrans)/(Ltrans_cond+Ltrans+epso)
+
+! Load ggoth
+open(55, file="/home/luke/summer_2020/mesa/test_files/ggoth.dat")
+do i = 1, 1999
+	read(55, *) r_mesa(i), ggoth_mesa(i)
+enddo
+! Interpolate ggoth to MESA grid (cubic spline)
+splinelog = .false.
+call DPCHEZ(1999, r_mesa, ggoth_mesa, dggothdr_mesa, SPLINElog, pchipScratch, LWK, IERR )
+if (ierr .lt. 0) then
+	print*, 'DPCHEZ interpolant failed with error ', IERR
+	return
+ENDIF
+call DPCHEV (1999, r_mesa, ggoth_mesa, dggothdr_mesa, nlines, tab_r, ggoth, dggothdr, IERR )
+! Convert Ltrans_sp --> Ltrans_gr with ggoth
+!Ltrans = Ltrans*ggoth
+do i=1,nlines-1
+	dLdr(i) = (Ltrans(i+1)-Ltrans(i))/(tab_r(i+1)-tab_r(i))/Rsun
+enddo
+!Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
 EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
@@ -275,20 +328,15 @@ print *, "Transgen: total S&P transported energy = ", EtransTot
 Etrans_test = Etrans
 call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
-! Calculate Ltrans
-do i=1,nlines
-	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-enddo
-
 ! Write things to file
 open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_sp.dat")
 do i=1,nlines
-	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i)
+	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i), dTdr(i), nxIso(i), nabund(1,i)
 end do
 close(55)
 
 open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
-write(55,*) mfp(1), maxval(-Ltrans)
+write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
 close(55)
 
 return

@@ -37,10 +37,10 @@
     character*300 :: modfile
     double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250), AtomicNumber(29)
-    double precision :: maxcap, nwimpsin, evapRate(50), Tx, Nbar, noise_indicator
-    double precision, allocatable :: Etrans(:), Etrans_all(:,:), msum(:)
+    double precision :: maxcap, nwimpsin, evapRate(101), Tx, Nbar, noise_indicator
+    double precision, allocatable :: Etrans(:), Etrans_all(:,:), msum(:), Ltrans(:), Ltrans_all(:,:)
     double precision :: EtransTot
-    integer :: nq, nv, i, nlines
+    integer :: nq, nv, i, j, nlines
     logical :: nonlocal
     double precision, allocatable :: tab_mencl(:), tab_r(:), tab_T(:), tab_starrho(:), tab_mfr(:,:)
     double precision :: Pres, Lumi
@@ -63,6 +63,8 @@
     call getnlines(nlines)
     allocate(etrans(nlines))
     allocate(Etrans_all(nlines,50))
+    allocate(Ltrans(nlines))
+    allocate(Ltrans_all(nlines,50))
     call get_alpha_kappa(nq,nv)
     
     allocate(tab_mencl(nlines))
@@ -93,10 +95,10 @@
     ! Total number of baryons:
     Nbar = trapz(tab_r*Rsun, msum*tab_starrho/mnucg*4*pi*(tab_r*Rsun)**2, nlines)
 
-    do i = 1,1
+    do i = 1,25
       
-      mx = 5.d0 !2.d0+dble(i)
-      sigma_0 = 1.d-40 !10.d0**(-40+dble(i)/2.d0)
+      mx = 1.d0 !dble(i)/2.d0
+      sigma_0 =  10.d0**(-40+dble(i)/5.d0)
       print*
       print *, "i=", i
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
@@ -117,12 +119,16 @@
 
 !      nwimpsin = capped_sd(i)*3.d7*4.57d9
 !	  nwimpsin = 1.d-15*Nbar
-	  nwimpsin = 4.8267971276458977d44
+	  nwimpsin = 5.d44
 	  print*, "Total number of baryons: Nbar=", Nbar
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
       call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,noise_indicator,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
-      Etrans_all(:,i) = Etrans
+	  Etrans_all(:,i) = Etrans
+!	  do j=1,nlines
+!		  Ltrans(j) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, j)
+!	  enddo
+      Ltrans_all(:,i) = Ltrans
 
       print*,"Calling fastevap."
       call fastevap(sigma_0,1.d0,28,EvapRate(i))
@@ -139,7 +145,7 @@
       
     end do
 
-    !Output results to file
+    !Output Etrans to file
     if (nonlocal) then 
     	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_sp.dat")
     else if (.not. nonlocal) then 
@@ -147,6 +153,15 @@
     endif
 	do i=1,nlines
 		write(55,*) tab_r(i), Etrans_all(i,:)
+	enddo
+	! Also write Ltrans to file
+	if (nonlocal) then 
+    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_Ltrans_sp.dat")
+    else if (.not. nonlocal) then 
+    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_Ltrans_gr.dat")
+    endif
+	do i=1,nlines
+		write(55,*) tab_r(i), Ltrans_all(i,:)
 	enddo
 !    do i=1,50
 !      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
