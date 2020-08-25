@@ -49,7 +49,7 @@
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = 0
     nv = 0
-	nonlocal = .false.
+	nonlocal = .true.
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
@@ -95,10 +95,10 @@
     ! Total number of baryons:
     Nbar = trapz(tab_r*Rsun, msum*tab_starrho/mnucg*4*pi*(tab_r*Rsun)**2, nlines)
 
-    do i = 1,25
+    do i = 1,1
       
-      mx = 1.d0 !dble(i)/2.d0
-      sigma_0 =  10.d0**(-40+dble(i)/5.d0)
+      mx = 5.d0 !dble(i)/2.d0
+      sigma_0 =  1.d-37 !10.d0**(-40+dble(i)/5.d0)
       print*
       print *, "i=", i
       print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
