@@ -1,28 +1,17 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Nonlocal WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
+!	-nx_func: Calculates the WIMP density profile using the fgoth interpolation
 ! 	-Etrans_nl: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx 
 
-! I apologize for the horribly long function calls.
+! All units are cgs except tab_r and tab_dr
+! I apologize for the long function calls.
 
 module nonlocalmod
 use capmod
 implicit none
-
-!    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15,GNewt = 6.672d-8
-!    double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
-!    double precision, parameter :: eps = 0d-10 !stops divisions by zero (don't think it is needed now)
-!    !these are now set in captn_init
-!    double precision :: usun , u0 ,rho0, vesc_halo, Rsun
-!    !this goes with the Serenelli table format
-!    double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
-!    double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:),tab_T(:),tab_g(:)
-
-!    ! nq and nv can be -1, 0, 1, 2; this is set in the main program
-!    integer :: nq, nv, nlines
-!    double precision :: mdm, vesc_shared, a_shared, mu, muplus
    
 double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24
 
@@ -47,11 +36,11 @@ integer :: i, j
 !n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_iso, nlines) ! Normalize so that integral(nx) = Nwimps
 !nx_iso = n_0*nx_iso
 
-Tc = tab_T(1)
-R = tab_r*Rsun
-dR = tab_dr*Rsun
-phi = -tab_vesc**2/2.d0
-dphidr = -tab_g
+Tc = tab_T(1) ! K
+R = tab_r*Rsun ! cm
+dR = tab_dr*Rsun ! cm
+phi = -tab_vesc**2/2.d0 ! erg/g
+dphidr = -tab_g ! erg/g/cm
 mxg = mdm*1.782662d-24
 
 do i=1,niso
@@ -60,7 +49,7 @@ do i=1,niso
 	enddo
 enddo
 
-rchi = (3.*(kB*Tc)/(2.*pi*GNewt*tab_starrho(1)*mxg))**.5
+rchi = (3.*(kB*Tc)/(2.*pi*GNewt*tab_starrho(1)*mxg))**.5 ! cm
 K = mfp(1)/rchi
 
 cumint(1) = 0.d0
@@ -102,7 +91,9 @@ end function
 
 function Etrans_nl(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
 implicit none
-! Calculates WIMP Etrans using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
+! Calculates WIMP transported energy (erg/g/s) using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
+! The Spergel Press formalism doesn't actually us dT/dr. 
+! I have it here in case we want to use the fgoth nx interpolation with nx_func (which requires dTdr)
 
 integer, intent(in) :: niso
 double precision, intent(in) :: T_x, Nwimps, sigma_0
@@ -113,36 +104,38 @@ double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
 double precision :: Etrans_nl(nlines)
 integer :: i, j
-! mxg and m_p in grams, T_x, T_star in Kelvin, sigma in cm^2, n_nuc, n_x in cm^-3
+! T_x in K, dTdr in K/r, mfp in cm, sigma_0 in cm^2, 
 
-R = tab_r*Rsun
-phi = -tab_vesc**2/2.d0
-mxg = mdm*1.782662d-24
+R = tab_r*Rsun ! R in cm
+phi = -tab_vesc**2/2.d0 ! phi in erg/g
+mxg = mdm*1.782662d-24 ! WIMP mass in g
 
+! n_nuc in cm^-3
 do i=1,niso
 	do j=1,nlines
-		n_nuc(j,i) = tab_mfr(j,i)*tab_starrho(j)/AtomicNumber(i)/mnucg
+		n_nuc(j,i) = tab_mfr(j,i)*tab_starrho(j)/AtomicNumber(i)/mnucg ! tab_starrho in gcm^-3
 	enddo
 enddo
 
-sigma_nuc = 2.d0*sigma_N*sigma_0 ! Total WIMP-nucleus cross section
+sigma_nuc = 2.d0*sigma_N*sigma_0 ! Total WIMP-nucleus cross section in cm^2
 
-! A better nxIso estimate than in Transgen
-! Ideally, we would use nx_func here so that both schemes use the same nx.
+! n_x in cm^-3. This is a better nxIso estimate than in Transgen
+! Ideally, we would call nx_func here so that both schemes use the same nx.
 n_x = exp(-mxg*phi/kB/T_x) 
 n_0 = Nwimps/trapz(R, 4.d0*pi*R**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
-n_x = n_0*n_x
+n_x = n_0*n_x ! WIMP density in cm^-3
 
 ! Separate calc into species dependent and independent factors
 species_indep = 8.0d0*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
 
 ! Now sum over species to get the species dependent factor (Right now I only have this working for the SD case)
 species_dep=0.d0
-species_dep = sigma_nuc(1)*n_nuc(1,:)*mxg*mnucg/((mxg+mnucg)**2)*sqrt(tab_T/mnucg + T_x/mxg)
-!do i=1,niso
-!	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-!		sqrt(T_star/mnucg*AtomicNumber(i) + T_x/mxg)
-!enddo
+!species_dep = sigma_nuc(1)*n_nuc(1,:)*mxg*mnucg/((mxg+mnucg)**2)*sqrt(tab_T/mnucg + T_x/mxg)
+! Uncomment the next four lines for spin-independent scattering 
+do i=1,niso
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
+		sqrt(tab_T/mnucg*AtomicNumber(i) + T_x/mxg)
+enddo
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
 
@@ -162,7 +155,6 @@ end function
 function Tx_integral(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
 implicit none
 ! Calculates the Tx defining integral 
-! T_x, T_star in K, r in cm, phi in erg/g, rho_star in g/cm^3, m_x and m_nuc in g, n_nuc in cm^-3, sigma in cm^2
 
 integer, intent(in) :: niso
 double precision, intent(in) :: T_x, Nwimps, sigma_0

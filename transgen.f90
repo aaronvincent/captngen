@@ -162,6 +162,7 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nx + (1.-fgoth)*nxIso
 
+! Ideally, we would have called nx_func here so that both schemes use the same nx.
 
 if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
 
@@ -208,7 +209,7 @@ end do
 close(55)
 open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_gr.dat", access="APPEND")
 write(55,*) mfp(1), maxval(-Ltrans)
-!close(55)
+close(55)
 
 return
 
@@ -286,9 +287,9 @@ do i=1,nlines
 	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i), dTdr(i), nxIso(i), nabund(1,i)
 end do
 close(55)
-!open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
-!write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
-!close(55)
+open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
+write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
+close(55)
 
 return
 
