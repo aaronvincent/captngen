@@ -139,14 +139,14 @@ enddo
 
 Etrans_nl = species_indep*species_dep ! erg/g/s
 
-! Useful when troubleshooting
-open(55, file="/home/luke/summer_2020/mesa/test_files/Etrans_nl_params.txt")
-write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
-	"nlines=", nlines, "niso=", niso
-do i=1,nlines
-	write(55,*) R(i), tab_T(i), n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i), Etrans_nl(i)
-enddo
-close(55)
+!! Useful when troubleshooting
+!open(55, file="/home/luke/summer_2020/mesa/test_files/Etrans_nl_params.txt")
+!write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
+!	"nlines=", nlines, "niso=", niso
+!do i=1,nlines
+!	write(55,*) R(i), tab_T(i), n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i), Etrans_nl(i)
+!enddo
+!close(55)
 
 return
 end function
@@ -192,7 +192,7 @@ double precision :: newtons_meth
 x_1 = guess_1
 x_2 = guess_2
 error = tolerance + 1	! So that the first iteration is executed
-print*, "beginning loop"
+
 ! Newton's method loop
 do while (error > tolerance)
 	! Update x_3 using Newton's method formula
@@ -202,7 +202,6 @@ do while (error > tolerance)
 	error = abs(x_3-x_2)
 	x_1 = x_2
 	x_2 = x_3
-	print*, x_3
 enddo
 
 newtons_meth = x_3 ! The solution to the nonlinear equation

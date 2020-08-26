@@ -196,20 +196,19 @@ Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 Etrans_test = Etrans
 call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
-print *, "Transgen: total G&R transported energy = ", EtransTot
 print *, "fogth=", fgoth
 
-! Useful info to have when troubleshooting, but make sure to change the file path!
+! Useful info to have when troubleshooting
 ! Check Ltrans
-open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_gr.dat")
+open(55,file = "Ltrans_gr.dat")
 do i=1,nlines
 	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), nx(i), &
 		tab_starrho(i)
 end do
 close(55)
-open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_gr.dat", access="APPEND")
-write(55,*) mfp(1), maxval(-Ltrans)
-close(55)
+!open(55, file="Lmax_gr.dat", access="APPEND")
+!write(55,*) mfp(1), maxval(-Ltrans)
+!close(55)
 
 return
 
@@ -252,7 +251,7 @@ enddo
 !! Now convert Etrans_sp to Etrans_gr (by multiplying Ltrans by ggoth, a conversion factor). 
 !! Easier to work with Ltrans than Etrans because Ltrans is always positive in both schemes.
 !! Load ggoth
-!open(55, file="/home/luke/summer_2020/mesa/test_files/ggoth.dat")
+!open(55, file="ggoth.dat")
 !do i = 1, 1999
 !	read(55, *) r_mesa(i), ggoth_mesa(i)
 !enddo
@@ -274,22 +273,21 @@ enddo
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
 EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
-print *, "Transgen: total S&P transported energy = ", EtransTot
 
 ! Check the noise in Etrans (same as GR scheme) - note that dTdr_even is just a work array, I'm not actually using 
 ! anything about dTdr in the noise calculation
 Etrans_test = Etrans
 call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
-! Write things to file
-open(55,file = "/home/luke/summer_2020/mesa/test_files/Ltrans_sp.dat")
+! Write various things to file. Ltrans_sp is especially useful when troubleshooting
+open(55,file = "Ltrans_sp.dat")
 do i=1,nlines
 	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i) , tab_T(i), tab_g(i), dTdr(i), nxIso(i), nabund(1,i)
 end do
 close(55)
-open(55, file="/home/luke/summer_2020/mesa/test_files/Lmax_sp.dat", access="APPEND")
-write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
-close(55)
+!open(55, file="Lmax_sp.dat", access="APPEND")
+!write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
+!close(55)
 
 return
 

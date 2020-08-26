@@ -48,4 +48,4 @@ $(MAIN): %.o: %.f90
 
 
 clean:
-	rm -f *.o *.so gentest.x akmod.mod capmod.mod
+	rm -f *.o *.so gentest.x akmod.mod capmod.mod nonlocalmod.mod

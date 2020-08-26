@@ -132,12 +132,6 @@
     tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
     ! print*,GNewt, tab_mencl(nlines),tab_r(nlines), tab_g(nlines)
 
-    open(55,file = "tab_serenelli.dat")
-    do i=1,nlines
-      write(55,*) tab_r(i), tab_starrho(i), tab_vesc(i), tab_mfr(i,:)
-      end do
-      close(55)
-
       ! Populate the atomic number tables here (because it relies on a specific format)
     AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
                       18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
