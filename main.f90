@@ -4,40 +4,12 @@
 !
 !
 
-	module trapzmod
-	contains
-	
-	function trapz(x,y,flen)
-      implicit none
-      integer, intent(in) :: flen
-      double precision, intent (in) :: x(flen), y(flen)
-      double precision trapz
-
-      integer i
-
-
-      trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
-      do i = 2,flen-1
-        trapz = trapz + y(i)*(x(i)-x(i-1))
-
-!        if (trapz .lt. 0.d0) then
-!          print*, "negative encountered in trapz: i = ", i
-!        end if
-      end do
-
-
-      return
-      end function
-	
-	end module
-
     PROGRAM GENCAP
-    use trapzmod
     implicit none
     character*300 :: modfile
     double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
     double precision :: capped_si_spec(250),capped_sd_spec(250), AtomicNumber(29)
-    double precision :: maxcap, nwimpsin, evapRate(101), Tx, Nbar, noise_indicator
+    double precision :: maxcap, nwimpsin, evapRate(101), Tx, noise_indicator
     double precision, allocatable :: Etrans(:), Etrans_all(:,:), msum(:), Ltrans(:), Ltrans_all(:,:)
     double precision :: EtransTot
     integer :: nq, nv, i, j, nlines
@@ -49,7 +21,7 @@
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = 0
     nv = 0
-	nonlocal = .true.
+	nonlocal = .false.
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
@@ -85,15 +57,6 @@
                       18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
                       39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
                       54.93, 55.845, 58.933, 58.693/)
-    
-    ! A useful sum:
-    do i=1,29
-    	msum = msum + tab_mfr(:,i)/AtomicNumber(i)
-    enddo
-    print *, "max(msum)=", maxval(abs(msum))
-    
-    ! Total number of baryons:
-    Nbar = trapz(tab_r*Rsun, msum*tab_starrho/mnucg*4*pi*(tab_r*Rsun)**2, nlines)
 
     do i = 1,1
       
@@ -118,17 +81,11 @@
       print*, "Capture rates (SI, SD): (", capped_si_spec(i), capped_sd_spec(i), ") s^-1"
 
 !      nwimpsin = capped_sd(i)*3.d7*4.57d9
-!	  nwimpsin = 1.d-15*Nbar
 	  nwimpsin = 5.d44
-	  print*, "Total number of baryons: Nbar=", Nbar
       print*,"Calling transgen, with nwimpsin = ", nwimpsin
       call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,noise_indicator,Etrans,Etranstot)
       print*, "Etranstot: ", Etranstot !FIXME units?
 	  Etrans_all(:,i) = Etrans
-!	  do j=1,nlines
-!		  Ltrans(j) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, j)
-!	  enddo
-      Ltrans_all(:,i) = Ltrans
 
       print*,"Calling fastevap."
       call fastevap(sigma_0,1.d0,28,EvapRate(i))
@@ -147,21 +104,12 @@
 
     !Output Etrans to file
     if (nonlocal) then 
-    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_sp.dat")
+    	open(55,file = "gentest_sp.dat")
     else if (.not. nonlocal) then 
-    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_gr.dat")
+    	open(55,file = "gentest_gr.dat")
     endif
 	do i=1,nlines
 		write(55,*) tab_r(i), Etrans_all(i,:)
-	enddo
-	! Also write Ltrans to file
-	if (nonlocal) then 
-    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_Ltrans_sp.dat")
-    else if (.not. nonlocal) then 
-    	open(55,file = "/home/luke/summer_2020/mesa/test_files/gentest_Ltrans_gr.dat")
-    endif
-	do i=1,nlines
-		write(55,*) tab_r(i), Ltrans_all(i,:)
 	enddo
 !    do i=1,50
 !      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
