@@ -26,7 +26,8 @@
       double precision :: usun , u0 ,rho0, vesc_halo, Rsun
       !this goes with the Serenelli table format
       double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
-      double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:),tab_T(:),tab_g(:)
+      double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_atomic(:)
+      double precision, allocatable :: tab_r(:), tab_vesc(:), tab_dr(:),tab_T(:),tab_g(:)
 
       ! nq and nv can be -1, 0, 1, 2; this is set in the main program
       integer :: nq, nv, nlines
@@ -240,9 +241,11 @@
       use capmod
       implicit none
       integer, intent(in):: nq_in, nv_in, niso
+      ! integer, intent(in):: spin_in
       integer eli, ri, limit
       double precision, intent(in) :: mx_in, sigma_0
       double precision :: capped !this is the output
+      ! double precision :: sigma_SD, sigma_SI
       double precision :: maxcap, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
@@ -259,6 +262,14 @@
       mdm = mx_in
       nq = nq_in
       nv = nv_in
+
+      ! if (spin_in == 1) then
+      !   sigma_SD = sigma_0
+      !   sigma_SI = 0.d0
+      ! else if (spin_in == 0) then
+      !   sigma_SD = 0.d0
+      !   sigma_SI = sigma_0
+      ! end if
 
       if (nq*nv .ne. 0) then
       print*, "Oh no! nq and nv can't both be nonzero."
@@ -285,6 +296,7 @@
           a_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
+          ! sigma_N = a**2 * (sigma_SD*a**2 + 4.*sigma_SI) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
           sigma_N = sigma_0 * a**4 * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
 
           mu = mx_in/(mnuc*a)
@@ -340,6 +352,15 @@
 
 
     !! captn_specific calculates the capture rate for constant cross section.
+    ! subroutine captn_specific(mx_in,sigma_0,capped_SD,capped_SI)
+    !   implicit none
+    !   double precision, intent(in) :: mx_in, sigma_0
+    !   double precision :: capped_SD,capped_SI
+
+    !   call captn_general(mx_in,sigma_0,1,0,0,1,capped_SD)
+    !   call captn_general(mx_in,sigma_0,29,0,0,0,capped_SI)
+    ! end subroutine captn_specific
+
     subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
       implicit none
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
@@ -386,6 +407,7 @@
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
     allocate(tab_mfr(nlines,8))       !mass fraction per isotope
+    allocate(tab_atomic(8))
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
@@ -401,6 +423,7 @@
     deallocate(tab_r)
     deallocate(tab_starrho)
     deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
+    deallocate(tab_atomic)
     deallocate(tab_vesc)
     deallocate(tab_T)
     deallocate(tab_dr)
@@ -410,13 +433,15 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! This is called INSTEAD of get_solar_params, for use with MESA interface.
-  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,mesavesc,Tmesa,mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,atomicmesa,mesavesc,Tmesa, &
+                                mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
     use capmod
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines),mesavesc(nlines),mesag(nlines)
-    double precision :: Tmesa(nlines)
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines)
+    double precision :: mesavesc(nlines),mesag(nlines),Tmesa(nlines)
+    double precision :: atomicmesa(8)
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
@@ -434,13 +459,14 @@
     do i= 1,8
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
+    tab_atomic = atomicmesa
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
     end do
     tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
 
-    AtomicNumber(1:8) = (/1., 3., 4., 12., 14., 16., 20., 28.  /)
+    AtomicNumber(1:8) = tab_atomic
 
     RETURN
   end subroutine get_stellar_params
