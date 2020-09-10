@@ -7,17 +7,19 @@
     PROGRAM GENCAP
     implicit none
     character*300 :: modfile
-    character*10 :: outfile
+    character*100 :: outfile(7)
     double precision :: mx, sigma_0,capped_sd,capped_si
     double precision :: capped_si_spec,capped_sd_spec
     double precision :: maxcap, nwimpsin, evapRate
     double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
-    integer :: nq, nv, i, j, nlines
+    integer :: nq(7), nv(7), i, j, nlines
 
     ! Choose velocity and momentum transfer powers in differential cross-section
-    nq = 0
-    nv = 0
+    nq = [0,-1,1,2,0,0,0]
+    nv = [0,0,0,0,-1,1,2]
+
+    outfile = ['const.dat','qm1--.dat','q1---.dat','q2---.dat','vm1--.dat','v1---.dat','v2---.dat']
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
@@ -33,9 +35,8 @@
     call get_alpha_kappa(nq,nv)
 
 
-    ! do j = 1,10
-      ! write(outfile,'(a,i2.2,a)') "mx",j,".dat"
-      open(55,file = "mx10_sun_const.dat")
+    do j = 1,7
+      open(94,file = outfile(j))
       do i = 1,100
         ! mx = 0d0 + dble(i)/5.
         mx = 10.d0
@@ -50,7 +51,7 @@
         ! print*, "Capture rate", capped_si, "s^-1"
 
         ! print*,"Calling captn_general for SD scattering."
-        call captn_general(mx,sigma_0,1,nq,nv,capped_sd)
+        call captn_general(mx,sigma_0,1,nq(j),nv(j),1,capped_sd)
         ! print*, "Capture rate", capped_sd, "s^-1"
 
         ! print*,"Calling captn_specific for SI and SD scattering."
@@ -60,25 +61,17 @@
         nwimpsin = 1.2d42
         ! nwimpsin = capped_sd*3.d7*4.57d9
         ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        call transgen(sigma_0,nwimpsin,1,nq,nv,Etrans,Etranstot)
+        call transgen(sigma_0,nwimpsin,1,nq(j),nv(j),1,Etrans,Etranstot)
         ! print*, "Etranstot: ", Etranstot !FIXME units?
 
         ! print*,"Calling fastevap."
         ! call fastevap(sigma_0,1.d0,28,EvapRate)
         ! print*,"Evap rate: ", EvapRate, "s^-1"
 
-        write(55,*) sigma_0, mx, capped_sd, Etranstot
+        write(94,*) sigma_0, mx, capped_sd, Etranstot
       end do
-      close(55)
-    ! end do
-
-    ! Output results to file
-    ! open(55,file = "gencap.dat")
-    ! do i=1,50
-    !  write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
-    !  write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
-    ! end do
-    ! close(55)
+      close(94)
+    end do
 
     END PROGRAM GENCAP
 !

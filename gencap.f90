@@ -237,15 +237,15 @@
     ! end subroutine captn_mesa
 
 
-    subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,capped)
+    subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
       use capmod
       implicit none
-      integer, intent(in):: nq_in, nv_in, niso
+      integer, intent(in):: nq_in, nv_in, niso, spin_in
       ! integer, intent(in):: spin_in
       integer eli, ri, limit
       double precision, intent(in) :: mx_in, sigma_0
       double precision :: capped !this is the output
-      ! double precision :: sigma_SD, sigma_SI
+      double precision :: sigma_SD, sigma_SI
       double precision :: maxcap, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
@@ -263,13 +263,13 @@
       nq = nq_in
       nv = nv_in
 
-      ! if (spin_in == 1) then
-      !   sigma_SD = sigma_0
-      !   sigma_SI = 0.d0
-      ! else if (spin_in == 0) then
-      !   sigma_SD = 0.d0
-      !   sigma_SI = sigma_0
-      ! end if
+      if (spin_in == 1) then
+        sigma_SD = sigma_0
+        sigma_SI = 0.d0
+      else if (spin_in == 0) then
+        sigma_SD = 0.d0
+        sigma_SI = sigma_0
+      end if
 
       if (nq*nv .ne. 0) then
       print*, "Oh no! nq and nv can't both be nonzero."
@@ -296,8 +296,7 @@
           a_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
-          ! sigma_N = a**2 * (sigma_SD*a**2 + 4.*sigma_SI) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
-          sigma_N = sigma_0 * a**4 * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
+          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
 
           mu = mx_in/(mnuc*a)
           muplus = (1.+mu)/2.
@@ -366,8 +365,8 @@
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
       double precision :: capped_SD,capped_SI
 
-      call captn_general(mx_in,sigma_0_SD_in,1,0,0,capped_SD)
-      call captn_general(mx_in,sigma_0_SI_in,29,0,0,capped_SI)
+      call captn_general(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
+      call captn_general(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
     end subroutine captn_specific
 
 
