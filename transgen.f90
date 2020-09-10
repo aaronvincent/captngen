@@ -15,13 +15,13 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,etrans,EtransTot)
 !mdm is stored in capmod
 use capmod
 use akmod
 implicit none
 !nlines might be redundant
-integer, intent(in):: niso, nv_in, nq_in
+integer, intent(in):: niso, nv_in, nq_in, spin_in
 logical splinelog !for PCHIP
 double precision, intent(in) :: sigma_0, Nwimps
 integer, parameter :: decsize = 180 !this should be done a bit more carefully
@@ -30,6 +30,7 @@ double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
 double precision :: mxg, q0_cgs, rchi, Tc,rhoc,K, integrand
 double precision :: capped, maxcap !this is the output
+double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
 double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
@@ -56,6 +57,14 @@ rhoc = tab_starrho(1)
 nq = nq_in
 nv = nv_in
 
+if (spin_in == 1) then
+  sigma_SD = sigma_0
+  sigma_SI = 0.d0
+else if (spin_in == 0) then
+  sigma_SD = 0.d0
+  sigma_SI = sigma_0
+end if
+
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
 if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in transgen"
@@ -66,20 +75,21 @@ phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
 !remember, nq and nv are set in darkInputs.txt for DarkMESA or if not, just in main
-! call get_alpha_kappa(nq,nv)
+call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 
 print*,'niso = ', niso
 
 do i = 1,niso
-    !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
-    muarray(i) = mdm/AtomicNumber(i)/mnuc
-    sigma_N(i) = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2 !not yet multiplied by sigma_0
-    nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/AtomicNumber(i)/mnucg
-    !these shouldn't really be done every iteration, can fix later
-    call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
-    call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
+  a = AtomicNumber(i)
+  !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
+  muarray(i) = mdm/a/mnuc
+  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2 !not yet multiplied by sigma_0
+  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
+  !these shouldn't really be done every iteration, can fix later
+  call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
+  call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
 end do
 
 ! PS: I've commented out the following line -- the array bounds don't match, so it
@@ -96,31 +106,31 @@ end do
 ! equations from 1311.2074 (eqns 69 to 74 on arxiv copy)
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
+    mfp(i) = 1./sum(sigma_N*nabund(:,i)) !factor of 2 b/c  sigma_tot = 2 sigma_0
   end do
 else if ((nq .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2))/sigma_0/2.
+    mfp(i) = 1./sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2))
   end do
 else if ((nq .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4))/sigma_0/2.
+    mfp(i) = 1./sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4))
   end do
 else if ((nq .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2)/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2)
   end do
 else if ((nv .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))
   end do
 else if ((nv .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))
   end do
 else if ((nv .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))/sigma_0/2.
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))
   end do
 end if
 
@@ -182,19 +192,19 @@ do i = 1,nlines
   !get alpha & kappa averages
   alphaofR(i) = sum(alpha*sigma_N*nabund(:,i))/sum(sigma_N*nabund(:,i))
   if ((nq .eq. 0) .and. (nv .eq. 0)) then
-    kappaofR(i) = mfp(i)*sum(sigma_0*sigma_N*nabund(:,i)/kappa)
+    kappaofR(i) = mfp(i)*sum(sigma_N*nabund(:,i)/kappa)
   else if ((nq .eq. 1)) then
-    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_0*sigma_N/(1.+muarray)/(zeta_q**2)/kappa)
+    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q**2)/kappa)
   else if ((nq .eq. 2)) then
-    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_0*sigma_N/((1.+muarray)**2)/(zeta_q**4)/kappa)
+    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q**4)/kappa)
   else if ((nq .eq. -1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*(1.+muarray)*zeta_q**2/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q**2/kappa)
   else if ((nv .eq. 1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*(1.+muarray)*3./2./(zeta_v**2)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v**2)/kappa)
   else if ((nv .eq. 2)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*((1.+muarray)**2)*15./4./(zeta_v**4)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v**4)/kappa)
   else if ((nv .eq. -1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_0*sigma_N*2*zeta_v**2/(1.+muarray)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v**2/(1.+muarray)/kappa)
   end if
   kappaofR(i) = 1./kappaofR(i)
 
