@@ -237,12 +237,13 @@
     ! end subroutine captn_mesa
 
 
-    subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
+    subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped,capiso)
       use capmod
+      use omp_lib
       implicit none
       integer, intent(in):: nq_in, nv_in, niso, spin_in
       ! integer, intent(in):: spin_in
-      integer eli, ri, limit
+      integer eli, ri, limit, i
       double precision, intent(in) :: mx_in, sigma_0
       double precision :: capped !this is the output
       double precision :: sigma_SD, sigma_SI
@@ -250,6 +251,7 @@
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
       double precision, allocatable :: u_int_res(:)
+      double precision, dimension(niso) :: capiso
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
       external integrand
@@ -282,25 +284,26 @@
       allocate(u_int_res(nlines))
 
       capped = 0.d0
+      !Loop over the different elements
+    !$OMP parallel do
+      do eli = 1, niso
+        capiso(eli) = 0.d0
 
-      !Loop over the shells of constant radius in the star
-      do ri = 1, nlines
+        a = AtomicNumber(eli)
+        a_shared = a !make accessible via the module
 
-        vesc = tab_vesc(ri)
-        vesc_shared = vesc !make accessible via the module
+        !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
+        sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
 
-        !Loop over the different elements
-        do eli = 1, niso
+        mu = mx_in/(mnuc*a)
+        muplus = (1.+mu)/2.
+        muminus = (mu-1.d0)/2.
 
-          a = AtomicNumber(eli)
-          a_shared = a !make accessible via the module
+        !Loop over the shells of constant radius in the star
+        do ri = 1, nlines
 
-          !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
-          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
-
-          mu = mx_in/(mnuc*a)
-          muplus = (1.+mu)/2.
-          muminus = (mu-1.d0)/2.
+          vesc = tab_vesc(ri)
+          vesc_shared = vesc !make accessible via the module
 
           ! Bottom part of the integral is always zero -- happy little slow DM particles can always be captured.
           umin = 0.d0
@@ -312,17 +315,21 @@
           epsabs,epsrel,limit,u_int_res(ri),abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           u_int_res(ri) = u_int_res(ri) * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
           capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+          capiso(eli) = capiso(eli) + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
           if (isnan(capped)) then
             capped = 0.d0
-            stop 'NaN encountered whilst trying compute capture rate.'
+            capiso(eli) = 0.d0
+            ! stop 'NaN encountered whilst trying compute capture rate.'
           end if
 
         end do
 
       end do
+    !$OMP end parallel do
 
       capped = 4.d0*pi*Rsun**3*capped
+      capiso(:) = 4.d0*pi*Rsun**3*capiso(:)
 
       if (capped .gt. 1.d100) then
         print*,"Capt'n General says: Oh my, it looks like you are capturing an"
@@ -364,9 +371,11 @@
       implicit none
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
       double precision :: capped_SD,capped_SI
+      double precision, dimension(1) :: capiso_SD
+      double precision, dimension(29) :: capiso_SI
 
-      call captn_general(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
-      call captn_general(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
+      call captn_general(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD,capiso_SD)
+      call captn_general(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI,capiso_SI)
     end subroutine captn_specific
 
 
@@ -405,8 +414,8 @@
     allocate(tab_mencl(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
-    allocate(tab_mfr(nlines,8))       !mass fraction per isotope
-    allocate(tab_atomic(8))
+    allocate(tab_mfr(nlines,15))       !mass fraction per isotope
+    allocate(tab_atomic(15))
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
@@ -438,9 +447,9 @@
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines)
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(15,nlines)
     double precision :: mesavesc(nlines),mesag(nlines),Tmesa(nlines)
-    double precision :: atomicmesa(8)
+    double precision :: atomicmesa(15)
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
@@ -455,7 +464,7 @@
     tab_vesc = mesavesc
     tab_T = tmesa
     tab_g = -mesag
-    do i= 1,8
+    do i= 1,15
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
@@ -465,7 +474,7 @@
     end do
     tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
 
-    AtomicNumber(1:8) = tab_atomic
+    AtomicNumber(1:15) = tab_atomic
 
     RETURN
   end subroutine get_stellar_params

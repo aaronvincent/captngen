@@ -11,13 +11,14 @@
     double precision :: mx, sigma_0,capped_sd,capped_si
     double precision :: capped_si_spec,capped_sd_spec
     double precision :: maxcap, nwimpsin, evapRate
-    double precision, allocatable :: Etrans(:)
+    double precision, allocatable :: Etrans(:), capiso(:)
     double precision :: EtransTot
-    integer :: nq(7), nv(7), i, j, nlines
+    integer :: nq(7), nv(7), i, j, nlines, niso
 
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
     nv = [0,0,0,0,-1,1,2]
+    niso = 2
 
     outfile = ['const.dat','qm1--.dat','q1---.dat','q2---.dat','vm1--.dat','v1---.dat','v2---.dat']
 
@@ -32,6 +33,7 @@
     ! Initialise transport calculations
     call getnlines(nlines)
     allocate(etrans(nlines))
+    allocate(capiso(niso))
     call get_alpha_kappa(nq,nv)
 
 
@@ -51,7 +53,7 @@
         ! print*, "Capture rate", capped_si, "s^-1"
 
         ! print*,"Calling captn_general for SD scattering."
-        call captn_general(mx,sigma_0,1,nq(j),nv(j),1,capped_sd)
+        call captn_general(mx,sigma_0,niso,nq(j),nv(j),1,capped_sd,capiso)
         ! print*, "Capture rate", capped_sd, "s^-1"
 
         ! print*,"Calling captn_specific for SI and SD scattering."
@@ -61,14 +63,14 @@
         nwimpsin = 1.2d42
         ! nwimpsin = capped_sd*3.d7*4.57d9
         ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        call transgen(sigma_0,nwimpsin,1,nq(j),nv(j),1,Etrans,Etranstot)
+        call transgen(sigma_0,nwimpsin,niso,nq(j),nv(j),1,Etrans,Etranstot)
         ! print*, "Etranstot: ", Etranstot !FIXME units?
 
         ! print*,"Calling fastevap."
         ! call fastevap(sigma_0,1.d0,28,EvapRate)
         ! print*,"Evap rate: ", EvapRate, "s^-1"
 
-        write(94,*) sigma_0, mx, capped_sd, Etranstot
+        write(94,*) sigma_0, mx, capped_sd, capiso(1), capiso(2), Etranstot
       end do
       close(94)
     end do
