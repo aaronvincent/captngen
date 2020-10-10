@@ -239,7 +239,6 @@
 
     subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped,capiso)
       use capmod
-      use omp_lib
       implicit none
       integer, intent(in):: nq_in, nv_in, niso, spin_in
       ! integer, intent(in):: spin_in
@@ -283,9 +282,9 @@
       end if
       allocate(u_int_res(nlines))
 
+      maxcapped = maxcap(mx_in)
       capped = 0.d0
       !Loop over the different elements
-    !$OMP parallel do
       do eli = 1, niso
         capiso(eli) = 0.d0
 
@@ -314,8 +313,12 @@
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,u_int_res(ri),abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           u_int_res(ri) = u_int_res(ri) * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
-          capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
-          capiso(eli) = capiso(eli) + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+          if (capped .lt. maxcapped) then
+            capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+            capiso(eli) = capiso(eli) + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+          else
+            capped = maxcapped
+          endif
 
           if (isnan(capped)) then
             capped = 0.d0
@@ -326,7 +329,6 @@
         end do
 
       end do
-    !$OMP end parallel do
 
       capped = 4.d0*pi*Rsun**3*capped
       capiso(:) = 4.d0*pi*Rsun**3*capiso(:)
@@ -336,10 +338,6 @@
         print*,"infinite amount of dark matter in the Sun. Best to look into that."
       end if
 
-      maxcapped = maxcap(mx_in)
-      if (capped .gt. maxcapped) then
-        capped = maxcapped
-      end if
     end subroutine captn_general
 
 
