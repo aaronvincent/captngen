@@ -83,7 +83,7 @@
       !read in solar parameters from Aldo Serenelli-style files, with header removed
       subroutine get_solar_params(filename,nlines)
         character*300 :: filename
-        double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
+        double precision :: Pres, Lumi !these aren't used, but dummies are required
         double precision, allocatable :: phi(:) !this is used briefly
         integer :: i,j, nlines,iostatus
 
