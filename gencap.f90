@@ -21,7 +21,6 @@
       implicit none
       double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15,GNewt = 6.672d-8
       double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
-      double precision, parameter :: eps = 0d-10 !stops divisions by zero (don't think it is needed now)
       !these are now set in captn_init
       double precision :: usun , u0 ,rho0, vesc_halo, Rsun
       !this goes with the Serenelli table format
