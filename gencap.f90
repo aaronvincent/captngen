@@ -87,10 +87,10 @@
         double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
         double precision, allocatable :: phi(:) !this is used briefly
         integer :: i,j, nlines,iostatus
-        !Get number of lines in the file
 
         Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
 
+        !Get number of lines in the file
         open(99,file=filename)
         nlines=0
         do
