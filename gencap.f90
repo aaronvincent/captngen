@@ -247,8 +247,7 @@
       end if
 
       if (nq*nv .ne. 0) then
-      print*, "Oh no! nq and nv can't both be nonzero."
-      return
+        stop "Oh no! nq and nv can't both be nonzero."
       end if
 
       if (.not. allocated(tab_r)) then
