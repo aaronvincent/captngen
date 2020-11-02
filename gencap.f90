@@ -212,24 +212,6 @@
     end function integrand
 
 
-    ! This is for use with MESA arrays specifically (though could likely be used for GARSTEC)
-    ! star initialization done elsewhere
-    ! subroutine captn_mesa(mx_in,sigma_0_in,niso_in,nq_in,nv_in,capped)
-    !   subroutine captn_mesa()
-    !   use capmod
-    !   implicit none
-    !   ! integer, intent(in):: nq_in, niso_in, nv_in
-    !   integer i, ri
-    !   ! double precision, intent(in) :: mx_in, sigma_0_in
-    !   double precision :: capped, maxcap !this is the output
-    !   double precision :: epsabs, epsrel,limit,result,abserr,neval !for integrator
-    !   double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
-    !   double precision, allocatable :: u_int_res(:)
-    !
-    !
-    ! end subroutine captn_mesa
-
-
     subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
       use capmod
       implicit none
