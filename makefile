@@ -1,14 +1,14 @@
 FC=gfortran
 FOPT= -O3 -fPIC #-Wall -fbounds-check
-AUXDIR = ./numerical
+NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 # TSDIR = ./numerical/TSPACK
 
 MAIN = main.o
 MFOBJ = gencap.o
 TRGOBJ = alphakappamod.o transgen.o fastevap.o
-NUMOBJ =  dgamic.o d1mach.o
-AUXOBJ = sgolay.o spline.o pchip.o
+NUMFOBJ =  dgamic.o d1mach.o
+NUMF90OBJ = sgolay.o spline.o pchip.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 
 
@@ -16,18 +16,18 @@ QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
  INTRVL.o HVAL.o HPVAL.o
 
 
-gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
-	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
-#	rm $(MFOBJ) $(NUMOBJ) $(QAG)
+gentest.x: $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG)
+	${FC} -o gentest.x $(MAIN) $(MFOBJ) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG)
+#	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
 
-gencaplib.so: $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
-	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(TRGOBJ) $(NUMOBJ) $(AUXOBJ) $(QAG)
+gencaplib.so: $(MFOBJ) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG)
+	$(FC) $(FOPT) -shared -o $@ $(MFOBJ) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG)
 
-$(NUMOBJ): %.o : $(AUXDIR)/%.f
+$(NUMFOBJ): %.o : $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
 
-$(AUXOBJ): %.o : $(AUXDIR)/%.f90
+$(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
 	$(FC) $(FOPT) -c  $<
 
 $(TSOBJ): %.o : $(TSDIR)/%.f
