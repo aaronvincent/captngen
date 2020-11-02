@@ -38,8 +38,7 @@
     do j = 1,7
       open(94,file = outfile(j))
       do i = 1,100
-        ! mx = 0d0 + dble(i)/5.
-        mx = 10.d0
+        mx = 0d0 + dble(i)/5.
         sigma_0 = 10d0**(-50+dble(i)/5.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
