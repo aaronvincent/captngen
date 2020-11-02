@@ -27,7 +27,7 @@
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
     ! Initialise capture calculations
-    call captn_init(modfile,0.4d0,220.d0,220.d0,600.d0)
+    call captn_init(modfile,0.4d0,235.d0,235.d0,550.d0)
 
     ! Initialise transport calculations
     call getnlines(nlines)
