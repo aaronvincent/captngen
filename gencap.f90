@@ -56,8 +56,7 @@
         G = (p/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
         *((mu/muplus**2)**(dble(nq)+1.)-(u**2/w**2)**(dble(nq)+1.))
       else
-        !eps added to make the log finite: the value of eps does not affect the answer
-        G = ((p)/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*log(mu/muplus**2*w**2/(u+eps)**2)
+        G = ((p)/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*log(mu/muplus**2*w**2/(u)**2)
       endif
       GFFI_H = G
       end function GFFI_H
@@ -74,8 +73,8 @@
         if (nq .eq. 0) then
           GFFI_A = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
         else
-          GFFI_A = ((p+eps)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/w**2+eps) &
-                  - dgamic(1.+dble(nq),B*mu/muplus**2+eps))
+          GFFI_A = ((p)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/w**2) &
+                  - dgamic(1.+dble(nq),B*mu/muplus**2))
         end if
       end function GFFI_A
 
