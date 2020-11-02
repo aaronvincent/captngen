@@ -17,6 +17,12 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
 
   integer :: i, j, k
+
+  ! User warning:
+  print*, "WARNING!"
+  print*, "HEY! This is the fast evaporation routine - it DOES NOT WORK in the LTE limit"
+  print*, "Make sure you aren't underestimating the evaporation rate!"
+
   mdmg = mdm*1.78d-24
   mnucg = mnuc*1.78d-24
 
