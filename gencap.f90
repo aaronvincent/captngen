@@ -223,7 +223,7 @@
       double precision :: maxcap, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
-      double precision, allocatable :: u_int_res(:)
+      double precision :: int_result
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
       external integrand
@@ -252,7 +252,6 @@
       if (.not. allocated(tab_r)) then
         stop "You haven't yet called captn_init to load the solar model!"
       end if
-      allocate(u_int_res(nlines))
 
       capped = 0.d0
 
@@ -282,9 +281,9 @@
 
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
-          epsabs,epsrel,limit,u_int_res(ri),abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          u_int_res(ri) = u_int_res(ri) * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
-          capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+          epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+          int_result = int_result * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
+          capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
             capped = 0.d0
