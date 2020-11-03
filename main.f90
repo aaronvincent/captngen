@@ -13,7 +13,7 @@
     double precision :: maxcap, nwimpsin, evapRate
     double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
-    integer :: nq(7), nv(7), i, j, nlines
+    integer :: nq(7), nv(7), i, j, nlines, num_isotopes, spin_dependency
 
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -25,6 +25,12 @@
     !modfile = "solarmodels/model_gs98_nohead.dat"
     !modfile = "solarmodels/struct_b16_agss09_nohead.dat"
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
+
+    ! number of isotopes capt'n will loop over in the calculation: up to 29 isotopes
+    num_isotopes = 29
+
+    ! zero for spin_independent, one for spin_dependent
+    spin_dependency = 0
 
     ! Initialise capture calculations
     call captn_init(modfile,0.4d0,235.d0,235.d0,550.d0)
@@ -50,7 +56,7 @@
         ! print*, "Capture rate", capped_si, "s^-1"
 
         ! print*,"Calling captn_general for SD scattering."
-        call captn_general(mx,sigma_0,1,nq(j),nv(j),1,capped_sd)
+        call captn_general(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
         ! print*, "Capture rate", capped_sd, "s^-1"
 
         ! print*,"Calling captn_specific for SI and SD scattering."
@@ -60,7 +66,7 @@
         nwimpsin = 1.2d42
         ! nwimpsin = capped_sd*3.d7*4.57d9
         ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        call transgen(sigma_0,nwimpsin,1,nq(j),nv(j),1,Etrans,Etranstot)
+        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,Etrans,Etranstot)
         ! print*, "Etranstot: ", Etranstot !FIXME units?
 
         ! print*,"Calling fastevap."
