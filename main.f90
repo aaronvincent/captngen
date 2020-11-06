@@ -45,11 +45,11 @@
       open(94,file = outfile(j))
       write(94,*) "Number of Isotopes: ", num_isotopes
       write(94,*) "Spin Dependency: ", spin_dependency
-      write(94,*) "Power: ", outfile(j) 
+      write(94,*) "Power: ", outfile(j)
       write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
-      do i = 1,100
-        mx = 0d0 + dble(i)/5.
-        sigma_0 = 10d0**(-50+dble(i)/5.)
+      do i = 1,10
+        mx = 5.d0 + dble(i)/5.
+        sigma_0 = 10d0**(-45+dble(i)/2.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 

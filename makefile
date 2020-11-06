@@ -1,5 +1,5 @@
 FC=gfortran
-FOPT= -O3 -fPIC #-std=legacy #must be added if you are running gcc 10 or later #-Wall -fbounds-check
+FOPT= -O3 -fPIC -std=legacy #latter is required if you are running gcc 10 or later #-Wall -fbounds-check
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 # TSDIR = ./numerical/TSPACK
