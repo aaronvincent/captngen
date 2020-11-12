@@ -22,8 +22,13 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
  INTRVL.o HVAL.o HPVAL.o
 
 
-gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+gentest.x: $(MAIN) $(MFSHR) $(MFOBJ)  $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	${FC} -o gentest.x $(MAIN) $(MFSHR) $(MFOBJ)  $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+#	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
+
+
+gencaplib.so: $(MFSHR) $(MFOBJ)  $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ)  $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 $(NUMFOBJ): %.o : $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
@@ -32,9 +37,6 @@ $(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
 	$(FC) $(FOPT) -c  $<
 
 $(TSOBJ): %.o : $(TSDIR)/%.f
-	$(FC) $(FOPT) -c  $<
-
-$(MAIN): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
 $(MFSHR): %.o: %.f90
