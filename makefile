@@ -1,27 +1,38 @@
 FC=gfortran
-FOPT= -O3 -fPIC# -fopenmp
+FOPT= -O3 -fPIC -std=legacy #latter is required if you are running gcc 10 or later #-Wall -fbounds-check
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
+# TSDIR = ./numerical/TSPACK
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = mainTest.o #mainOper.o
+MAIN = main.o
 MFSHR = sharedcap.o
 MFOBJ = gencap.o
 MFCAP = opercap.o
-NUMOBJ =  dgamic.o d1mach.o
+TRGOBJ = alphakappamod.o transgen.o fastevap.o
+NUMFOBJ =  dgamic.o d1mach.o
+NUMF90OBJ = sgolay.o spline.o pchip.o
 QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
 WFUNC = WM.o WS2.o WS1.o WP2.o WMP2.o WP1.o WD.o WS1D.o
 RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
 
 
-gentest.x: $(MAIN) $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
-	${FC} $(FOPT) -o gentest.x $(MAIN) $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
+# TSOBJ = ENDSLP.o SIGS.o SNHCSH.o STORE.o YPCOEF.o YPC1.o YPC1P.o YPC2.o YPC2P.o TSPSI.o \
+ INTRVL.o HVAL.o HPVAL.o
 
 
-gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(NUMOBJ) $(QAG) $(WFUNC) $(RFUNC)
+gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
+$(NUMFOBJ): %.o : $(NUMDIR)/%.f
+	$(FC) $(FOPT) -c  $<
+
+$(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
+	$(FC) $(FOPT) -c  $<
+
+$(TSOBJ): %.o : $(TSDIR)/%.f
+	$(FC) $(FOPT) -c  $<
 
 $(MAIN): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
@@ -33,6 +44,12 @@ $(MFOBJ): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
 $(MFCAP): %.o: %.f90
+	$(FC) $(FOPT) -c  $<
+
+$(TRGOBJ): %.o: %.f90
+	$(FC) $(FOPT) -c $<
+
+$(MAIN): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
 $(NUMOBJ): %.o: $(NUMDIR)/%.f
@@ -49,4 +66,4 @@ $(RFUNC): %.o: $(RDIR)/%.f
 
 
 clean:
-	rm -f *.o *.so *.mod gentest.x
+	rm -f *.o *.mod *.so gentest.x
