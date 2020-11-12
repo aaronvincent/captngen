@@ -74,6 +74,7 @@ module sharedmod
         allocate(tab_dr(nlines))
         allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
         allocate(tab_g(nlines))
+        allocate(tab_mfr_oper(nlines,16)) ! for the operator method
 
 
         !now actually read in the file
