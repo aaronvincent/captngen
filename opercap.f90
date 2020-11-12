@@ -64,246 +64,6 @@ module opermod
                 - dgamic(1.+dble(mq),B*mu/muplus**2))
         end if
     end function GFFI_A_oper
-    
-    ! ! breaks the function W into each term, and sums them with the corresponding GFFI
-    ! function sumW(w,vesc,iso,tau,tauprime,Wtype,qOffset)
-    !     double precision :: w,vesc,yConverse,sumW,tally
-    !     integer :: k,iso,tau,tauprime,Wtype,qOffset
-    !     double precision :: G
-    !     ! y = yConverse * q^2
-    !     ! yConverse is the conversion factor to go from q^2 to y
-    !     yConverse = 2/3.*((0.91*(mnuc*AtomicNumber_oper(iso))**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2
-    !     tally = 0
-    !     !$OMP parallel default(shared) private(k, G)
-    !     !$OMP do
-    !     do k=1,7
-    !         if (iso.eq.1) then
-    !             G = GFFI_H_oper(w,vesc,(k-1+qOffset))
-    !         else
-    !             G = GFFI_A_oper(w,vesc,AtomicNumber_oper(iso),(k-1+qOffset))
-    !         end if
-    !         tally = tally + W_array(Wtype,iso,tau,tauprime,k) * yConverse**(k-1) * G
-    !     end do
-    !     !$OMP end do
-    !     !$OMP end parallel
-    !     sumW = tally
-    ! end function sumW
-    
-    ! ! this is eqn 3.23 in 1501.03729
-    ! ! large sum handled through expansion of R functions
-    ! ! many if statements used to check for terms excluded by choice of constants (c1,c3..c15) = 0
-    ! function p_tot(w,vesc,i)
-    !     double precision :: w,vesc, p_tot
-    !     double precision :: m_T,mu_T,GF
-    !     integer :: i,tau,taup
-    !     integer :: c, v2, q2, v2q2, q4, v2q4
-    !     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2
-        
-    !     c = 0
-    !     v2 = 1
-    !     q2 = 2
-    !     v2q2 = 3
-    !     q4 = 4
-    !     v2q4 = 5
-
-    !     ! get the target nucleus mass m_T and the nucleus-dm reduced mass mu_T
-    !     m_T = mnuc * AtomicNumber_oper(i)
-    !     mu_T = (m_T*mdm)/(m_T+mdm)
-
-    !     ! use GFFI_H for hydrogen or y~0
-    !     ! do a check to see if y can simplify W to a constant
-        
-    !     ! the sum in eqn 3.23 of paper 1501.03729
-    !     ! expanded the R functions into each term of consatnt, v^2n, and q^2n
-    !     ! check to see if choice of couping constants has zeroed out any R term before doinng any more work with it
-    !     ! if not zerod out, is added to sum (sumW expands the W functions as polynomials as given in paper's appendix)
-    !     ! note! coupling constants are 2d array of length 14 (c1,c3,c4...c14,c15) (note absence of c2)
-    !     ! this results in array call of index [1] -> c1, but a call of index [2] -> c3 !
-    !     p_tot = 0.0
-    !     !$OMP  parallel default(shared) private(tau)
-    !     !$OMP  do
-    !     do tau=1,2
-    !         !$OMP  parallel default(shared) private(taup)
-    !         !$OMP  do
-    !         do taup=1,2
-    !             ! RM (c, v2, q2, v2q2)
-    !             ! c1,c1
-    !             if ((coupling_Array(1,tau).ne.0).and.(coupling_Array(1,taup).ne.0)) then
-    !                 p_tot = p_tot + RM(mnuc,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,1,0)
-    !             end if
-    !             ! c8,c8
-    !             if ((coupling_Array(7,tau).ne.0).and.(coupling_Array(7,taup).ne.0)) then
-    !                 p_tot = p_tot + RM(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,0) &
-    !                             - RM(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,1,1) 
-    !             end if
-    !             ! c11,c11
-    !             if ((coupling_Array(10,tau).ne.0).and.(coupling_Array(10,taup).ne.0)) then
-    !                 p_tot = p_tot + RM(mnuc,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,1,1)
-    !             end if
-    !             ! c5,c5
-    !             if ((coupling_Array(4,tau).ne.0).and.(coupling_Array(4,taup).ne.0)) then
-    !                 p_tot = p_tot + RM(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,1,1) &
-    !                             - RM(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,1,2) 
-    !             end if
-                
-    !             ! RS2 (c, v2, q2, v2q2, q4)
-    !             ! c4,c4
-    !             if ((coupling_Array(3,tau).ne.0).and.(coupling_Array(3,taup).ne.0)) then
-    !                 p_tot = p_tot + RS2(mnuc,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,0) 
-    !             end if
-    !             ! c12,c12
-    !             if ((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0)) then
-    !                 p_tot = p_tot + RS2(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,0) &
-    !                             - RS2(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,2,1)
-    !             end if
-    !             ! c10,c10 or c4,c6 or c6,c4
-    !             if (((coupling_Array(9,tau).ne.0).and.(coupling_Array(9,taup).ne.0)).or. &
-    !                     ((coupling_Array(3,tau).ne.0).and.(coupling_Array(5,taup).ne.0)).or. &
-    !                     ((coupling_Array(5,tau).ne.0).and.(coupling_Array(3,taup).ne.0))) then
-    !                 p_tot = p_tot + RS2(mnuc,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,1)
-    !             end if
-    !             ! c13,c13
-    !             if ((coupling_Array(12,tau).ne.0).and.(coupling_Array(12,taup).ne.0)) then
-    !                 p_tot = p_tot + RS2(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,2,1) &
-    !                             - RS2(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,2,2)
-    !             end if
-    !             ! c6,c6
-    !             if ((coupling_Array(5,tau).ne.0).and.(coupling_Array(5,taup).ne.0)) then
-    !                 p_tot = p_tot + RS2(mnuc,c0,tau,taup,q4,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,2,2)
-    !             end if
-                
-    !             ! RS1 (c, v2, q2, v2q2, v2q4)
-    !             ! c4,c4
-    !             if ((coupling_Array(3,tau).ne.0).and.(coupling_Array(3,taup).ne.0)) then
-    !                 p_tot = p_tot + RS1(mnuc,c0,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,3,0)
-    !             end if
-    !             ! c7,c7 or c12,c12
-    !             if (((coupling_Array(6,tau).ne.0).and.(coupling_Array(6,taup).ne.0)).or. &
-    !                     ((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
-    !                 p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,0) &
-    !                             - RS1(mnuc,c0,tau,taup,v2,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,1)
-    !             end if
-    !             ! c9,c9
-    !             if ((coupling_Array(8,tau).ne.0).and.(coupling_Array(8,taup).ne.0)) then
-    !                 p_tot = p_tot + RS1(mnuc,c0,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,3,1)
-    !             end if
-    !             ! c3,c3 or c14,c14 or c15,c12 or c12,c15
-    !             if (((coupling_Array(2,tau).ne.0).and.(coupling_Array(2,taup).ne.0)).or. &
-    !                     ((coupling_Array(13,tau).ne.0).and.(coupling_Array(13,taup).ne.0)).or. &
-    !                     ((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0)).or. &
-    !                     ((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
-    !                 p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * w**2 * sumW(w,vesc,i,tau,taup,3,1)&
-    !                             -RS1(mnuc,c0,tau,taup,v2q2,j_chi,coupling_Array)  * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,2)
-    !             end if
-    !             ! c15,c15
-    !             if ((coupling_Array(14,tau).ne.0).and.(coupling_Array(14,taup).ne.0)) then
-    !                 p_tot = p_tot + RS1(mnuc,c0,tau,taup,v2q4,j_chi,coupling_Array) * w**2 * sumW(w,vesc,i,tau,taup,3,2) &
-    !                             - RS1(mnuc,c0,tau,taup,v2q4,j_chi,coupling_Array) * c0**2/(4.*mu_T**2) * sumW(w,vesc,i,tau,taup,3,3) 
-    !             end if
-                
-    !             ! RP2 (c, q2, q4)
-    !             ! c12,c12
-    !             if (((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RP2(mnuc,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,1)
-    !             end if
-    !             ! c3,c3 or c12,c15 or c15,c12
-    !             if (((coupling_Array(2,tau).ne.0).and.(coupling_Array(2,taup).ne.0)).or. &
-    !                     ((coupling_Array(11,tau).ne.0).and.(coupling_Array(14,taup).ne.0)).or. &
-    !                     ((coupling_Array(14,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RP2(mnuc,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,2)
-    !             end if
-    !             ! c15,c15
-    !             if (((coupling_Array(14,tau).ne.0).and.(coupling_Array(14,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RP2(mnuc,tau,taup,q4,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,4,3)
-    !             end if
-                
-    !             ! RMP2 (c, q2)
-    !             ! c3,c1 or c12,c11
-    !             if (((coupling_Array(2,tau).ne.0).and.(coupling_Array(1,taup).ne.0)).or. &
-    !                     ((coupling_Array(11,tau).ne.0).and.(coupling_Array(10,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RMP2(mnuc,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,5,1)
-    !             end if
-    !             ! c15,c11
-    !             if (((coupling_Array(14,tau).ne.0).and.(coupling_Array(10,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RMP2(mnuc,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,5,2)
-    !             end if
-                
-    !             ! RP1 (c, q2)
-    !             ! c12,c12
-    !             if (((coupling_Array(11,tau).ne.0).and.(coupling_Array(11,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RP1(mnuc,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,6,1) 
-    !             end if
-    !             ! c13,c13
-    !             if (((coupling_Array(12,tau).ne.0).and.(coupling_Array(12,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RP1(mnuc,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,6,2)
-    !             end if
-                
-    !             ! RD (c, q2)
-    !             ! c8,c8
-    !             if ((coupling_Array(7,tau).ne.0).and.(coupling_Array(7,taup).ne.0)) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RD(mnuc,tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,7,1)
-    !             end if
-    !             ! c5,c5
-    !             if ((coupling_Array(4,tau).ne.0).and.(coupling_Array(4,taup).ne.0)) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RD(mnuc,tau,taup,q2,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,7,2)
-    !             end if
-                
-    !             !RS1D (c)
-    !             ! c5,c4 or c8,c9
-    !             if (((coupling_Array(4,tau).ne.0).and.(coupling_Array(3,taup).ne.0)).or. &
-    !                     ((coupling_Array(7,tau).ne.0).and.(coupling_Array(8,taup).ne.0))) then
-    !                 p_tot = p_tot + 1./mnuc**2 * RS1D(tau,taup,c,j_chi,coupling_Array) * sumW(w,vesc,i,tau,taup,8,1)
-    !             end if
-    !         end do
-    !         !$OMP  end do
-    !         !$OMP  end parallel
-    !     end do
-    !     !$OMP  end do
-    !     !$OMP  end parallel
-    !     p_tot = p_tot  * hbar**2 * c0**2
-    ! end function p_tot
-
-
-    ! !   this is eqn 2.1 in 1501.03729
-    ! function OMEGA_oper(rindex,w)
-    !     double precision :: w, vesc,mu,muplus,u,J, OMEGA_oper
-    !     integer rindex, i
-        
-    !     vesc = tab_vesc(rindex)
-    !     u = sqrt(w**2-vesc**2)
-    !     Omega_oper = 0.d0
-        
-    !     ! if only one isotope is being run
-    !     if ((0 .lt. pickIsotope).and.(pickIsotope .lt. 17)) then
-    !         J = AtomicSpin_oper(pickIsotope)
-    !         mu = mdm/mnuc/AtomicNumber_oper(pickIsotope)
-    !         muplus = (1.+mu)/2.
-    !         if (mu/muplus**2 .gt. u**2/w**2) then
-    !             ! note the factor [(2*mnuc*AtomicNumber(pickIsotope))/(w**2*(2*J+1))],is the product of
-    !             ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
-    !             Omega_oper = Omega_oper+(NAvo*tab_starrho(rindex)/AtomicNumber_oper(pickIsotope)/mnuc* &
-    !                 tab_mfr_oper(rindex,pickIsotope))*w*((2*mnuc*AtomicNumber_oper(pickIsotope))/(w**2*(2*J+1)))* &
-    !                 p_tot(w,vesc,pickIsotope)
-    !         end if
-    !     else ! if all the isotopes are being run
-    !         !$OMP  parallel default(none) shared(niso, mdm, u, w, tab_starrho, rindex, tab_mfr_oper, vesc) &
-    !         !$OMP  private(i, J, mu, muplus)
-    !         !$OMP  do
-    !         do i = 1,16!niso
-    !             J = AtomicSpin_oper(i)
-    !             mu = mdm/mnuc/AtomicNumber_oper(i)
-    !             muplus = (1.+mu)/2.
-    !             if (mu/muplus**2 .gt. u**2/w**2) then
-    !                 ! note the factor [(2*mnuc*AtomicNumber(i))/(w**2*(2*J+1))],is the product of
-    !                 ! the factors in front of eqns 3.26 and 3.23 in paper 1501.03729
-    !                 Omega_oper = Omega_oper+(NAvo*tab_starrho(rindex)/AtomicNumber_oper(i)/mnuc*tab_mfr_oper(rindex,i))*w* &
-    !                                         ((2*mnuc*AtomicNumber_oper(i))/(w**2*(2*J+1)))*p_tot(w,vesc,i)
-    !             end if
-    !         end do
-    !         !$OMP  end do
-    !         !$OMP  end parallel
-    !     end if
-    ! end function OMEGA_oper
 end module opermod
 
 subroutine captn_init_oper()
@@ -418,7 +178,7 @@ end function integrand_oper_extrawterm
 
 
 ! call captn_oper to run capt'n with the effective operator method
-subroutine captn_oper(mx_in, jx_in, niso, isotopeChosen, capped)
+subroutine captn_oper(mx_in, jx_in, niso, capped)
     use opermod
     implicit none
     integer, intent(in):: niso!_in, isotopeChosen
@@ -429,8 +189,6 @@ subroutine captn_oper(mx_in, jx_in, niso, isotopeChosen, capped)
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
     double precision, allocatable :: u_int_res(:)
-
-    integer :: isotopeChosen ! remove later, i'm just too lazy right now to change any call to captn_oper and remove that parameter
 
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W ! loop indicies
@@ -546,6 +304,7 @@ subroutine captn_oper(mx_in, jx_in, niso, isotopeChosen, capped)
                                     q_shared = term_W-1+qOffset ! the GFFI call in the integrand needs to know this
 
                                     !Loop over the shells of constant radius in the star
+                                    ! use OMP on this loop: shares vesc_shared(needs to be an array of length ri to be shared with thread safety), umax(depends on vesc, not shared with other functions - make private), and the arrays over the index ri: u_int_res(ri), tab_starrho(ri), tab_mfr(ri,eli), tab_r(ri), tab_dr(ri)
                                     do ri = 1, nlines
                                         vesc = tab_vesc(ri)
                                         vesc_shared = vesc !make accessible via the module
