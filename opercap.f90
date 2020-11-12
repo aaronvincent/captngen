@@ -142,13 +142,13 @@ function integrand_oper(u, foveru)
 
     ! vesc = tab_vesc(ri_for_omega)
 
-    w = sqrt(u**2+vesc_shared**2)
+    w = sqrt(u**2+vesc_shared_arr(rindex_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (a_shared .gt. 2.d0) then
-        integrand_oper = foveru(u)*GFFI_A_oper(w,vesc_shared,a_shared,q_shared)
+        integrand_oper = foveru(u)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
     else
-        integrand_oper = foveru(u)*GFFI_H_oper(w,vesc_shared,q_shared)
+        integrand_oper = foveru(u)*GFFI_H_oper(w,vesc_shared_arr(rindex_shared),q_shared)
     end if
     if (w_shared) then
         integrand_oper = integrand_oper * w**2
@@ -166,13 +166,13 @@ function integrand_oper_extrawterm(u,foveru)
     double precision :: u, w, integrand_oper_extrawterm, foveru
     external foveru
 
-    w = sqrt(u**2+vesc_shared**2)
+    w = sqrt(u**2+vesc_shared_arr(rindex_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (a_shared .gt. 2.d0) then
-        integrand_oper_extrawterm = foveru(u)*GFFI_A_oper(w,vesc_shared,a_shared,q_shared+1)
+        integrand_oper_extrawterm = foveru(u)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared+1)
     else
-        integrand_oper_extrawterm = foveru(u)*GFFI_H_oper(w,vesc_shared,q_shared+1)
+        integrand_oper_extrawterm = foveru(u)*GFFI_H_oper(w,vesc_shared_arr(rindex_shared),q_shared+1)
     end if
 end function integrand_oper_extrawterm
 
@@ -305,9 +305,13 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
 
                                     !Loop over the shells of constant radius in the star
                                     ! use OMP on this loop: shares vesc_shared(needs to be an array of length ri to be shared with thread safety), umax(depends on vesc, not shared with other functions - make private), and the arrays over the index ri: u_int_res(ri), tab_starrho(ri), tab_mfr(ri,eli), tab_r(ri), tab_dr(ri)
+                                    !$OMP parallel 
+                                    !$OMP default(private) !(none) 
+                                    !$OMP shared(vesc_shared_arr)
                                     do ri = 1, nlines
                                         vesc = tab_vesc(ri)
-                                        vesc_shared = vesc !make accessible via the module
+                                        rindex_shared = ri !make accessible via the module
+                                        vesc_shared_arr(ri) = vesc !make accessible via the module
                                         ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
                                         umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
 
@@ -353,6 +357,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                                             stop 'NaN encountered whilst trying compute capture rate.'
                                         end if
                                     end do !ri
+                                    !$OMP end parallel
                                 end if !WFuncConst>0
                             end do !term_W
                         end do !eli

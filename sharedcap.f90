@@ -17,11 +17,11 @@ module sharedmod
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
-    double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:)
+    double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
     double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
-    integer :: nlines!, ri_for_omega
+    integer :: nlines, rindex_shared!, ri_for_omega
     double precision :: mdm, vesc_shared, a_shared, mu, muplus
     
     contains
@@ -75,6 +75,7 @@ module sharedmod
         allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
         allocate(tab_g(nlines))
         allocate(tab_mfr_oper(nlines,16)) ! for the operator method
+        allocate(vesc_shared_arr(nlines)) ! for OMP stuff
 
 
         !now actually read in the file
