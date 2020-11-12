@@ -25,7 +25,6 @@
 
       ! nq and nv can be -1, 0, 1, 2; this is set in the main program
       integer :: nq, nv
-      double precision :: vesc_shared, a_shared, mu, muplus
 
         contains
 
