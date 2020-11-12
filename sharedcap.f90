@@ -21,8 +21,8 @@ module sharedmod
     !this goes with the Serenelli table format
     double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
-    integer :: ri_for_omega, nlines
-    double precision :: mdm
+    integer :: nlines!, ri_for_omega
+    double precision :: mdm, vesc_shared, a_shared, mu, muplus
     
     contains
 
