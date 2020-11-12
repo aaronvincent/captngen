@@ -375,9 +375,8 @@ end subroutine captn_init_oper
 
 !   this is the integral over R in eqn 2.3 in 1501.03729
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
-function integrand_oper(u)
+function integrand_oper(u, foveru)
     use opermod
-    implicit none
     double precision :: u, w, integrand_oper, foveru !int, vesc
     external foveru
 
