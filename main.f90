@@ -82,9 +82,4 @@
       close(94)
     end do
 
-    open(55,file = "captest_agss_q2.dat")
-    do i=1,50
-    	write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
-    end do
-    close(55)
 END PROGRAM GENCAP

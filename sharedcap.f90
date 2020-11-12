@@ -12,55 +12,58 @@
 module sharedmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
-    double precision, parameter :: Rsun=69.57d9
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938
-    double precision, parameter :: eps=1d-10 !stops divisions by zero
     !these are now set in captn_init
-    double precision :: usun , u0 ,rho0, vesc_halo
+    double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
-    double precision, allocatable :: tab_mfr_oper(:,:)
+    double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:)
+    !this goes with the Serenelli table format
+    double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
-    integer :: niso, ri_for_omega, nlines
+    integer :: ri_for_omega, nlines
     double precision :: mdm
     
     contains
 
     !   this is the function f_sun(u) in 1504.04378 eqn 2.2
     !velocity distribution,
-    function get_vdist(u)
-        double precision :: u,get_vdist, f, normfact
-        f = (3./2.)**(3./2.)*4.*rho0*u**2/sqrt(pi)/mdm/u0**3 &
-            *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
+    function vdist_over_u(u)
+        double precision :: u, vdist_over_u, normfact
+        vdist_over_u = (3./2.)**(3./2.)*4.*rho0*u/sqrt(pi)/mdm/u0**3 &
+        *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
         !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
         !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
         !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
         normfact = 1.
         !print*,normfact
-        f = f/normfact
-        get_vdist=f
-    end function get_vdist
+        vdist_over_u = vdist_over_u/normfact
+    end function vdist_over_u
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !read in solar parameters from Aldo Serenelli-style files, with header removed
+      !read in solar parameters from Aldo Serenelli-style files, with header removed
     subroutine get_solar_params(filename,nlines)
         character*300 :: filename
-        double precision :: Temp, Pres, Lumi !these aren't used, but dummies are required
+        double precision :: Pres, Lumi !these aren't used, but dummies are required
         double precision, allocatable :: phi(:) !this is used briefly
         integer :: i,j, nlines,iostatus
+
+        Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
+
         !Get number of lines in the file
         open(99,file=filename)
         nlines=0
         do
-            read(99,*, iostat=iostatus)
-            if(iostatus/=0) then ! to avoid end of file error.
-                exit
-            else
-                nlines=nlines+1
-            end if
+          read(99,*, iostat=iostatus)
+          if(iostatus/=0) then ! to avoid end of file error.
+            exit
+          else
+            nlines=nlines+1
+          end if
         end do
         close(99)
         nlines = nlines -1
+
         !allocate the arrays
         allocate(tab_mencl(nlines))
         allocate(tab_r(nlines))
@@ -69,13 +72,14 @@ module sharedmod
         allocate(tab_vesc(nlines))
         allocate(phi(nlines))
         allocate(tab_dr(nlines))
-        
-        allocate(tab_mfr_oper(nlines,16)) ! for the operator method
+        allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
+        allocate(tab_g(nlines))
+
 
         !now actually read in the file
         open(99,file=filename)
         do i=1,nlines
-            read(99,*) tab_mencl(i),tab_r(i), Temp, tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+          read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
         end do
         close(99)
 
@@ -84,51 +88,65 @@ module sharedmod
         tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
         tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
         do i = 1,nlines-1
-            j = nlines-i !trapezoid integral
-            phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
-            tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
-            tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
+          j = nlines-i !trapezoid integral
+          phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
+          tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
+          tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
+          ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
+          tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
         end do
-        return
-    end subroutine get_solar_params
+        ! tab_g(nlines) = tab_g(nlines-1)
+        tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
 
-    !this is to make sure the integrator does what it's supposed to
-    ! called by gausstest
-    function gaussinmod(x)
+          ! Populate the atomic number tables here (because it relies on a specific format)
+        AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
+                          18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
+                          39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
+                          54.93, 55.845, 58.933, 58.693/)
+
+
+        return
+      end subroutine get_solar_params
+
+    ! !this is to make sure the integrator does what it's supposed to
+      function gaussinmod(x)
         double precision :: x,gaussinmod
-        gaussinmod = 1*exp(-x**2/2.d0)
-    end function gaussinmod
+        gaussinmod = 1*exp(-x**2/2.d0)!*nq
+      end function gaussinmod
 end module sharedmod
 
 !Some functions that have to be external, because of the integrator.
-function gausstest(x) !just a test for the integrator. Nothing to see here
+
+!Just a test for the integrator. Nothing to see here
+function gausstest(x)
     use sharedmod
     double precision :: x,gausstest
     gausstest = gaussinmod(x)
 end function gausstest
 
-function dummyf(x)
-    double precision :: x, dummyf
-    dummyf = 1.d0
-end function dummyf
+! function dummyf(x)
+!     double precision :: x, dummyf
+!     dummyf = 1.d0
+! end function dummyf
 
 !   this is eqn 2.15 in 1504.04378
 !This is fine as long as the escape velocity is large enough
-subroutine captn_maxcap(mwimp_in,maxcap)
+  function maxcap(mx)
     use sharedmod
     implicit none
     double precision maxcap
-    double precision, intent(in) :: mwimp_in
-    mdm = mwimp_in
-    maxcap = pi/3.d0*rho0/mdm*Rsun**2 &
-        *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-        + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
-end subroutine captn_maxcap
+    double precision, intent(in) :: mx
+
+    maxcap = pi/3.d0*rho0/mx*Rsun**2 &
+    *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
+    + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
+
+  end function maxcap
 
 
 !------!------!------!------!------INITIALIZATION FCT
 
-subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     !input velocities in km/s, not cm/s!!!
     use sharedmod
     use iso_c_binding, only: c_ptr
@@ -138,13 +156,14 @@ subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     !common solarmodel
     !external solarmodel
 
-    if  (.not. allocated(tab_r)) then
+    if  (.not. allocated(tab_r)) then !
         print*,"Capgen initializing from model: ",solarmodel
         call get_solar_params(solarmodel,nlines)
     end if
-    !print*,"Capgen tabulons already allocated, you might be overdoing it by calling the init function more than once."
+
     usun = usun_in*1.d5
     u0 =  u0_in*1.d5
     rho0 =rho0_in
     vesc_halo = vesc_in*1.d5
-end subroutine captn_init
+
+  end subroutine captn_init

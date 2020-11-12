@@ -38,7 +38,7 @@ module opermod
             G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*1./(1.+mq)*((mu/muplus**2)**(mq+1)-(u**2/w**2)**(mq+1))
         else
             !eps added to make the log finite: the value of eps does not affect the answer
-            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*log(mu/muplus**2*w**2/(u+eps)**2)
+            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*log(mu/muplus**2*w**2/(u)**2)
         endif
         GFFI_H_oper = G
     end function GFFI_H_oper
@@ -57,8 +57,8 @@ module opermod
         if (mq .eq. 0) then
             GFFI_A_oper = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
         else
-            GFFI_A_oper = ((p+eps)/c0)**(2*mq)*Ei*c0**2/(B*mu)**mq*(dgamic(1.+dble(mq),B*u**2/w**2+eps) &
-                - dgamic(1.+dble(mq),B*mu/muplus**2+eps))
+            GFFI_A_oper = ((p)/c0)**(2*mq)*Ei*c0**2/(B*mu)**mq*(dgamic(1.+dble(mq),B*u**2/w**2) &
+                - dgamic(1.+dble(mq),B*mu/muplus**2))
         end if
     end function GFFI_A_oper
     
@@ -286,7 +286,7 @@ module opermod
             !$OMP  parallel default(none) shared(niso, mdm, u, w, tab_starrho, rindex, tab_mfr_oper, vesc) &
             !$OMP  private(i, J, mu, muplus)
             !$OMP  do
-            do i = 1,niso
+            do i = 1,16!niso
                 J = AtomicSpin_oper(i)
                 mu = mdm/mnuc/AtomicNumber_oper(i)
                 muplus = (1.+mu)/2.
@@ -377,7 +377,7 @@ function integrand_oper(u)
     double precision :: u, w, vesc, integrand_oper, int
     vesc = tab_vesc(ri_for_omega)
     w = sqrt(u**2+vesc**2)
-    int = get_vdist(u)/u*w*Omega_oper(ri_for_omega,w)
+    int = vdist_over_u(u)/u*w*Omega_oper(ri_for_omega,w)
     integrand_oper = int
 end function integrand_oper
 
@@ -398,14 +398,14 @@ subroutine captn_oper(mx_in, jx_in, niso_in, isotopeChosen, capped)
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
     !external gausstest !this is just for testing
     external integrand_oper
-    external dummyf
+    ! external dummyf
     epsabs=1.d-17
     epsrel=1.d-17
     limit=1000
 
     mdm = mx_in
     j_chi = jx_in
-    niso = niso_in
+    ! niso = niso_in
     
     pickIsotope = isotopeChosen
 
