@@ -91,7 +91,7 @@
     do cpl=1, 14
       filename = "oper_"//trim(cplConsts(cpl))//"_model.dat"
       open(55,file=filename)
-      write(55,*) "DM_Mass  ", "  Captures  ", "  MaxCaptures"
+      write(55,*) "DM_Mass | ", "  Captures | ", "  MaxCaptures"
 
       if (cpl==1) then
         call populate_array(1.65d-8, cpl, 0)
