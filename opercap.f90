@@ -185,7 +185,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
-    double precision :: maxcap, maxcapped, a, muminus, umax, umin, vesc, result
+    double precision :: a, muminus, umax, umin, vesc, result
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
     double precision, allocatable :: u_int_res(:)
@@ -291,7 +291,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
 
                             J = AtomicSpin_oper(eli)
                             !!!!!!!!!!!!!!!!!!!!!!!!!simplify yConverse mathematical opperation to help loop speed?
-                            yConverse = 2/3.*((0.91*(mnuc*a)**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2 !the conversion factor between q and y: y = yConverse * q^2
+                            ! yConverse = 2/3.*((0.91*(mnuc*a)**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2 !the conversion factor between q and y: y = yConverse * q^2
+                            yConverse = (1.38*10.**-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
                             ! get the target nucleus-dm reduced mass mu_T
                             mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
 
@@ -402,21 +403,21 @@ subroutine populate_array(val, couple, isospin)
     if ((-1.lt.isospin).and.(isospin.lt.2)) then
         iso = isospin + 1 !fortran arrays start at 1
     else
-        print*,"Error: isospin can only be 0 or 1!"
+        stop "Error: isospin can only be 0 or 1!"
     endif
 
 
     ! couple can be integer from 1 to 15, BUT 2 IS NOT ALLOWED!
     if (couple.lt.1) then
-        print*,"Error: you cannot pick a coupling constant lower than one!"
+        stop "Error: you cannot pick a coupling constant lower than one!"
     else if (couple.eq.1) then
         cpl = couple
     else if (couple.eq.2) then
-        print*,"Error: you cannot use the second coupling constant!"
+        stop "Error: you cannot use the second coupling constant!"
     else if (couple.gt.2) then
         cpl = couple - 1 !the coupling array doesn't have a slot for 2, so all constants other than one are shifted in row number
     else if (couple.gt.15) then
-        print*,"Error: you cannot pick a coupling constant past 15!"
+        stop "Error: you cannot pick a coupling constant past 15!"
     endif
 
     ! val is the value you want to populate with
