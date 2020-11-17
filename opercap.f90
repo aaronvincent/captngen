@@ -30,6 +30,7 @@ module opermod
     
     contains
 
+    ! having removed the scaling momentum, are the units off here? I'm looking at the p/c0 in particular
     function GFFI_H_oper(w,vesc,mq)
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
         integer mq
@@ -285,7 +286,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                             a = AtomicNumber_oper(eli)
                             a_shared = a !make accessible via the module
 
-                            mu = mx_in/(mnuc*a)
+                            mu = mdm/(mnuc*a)
                             muplus = (1.+mu)/2.
                             muminus = (mu-1.d0)/2.
 
@@ -308,7 +309,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                                     ! use OMP on this loop: shares vesc_shared(needs to be an array of length ri to be shared with thread safety), umax(depends on vesc, not shared with other functions - make private), and the arrays over the index ri: u_int_res(ri), tab_starrho(ri), tab_mfr(ri,eli), tab_r(ri), tab_dr(ri)
                                     !$OMP parallel 
                                     !$OMP default(private) !(none) 
-                                    !$OMP shared(vesc_shared_arr)
+                                    !$OMP shared(vesc_shared_arr)  ! w_shared is sent to the integrand oper to turn on multiplycation by w^2 there!
                                     do ri = 1, nlines
                                         vesc = tab_vesc(ri)
                                         rindex_shared = ri !make accessible via the module
@@ -327,29 +328,24 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                                             !Call integrator
                                             call dsntdqagse(integrand_oper_extrawterm,vdist_over_u,umin,umax, &
                                             epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-                                            u_int_res(ri) = u_int_res(ri) - c0**2/(4.*mu_T**2) * result
+                                            u_int_res(ri) = u_int_res(ri) - c0**2/(4.*mu_T**2) * result  ! The Rfunctions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the- q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
+                                            ! when w_shared is true, u_int_res(ri) contains the result of the integral performed with the w^2/c^2 term, here it is done on _extrawterm with the -q^2/(2*mu_T)^2 term (extra q^2 accounted for by _extrawterm)
                                         end if
                                         !!!!!!!!!!!!!!!!!!!!!!!!!!! the rest of these are multiplicative factors pulled out of the integral (and ideally canceled out to be minimally impactful on performance)
+                                        u_int_res(ri)=u_int_res(ri)*(2*mnuc*a)/(2*J+1) *RFuncConst*WFuncConst*yConverse**(term_W-1)
                                         ! extra terms from sumW
-                                        u_int_res(ri) = u_int_res(ri) * WFuncConst * yConverse**(term_W-1)
+                                        ! u_int_res(ri) = u_int_res(ri) * WFuncConst * yConverse**(term_W-1)
                                         ! extra terms from ptot
                                         if (funcType.gt.3) then ! note that the functions following Sigma` in the P_tot sum are all multiplied by an extra factor of q^2/mnuc^2 
                                             u_int_res(ri) = u_int_res(ri) * 1/mnuc**2
                                         end if
-                                        u_int_res(ri) = u_int_res(ri) * RFuncConst * (hbar*c0)**2
+                                        ! u_int_res(ri) = u_int_res(ri) * RFuncConst * (hbar*c0)**2
                                         ! extra terms from omega_oper
-                                        u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1) !!!!!!!!!!!!!!!!!! we have a rogue 'w' here too, flag it for the integrand!
+                                        ! u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
                                         !!!!!!!!!!!!!!!!!!!!!extra terms from captngeneral - check these, it seems Pat has different terms than what I get from my math, specifically this 2.d0*(muplus/mu)**2
-                                        u_int_res(ri) = u_int_res(ri)*2.d0*NAvo*tab_starrho(ri)*tab_mfr(ri,eli)*(muplus/mx_in)**2
-                                        ! u_int_res(ri) = u_int_res(ri)*NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a)
-
-                                        ! !!!! trying to collect all multiplicative factors here
-                                        ! u_int_res(ri) = u_int_res(ri) * WFuncConst*yConverse**(term_W-1) &
-                                        !     * RFuncConst*(hbar*c0)**2 * 2/(2*J+1) &
-                                        !     * NAvo*tab_starrho(ri)*tab_mfr(ri,eli)
-                                        ! if (funcType.gt.3) then ! note that the functions following Sigma` in the P_tot sum are all multiplied by an extra factor of q^2/mnuc^2 
-                                        !     u_int_res(ri) = u_int_res(ri) * 1/mnuc**2
-                                        ! end if
+                                        ! u_int_res(ri) = u_int_res(ri)*2.d0*NAvo*tab_starrho(ri)*tab_mfr(ri,eli)*(muplus/mdm)**2
+                                        u_int_res(ri) = u_int_res(ri)*NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a)
+                                        u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
 
                                         capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
