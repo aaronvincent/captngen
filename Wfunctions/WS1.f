@@ -184,7 +184,11 @@ ccc...
 ccc*H
 ccc...
       if (target.eq."H") then
-         WS1 = 0.07957747154594766!/exp(2.*y)
+         if (term.eq."y0") then
+            WS1 = 0.07957747154594766!/exp(2.*y)
+         else
+            WS1 = 0.
+         end if
       end if
 c
       end function WS1
