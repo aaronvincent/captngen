@@ -463,7 +463,11 @@ ccc...
 ccc*H
 ccc...
       if (target.eq."H") then
-         WM = 0.039788735772973836!/exp(2.*y)
+         if (term.eq."y0") then
+            WM = 0.039788735772973836!/exp(2.*y)
+         else
+            WM = 0.
+         end if
       end if 
 c
       end function WM
