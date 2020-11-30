@@ -24,6 +24,7 @@ module opermod
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
+    double precision :: yConverse_array(16)
 
     integer :: q_shared
     logical :: w_shared
@@ -132,6 +133,11 @@ subroutine captn_init_oper()
     ! populate_array will place the non-zero value into a chosen slot at runtime
     coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
+
+    ! calculate all the yConversion factors out now (only depends oon the isotope)
+    do i = 1, 16
+        yConverse_array(i) = (1.38*10.**-27) * ( ((mnuc*AtomicNumber_oper(i))**(1./3) + 0.33) / (hbar*c0) )**2
+    end do
 end subroutine captn_init_oper
 
 !   this is the integral over R in eqn 2.3 in 1501.03729
@@ -176,7 +182,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
-    double precision :: J, j_chi, RFuncConst, WFuncConst, yConverse, mu_T, prefactor_functype
+    double precision :: J, j_chi, RFuncConst, WFuncConst, yConverse, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
     double precision :: prefactor_array(niso,11,2)
 
@@ -224,7 +230,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
         ! I'll need mu_T to include in the prefactor when there is a v^2 term
         a = AtomicNumber_oper(eli)
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-        yConverse = (1.38*10.**-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2
+        ! yConverse = (1.38*10.**-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2
 
         ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
         do funcType = 1,8
@@ -283,20 +289,19 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
 
                                     ! calculates the total number of q^2
                                     q_index = 1 + q_functype + term_W - 1 + floor((term_R-1.)/2.)
+                                    prefactor_current = prefactor_functype*RFuncConst*WFuncConst*yConverse_array(eli)**(term_W-1)
 
                                     ! check if term_R is even (in my index convention this corresponds to it having a v^2 in the term)
                                     ! v^2 = w^2 - q^2/(2mu_T)^2
                                     if ( mod(term_R,2).eq.0 ) then
                                         ! this is the -q^2/(2mu_T)^2 contribution
-                                        prefactor_array(eli,q_index+1,1) = prefactor_array(eli,q_index+1,1) - &
-                                            prefactor_functype*RFuncConst*WFuncConst*yConverse**(term_W-1) * (c0**2/(4.*mu_T**2)) ! The Rfunctions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the- q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
+                                        prefactor_array(eli,q_index+1,1) = prefactor_array(eli,q_index+1,1) - prefactor_current * &
+                                            (c0**2/(4.*mu_T**2)) ! The Rfunctions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the- q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
                                         ! this is the +w^2 contribution
-                                        prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + &
-                                            prefactor_functype*RFuncConst*WFuncConst*yConverse**(term_W-1)
+                                        prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + prefactor_current
                                         
                                     else
-                                        prefactor_array(eli,q_index,1) = prefactor_array(eli,q_index,1) + &
-                                            prefactor_functype*RFuncConst*WFuncConst*yConverse**(term_W-1)
+                                        prefactor_array(eli,q_index,1) = prefactor_array(eli,q_index,1) + prefactor_current
 
                                     end if
                                 end if
@@ -348,12 +353,13 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                     end if
                 end do !q_pow
             end do !w_pow
-            u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
-            u_int_res(ri) = u_int_res(ri) * NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a)
-            u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
-            capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
+            ! u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
+            ! u_int_res(ri) = u_int_res(ri) * NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a)
+            ! u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
+            ! capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
-            ! capped = capped + u_int_res(ri) * tab_r(ri)**2*tab_dr(ri) * (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a) * (hbar*c0)**2
+            factor_final = (2*mnuc*a)/(2*J+1) *NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a) *tab_r(ri)**2*tab_dr(ri) *(hbar*c0)**2
+            capped = capped + u_int_res(ri) * factor_final
         end do !eli
     end do !ri
 
