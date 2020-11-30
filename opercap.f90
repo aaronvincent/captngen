@@ -293,7 +293,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                             J = AtomicSpin_oper(eli)
                             !!!!!!!!!!!!!!!!!!!!!!!!!simplify yConverse mathematical opperation to help loop speed?
                             ! yConverse = 2/3.*((0.91*(mnuc*a)**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2 !the conversion factor between q and y: y = yConverse * q^2
-                            yConverse = (1.38*10.**-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
+                            yConverse = (1.38E-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
                             ! get the target nucleus-dm reduced mass mu_T
                             mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
 
