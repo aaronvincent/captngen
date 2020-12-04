@@ -192,8 +192,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
     external integrand_oper_extrawterm
     ! external dummyf
 
-    epsabs=1.d-17
-    epsrel=1.d-17
+    epsabs=1.d-6
+    epsrel=1.d-6
     limit=1000
 
     mdm = mx_in
@@ -354,11 +354,11 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                 end do !q_pow
             end do !w_pow
             ! u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
-            ! u_int_res(ri) = u_int_res(ri) * NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a)
+            ! u_int_res(ri) = u_int_res(ri) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a)
             ! u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
             ! capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
-            factor_final = (2*mnuc*a)/(2*J+1) *NAvo*tab_starrho(ri)*tab_mfr(ri,eli)/(mnuc*a) *tab_r(ri)**2*tab_dr(ri) *(hbar*c0)**2
+            factor_final = (2*mnuc*a)/(2*J+1) *NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) *tab_r(ri)**2*tab_dr(ri) *(hbar*c0)**2
             capped = capped + u_int_res(ri) * factor_final
         end do !eli
     end do !ri
