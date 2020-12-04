@@ -203,8 +203,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
     external integrand_oper_extrawterm
     ! external dummyf
 
-    epsabs=1.d-17
-    epsrel=1.d-17
+    epsabs=1.d-6
+    epsrel=1.d-6
     limit=1000
 
     mdm = mx_in
