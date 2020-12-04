@@ -343,7 +343,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
                                         ! extra terms from omega_oper
                                         ! u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
                                         !!!!!!!!!!!!!!!!!!!!!extra terms from captngeneral - check these, it seems Pat has different terms than what I get from my math, specifically this 2.d0*(muplus/mu)**2
-                                        ! u_int_res(ri) = u_int_res(ri)*2.d0*NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)*(muplus/mdm)**2
+                                        ! u_int_res(ri) = u_int_res(ri)*2.d0*NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)*(muplus/mdm)**2  ! this doesn't match catena plots
                                         u_int_res(ri) = u_int_res(ri)*NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a)
                                         u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
 
