@@ -358,7 +358,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
             ! u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
             ! capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
-            factor_final = (2*mnuc*a)/(2*J+1) *NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) *tab_r(ri)**2*tab_dr(ri) *(hbar*c0)**2
+            factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
+                tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
             capped = capped + u_int_res(ri) * factor_final
         end do !eli
     end do !ri
