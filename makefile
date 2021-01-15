@@ -6,7 +6,7 @@ QAGDIR = ./numerical/dqag
 WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
-MAIN = main#_testing.o
+MAIN = main.o
 MFSHR = sharedcap.o
 MFOBJ = gencap.o
 MFCAP = opercap.o
