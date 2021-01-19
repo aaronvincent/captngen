@@ -144,10 +144,10 @@ subroutine captn_init_oper()
     ! yConverse = (1.38E-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
     ! yConverse = 2.671223d2/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.)) ! Aaron's suggestion
     ! yConverse = (41.467/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.))) * (10.d-13/(2*hbar*c0))**2 ! my calc
-    yConverse = 264.114/(45.d0*A**(-1./3.)-25.d0*A**(-2./3.)) ! this is the functional one!
+    ! yConverse = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.)) ! this is the functional one!
     ! calculate all the yConversion factors out now (only depends oon the isotope)
     do i = 1, 16
-        yConverse_array(i) = (1.38*10.**-27) * ( ((mnuc*AtomicNumber_oper(i))**(1./3) + 0.33) / (hbar*c0) )**2
+        yConverse_array(i) = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.))
     end do
 end subroutine captn_init_oper
 
