@@ -103,11 +103,11 @@ c
             if (term.eq."y0") then
                WP2 = 0.006481658707
             else if (term.eq."y1") then
-               WP2 = 0.008644293538
+               WP2 = -0.008644293538
             else if (term.eq."y2") then
                WP2 = 0.003870408522
             else if (term.eq."y3") then
-               WP2 = 0.0006590141866
+               WP2 = -0.0006590141866
             else if (term.eq."y4") then
                WP2 = 0.00003767182629
             else
