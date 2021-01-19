@@ -194,17 +194,17 @@ do i = 1,nlines
   if ((nq .eq. 0) .and. (nv .eq. 0)) then
     kappaofR(i) = mfp(i)*sum(sigma_N*nabund(:,i)/kappa)
   else if ((nq .eq. 1)) then
-    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q**2)/kappa)
+    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2)/kappa)
   else if ((nq .eq. 2)) then
-    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q**4)/kappa)
+    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4)/kappa)
   else if ((nq .eq. -1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q**2/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2/kappa)
   else if ((nv .eq. 1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v**2)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2)/kappa)
   else if ((nv .eq. 2)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v**4)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4)/kappa)
   else if ((nv .eq. -1)) then
-    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v**2/(1.+muarray)/kappa)
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray)/kappa)
   end if
   kappaofR(i) = 1./kappaofR(i)
 
