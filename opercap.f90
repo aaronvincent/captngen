@@ -57,7 +57,11 @@ module opermod
         muplus = (1.+mu)/2.
         u = sqrt(w**2-vesc**2)
         mN = A*mnuc
-        Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)
+        ! Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)  ! old varient
+        ! Ei = 1./(2.*mN*2.671223d2/(45.d0*A**(-1./3.) - 25.d0*A**(-2./3.))) ! Aaron's suggestion
+        ! Ei = 9.391d-4*(45.d0*A**(-1./3.) - 25.d0*A**(-2./3.))/mN ! my calc
+        ! Ei = 4./(mN*2.671223d2/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.))) ! Aaron's fixed suggestion
+        Ei = 1./4.d0/mN/264.114*(45.d0*A**(-1./3.)-25.d0*A**(-2./3.))
         B = .5*mdm*w**2/Ei/c0**2
         if (mq .eq. 0) then
             GFFI_A_oper = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
@@ -134,6 +138,13 @@ subroutine captn_init_oper()
     coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!simplify yConverse mathematical opperation to help loop speed?
+    ! yConverse = 2/3.*((0.91*(mnuc*a)**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2 !the conversion factor between q and y: y = yConverse * q^2
+    ! yConverse = (1.38E-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
+    ! yConverse = 2.671223d2/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.)) ! Aaron's suggestion
+    ! yConverse = (41.467/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.))) * (10.d-13/(2*hbar*c0))**2 ! my calc
+    yConverse = 264.114/(45.d0*A**(-1./3.)-25.d0*A**(-2./3.)) ! this is the functional one!
     ! calculate all the yConversion factors out now (only depends oon the isotope)
     do i = 1, 16
         yConverse_array(i) = (1.38*10.**-27) * ( ((mnuc*AtomicNumber_oper(i))**(1./3) + 0.33) / (hbar*c0) )**2
@@ -167,10 +178,10 @@ end function integrand_oper
 
 
 ! call captn_oper to run capt'n with the effective operator method
-subroutine captn_oper(mx_in, jx_in, niso, capped)
+subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
     implicit none
-    integer, intent(in):: niso!_in, isotopeChosen
+    integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
@@ -226,7 +237,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
     
     ! First I set the entries in prefactor_array(niso,11,2)
     ! These are the constants that mulitply the corresonding integral evaluation
-    do eli=1,niso
+    do eli=1,niso !isotopeChosen, isotopeChosen
         ! I'll need mu_T to include in the prefactor when there is a v^2 term
         a = AtomicNumber_oper(eli)
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
@@ -320,7 +331,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)
         rindex_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
-        do eli=1,niso
+        do eli=1,niso !isotopeChosen, isotopeChosen
             u_int_res(ri) = 0.d0
             a = AtomicNumber_oper(eli)
             a_shared = a !make accessible via the module

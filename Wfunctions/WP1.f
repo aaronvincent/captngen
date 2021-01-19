@@ -141,6 +141,10 @@ c
       if (target.eq."He4") then
          WP1 = 0.
       end if
+c     
+      if (target.eq."He3") then
+         WP1 = 0.
+      end if
 c
       if (target.eq."H") then
          WP1 = 0.
