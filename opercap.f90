@@ -314,9 +314,9 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
                                     !Loop over the shells of constant radius in the star
                                     ! use OMP on this loop: shares vesc_shared(needs to be an array of length ri to be shared with thread safety), umax(depends on vesc, not shared with other functions - make private), and the arrays over the index ri: u_int_res(ri), tab_starrho(ri), tab_mfr(ri,eli), tab_r(ri), tab_dr(ri)
-                                    !$OMP parallel 
-                                    !$OMP default(private) !(none) 
-                                    !$OMP shared(vesc_shared_arr)  ! w_shared is sent to the integrand oper to turn on multiplycation by w^2 there!
+                                    ! $OMP parallel 
+                                    ! $OMP default(private) !(none) 
+                                    ! $OMP shared(vesc_shared_arr)  ! w_shared is sent to the integrand oper to turn on multiplycation by w^2 there!
                                     do ri = 1, nlines
                                         vesc = tab_vesc(ri)
                                         rindex_shared = ri !make accessible via the module
@@ -361,7 +361,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                                             stop 'NaN encountered whilst trying compute capture rate.'
                                         end if
                                     end do !ri
-                                    !$OMP end parallel
+                                    ! $OMP end parallel
                                 end if !WFuncConst>0
                             end do !term_W
                         end do !eli
