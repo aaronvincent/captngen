@@ -238,7 +238,7 @@ c
             if (term.eq."y0") then
                WMP2 = -3.122841616248989
             else if (term.eq."y1") then
-               WMP2 =  + 4.111730986960552
+               WMP2 = 4.111730986960552
             else if (term.eq."y2") then
                WMP2 = -1.6721045582756733
             else if (term.eq."y3") then
@@ -458,7 +458,7 @@ c
       if (target.eq."He4") then
          WMP2 = 0.
       end if
-c
+c     
       if (target.eq."He3") then
          WMP2 = 0.
       end if
