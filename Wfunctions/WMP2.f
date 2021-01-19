@@ -459,6 +459,10 @@ c
          WMP2 = 0.
       end if
 c
+      if (target.eq."He3") then
+         WMP2 = 0.
+      end if
+c
       if (target.eq."H") then
           WMP2 = 0.
       end if

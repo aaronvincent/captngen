@@ -129,6 +129,10 @@ c
       if (target.eq."He4") then
          WD = 0.
       end if
+c     
+      if (target.eq."He3") then
+         WD = 0.
+      end if
 c
       if (target.eq."H") then
          WD = 0.
