@@ -7,6 +7,5 @@
 # ignore .x files
 *.x
 
-#ignore .png files (but not in the sub folders of testingCatnea)
-*.png
-!/testingCatena/*/**/*.png
+# ignore any VScode settings
+.vscode/*
