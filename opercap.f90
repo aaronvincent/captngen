@@ -13,13 +13,10 @@ module opermod
     double precision, parameter :: hbar=6.582d-25 !GeV*s
     !this goes with the Serenelli table format
     
-    ! integer :: pickIsotope
-    ! double precision :: j_chi
-
     double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
     character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
-                                                                "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"]
+                                                                "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
     double precision, parameter :: AtomicSpin_oper(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: coupling_Array(14,2)
@@ -42,7 +39,6 @@ module opermod
         if (mq .ne. -1) then
             G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*1./(1.+mq)*((mu/muplus**2)**(mq+1)-(u**2/w**2)**(mq+1))
         else
-            !eps added to make the log finite: the value of eps does not affect the answer
             G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*log(mu/muplus**2*w**2/(u)**2)
         endif
         GFFI_H_oper = G
@@ -57,10 +53,6 @@ module opermod
         muplus = (1.+mu)/2.
         u = sqrt(w**2-vesc**2)
         mN = A*mnuc
-        ! Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)  ! old varient
-        ! Ei = 1./(2.*mN*2.671223d2/(45.d0*A**(-1./3.) - 25.d0*A**(-2./3.))) ! Aaron's suggestion
-        ! Ei = 9.391d-4*(45.d0*A**(-1./3.) - 25.d0*A**(-2./3.))/mN ! my calc
-        ! Ei = 4./(mN*2.671223d2/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.))) ! Aaron's fixed suggestion
         Ei = 1./4.d0/mN/264.114*(45.d0*A**(-1./3.)-25.d0*A**(-2./3.))
         B = .5*mdm*w**2/Ei/c0**2
         if (mq .eq. 0) then
@@ -138,20 +130,14 @@ subroutine captn_init_oper()
     coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!simplify yConverse mathematical opperation to help loop speed?
-    ! yConverse = 2/3.*((0.91*(mnuc*a)**(1./3)+0.3)*10**-13)**2/(2*hbar*c0)**2 !the conversion factor between q and y: y = yConverse * q^2
-    ! yConverse = (1.38E-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2 !should be less computationally demanding I think, unless the 10**-27 makes floats do weird stuff - could combine the 10**-27 with the (hbar*c0)**2 to get a less extreme float prefactor
-    ! yConverse = 2.671223d2/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.)) ! Aaron's suggestion
-    ! yConverse = (41.467/(45.d0*a**(-1./3.) - 25.d0*a**(-2./3.))) * (10.d-13/(2*hbar*c0))**2 ! my calc
-    ! yConverse = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.)) ! this is the functional one!
-    ! calculate all the yConversion factors out now (only depends oon the isotope)
     do i = 1, 16
         yConverse_array(i) = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.))
     end do
 end subroutine captn_init_oper
 
-!   this is the integral over R in eqn 2.3 in 1501.03729
+! this is the integral over R in eqn 2.3 in 1501.03729
+! note that Omega there is expanded and broken into terms of the form const. * q^2n * exp{E_R/E_i}
+! I've doen this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function integrand_oper(u, foveru)
     use opermod
@@ -172,8 +158,6 @@ function integrand_oper(u, foveru)
         integrand_oper = integrand_oper * w**2
     end if
 
-    ! int = vdist_over_u(u)/u*w*Omega_oper(ri_for_omega,w)
-    ! integrand_oper = int
 end function integrand_oper
 
 
@@ -187,21 +171,19 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     double precision :: capped !this is the output
     double precision :: a, muminus, umax, umin, vesc, result
     double precision :: epsabs, epsrel, abserr, neval !for integrator
-    double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
+    double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
     double precision, allocatable :: u_int_res(:)
 
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
-    double precision :: J, j_chi, RFuncConst, WFuncConst, yConverse, mu_T, prefactor_functype, factor_final, prefactor_current
+    double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
     double precision :: prefactor_array(niso,11,2)
 
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
-    !external gausstest !this is just for testing
     external integrand_oper
     external integrand_oper_extrawterm
-    ! external dummyf
 
     epsabs=1.d-6
     epsrel=1.d-6
@@ -209,14 +191,6 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
     mdm = mx_in
     j_chi = jx_in
-    ! niso = niso_in
-    
-    ! pickIsotope = isotopeChosen
-
-    ! temporary, the user will want to choose their coupling constants to match a model
-    !                           c1,  c3,  c4, c5,   c6,  c7,  c8,  c9, c10, c11, c12, c13, c14, c15   
-    !coupling_Array = reshape((/1.65d-8, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
-                                !0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
     
     if (.not. allocated(tab_r)) then 
         print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
@@ -232,16 +206,12 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         end do
     end do
 
-    !As far as I can tell, the second argument (fofuoveru) does nothing in this integrator.
-    !I've sent it to an inert dummy just in case.
-    
     ! First I set the entries in prefactor_array(niso,11,2)
     ! These are the constants that mulitply the corresonding integral evaluation
     do eli=1,niso !isotopeChosen, isotopeChosen
         ! I'll need mu_T to include in the prefactor when there is a v^2 term
         a = AtomicNumber_oper(eli)
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-        ! yConverse = (1.38*10.**-27) * ( ((mnuc*a)**(1./3) + 0.33) / (hbar*c0) )**2
 
         ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
         do funcType = 1,8
@@ -306,9 +276,11 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                                     ! v^2 = w^2 - q^2/(2mu_T)^2
                                     if ( mod(term_R,2).eq.0 ) then
                                         ! this is the -q^2/(2mu_T)^2 contribution
+                                        ! it has one extra q^2 contribution compared to the current W & R function contributions
                                         prefactor_array(eli,q_index+1,1) = prefactor_array(eli,q_index+1,1) - prefactor_current * &
                                             (c0**2/(4.*mu_T**2)) ! The Rfunctions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the- q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
                                         ! this is the +w^2 contribution
+                                        ! it has the same q^2 contribution, but has a v_perp^2 contribution
                                         prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + prefactor_current
                                         
                                     else
@@ -324,6 +296,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         end do !functype
     end do !eli
 
+    ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     capped = 0.d0
     umin = 0.d0
     do ri=1,nlines
@@ -364,10 +337,6 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                     end if
                 end do !q_pow
             end do !w_pow
-            ! u_int_res(ri) = u_int_res(ri) * (2*mnuc*a)/(2*J+1)
-            ! u_int_res(ri) = u_int_res(ri) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a)
-            ! u_int_res(ri) = u_int_res(ri) * (hbar*c0)**2
-            ! capped = capped + tab_r(ri)**2*u_int_res(ri)*tab_dr(ri)
 
             factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
@@ -378,8 +347,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     capped = 4.d0*pi*Rsun**3*capped
 
     if (capped .gt. 1.d100) then
-      print*,"Capt'n General says: Oh my, it looks like you are capturing an  &
-      infinite amount of dark matter in the Sun. Best to look into that."
+      print*,"Capt'n General says: Oh my, it looks like you are capturing an", &
+        "infinite amount of dark matter in the Sun. Best to look into that."
     end if
 end subroutine captn_oper
 
