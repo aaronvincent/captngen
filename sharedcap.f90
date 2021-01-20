@@ -26,7 +26,7 @@ module sharedmod
     
     contains
 
-    !   this is the function f_sun(u) in 1504.04378 eqn 2.2
+    !   this is the function f_sun(u) in 1504.04378 eqn 2.2 divided by u
     !velocity distribution,
     function vdist_over_u(u)
         double precision :: u, vdist_over_u, normfact
