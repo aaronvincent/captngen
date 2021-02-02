@@ -29,7 +29,7 @@ gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
 # -Wl lets us send options to the linker (which are comma seperated)
 gentest.x: $(MAIN) gencaplib.so
-	${FC} $(FOPT) -L. -Wl,-rpath=. -o gentest.x $(MAIN) gencaplib.so
+	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
 #	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
 
