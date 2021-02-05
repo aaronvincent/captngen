@@ -209,7 +209,7 @@ c
             else if (term.eq."y2") then
                WM = 23.99417716
             else if (term.eq."y3") then
-               WM = 6.303472873
+               WM = -6.303472873
             else if (term.eq."y4") then
                WM = 0.5803045188
             else
@@ -229,7 +229,7 @@ c
             else if (term.eq."y2") then
                WM = 15.65057555
             else if (term.eq."y3") then
-               WM = 3.593209109
+               WM = -3.593209109
             else if (term.eq."y4") then
                WM = 0.2816949468
             else
