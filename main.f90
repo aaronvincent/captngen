@@ -6,14 +6,16 @@
 
     PROGRAM GENCAP
     implicit none
-    character*300 :: modfile
+    character*300 :: modfile, filename
     character*100 :: outfile(7)
-    double precision :: mx, sigma_0,capped_sd,capped_si
+    double precision :: mx, jx, sigma_0,capped_sd,capped_si, maxcapture
     double precision :: capped_si_spec,capped_sd_spec
     double precision :: maxcap, nwimpsin, evapRate
     double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
-    integer :: nq(7), nv(7), i, j, nlines, num_isotopes, spin_dependency
+    integer :: nq(7), nv(7), i, j, nlines, num_isotopes, spin_dependency, cpl
+    character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
+                        "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -82,5 +84,34 @@
       close(94)
     end do
 
-    END PROGRAM GENCAP
-!
+    
+    call captn_init_oper()
+    num_isotopes = 16
+    jx = 0.5
+    do cpl=1, 14
+      filename = "oper_"//trim(cplConsts(cpl))//"_model.dat"
+      open(55,file=filename)
+      write(55,*) "DM_Mass | ", "  Captures | ", "  MaxCaptures"
+
+      if (cpl==1) then
+        call populate_array(1.65d-8, cpl, 0)
+      else if (cpl==2) then
+        call populate_array(0.d0, cpl-1, 0)
+        call populate_array(1.65d-8, cpl+1, 0)
+      else
+        call populate_array(0.d0, cpl, 0)
+        call populate_array(1.65d-8, cpl+1, 0)
+      endif
+      
+      print*, "Running coupling constant: ", cplConsts(cpl)
+      do i = 1,10
+        mx = 5.d0 + dble(i)/5.
+        call captn_oper(mx,jx,num_isotopes,capped_sd)
+        maxcapture = maxcap(mx)
+        write(55,*) mx, capped_sd, maxcapture
+        print*, "mx: ",mx, "capped: ",capped_sd, "max_capture:",maxcapture
+      end do
+      close(55)
+    end do
+
+END PROGRAM GENCAP

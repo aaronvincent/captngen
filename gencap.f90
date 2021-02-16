@@ -18,34 +18,15 @@
 !     option was turned off from DarkMESA side.
 
     module capmod
+      use sharedmod
       implicit none
-      double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23,GMoverR = 1.908e15,GNewt = 6.672d-8
-      double precision, parameter :: c0 = 2.99792458d10, mnuc = 0.938, q0 = 0.04,v0 = 220.d5
-      !these are now set in captn_init
-      double precision :: usun , u0 ,rho0, vesc_halo, Rsun
-      !this goes with the Serenelli table format
-      double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
-      double precision, allocatable :: tab_mencl(:),tab_starrho(:),tab_mfr(:,:), tab_atomic(:)
-      double precision, allocatable :: tab_r(:), tab_vesc(:), tab_dr(:),tab_T(:),tab_g(:)
+      double precision, parameter :: GNewt = 6.672d-8
+      double precision, parameter :: q0 = 0.04,v0 = 220.d5
 
       ! nq and nv can be -1, 0, 1, 2; this is set in the main program
-      integer :: nq, nv, nlines
-      double precision :: mdm, vesc_shared, a_shared, mu, muplus
+      integer :: nq, nv
 
         contains
-
-      !velocity distribution,
-      function vdist_over_u(u)
-      double precision :: u, vdist_over_u, normfact
-      vdist_over_u = (3./2.)**(3./2.)*4.*rho0*u/sqrt(pi)/mdm/u0**3 &
-      *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
-      !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
-      !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
-      !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
-      normfact = 1.
-      !print*,normfact
-      vdist_over_u = vdist_over_u/normfact
-      end function vdist_over_u
 
       !generalized form factor: hydrogen
       function GFFI_H(w,vesc)
@@ -78,81 +59,6 @@
         end if
       end function GFFI_A
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !read in solar parameters from Aldo Serenelli-style files, with header removed
-      subroutine get_solar_params(filename,nlines)
-        character*300 :: filename
-        double precision :: Pres, Lumi !these aren't used, but dummies are required
-        double precision, allocatable :: phi(:) !this is used briefly
-        integer :: i,j, nlines,iostatus
-
-        Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
-
-        !Get number of lines in the file
-        open(99,file=filename)
-        nlines=0
-        do
-          read(99,*, iostat=iostatus)
-          if(iostatus/=0) then ! to avoid end of file error.
-            exit
-          else
-            nlines=nlines+1
-          end if
-        end do
-        close(99)
-        nlines = nlines -1
-
-        !allocate the arrays
-        allocate(tab_mencl(nlines))
-        allocate(tab_r(nlines))
-        allocate(tab_starrho(nlines))
-        allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
-        allocate(tab_vesc(nlines))
-        allocate(phi(nlines))
-        allocate(tab_dr(nlines))
-        allocate(tab_T(nlines)) !not used in capgen; used for transgen (and anngen? )
-        allocate(tab_g(nlines))
-
-
-        !now actually read in the file
-        open(99,file=filename)
-        do i=1,nlines
-          read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
-        end do
-        close(99)
-
-        !we calculate the escape velocity here since all the ingredients are ready
-        phi(nlines) = -GMoverR
-        tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
-        tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
-        do i = 1,nlines-1
-          j = nlines-i !trapezoid integral
-          phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
-          tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
-          tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
-          ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
-          tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
-        end do
-        ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
-
-          ! Populate the atomic number tables here (because it relies on a specific format)
-        AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
-                          18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
-                          39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
-                          54.93, 55.845, 58.933, 58.693/)
-
-
-        return
-      end subroutine get_solar_params
-
-      !this is to make sure the integrator does what it's supposed to
-      function gaussinmod(x)
-        double precision :: x,gaussinmod
-        gaussinmod = nq*exp(-x**2/2.d0)
-      end function gaussinmod
-
-
       !Fast trapezoidal integral
       function trapz(x,y,flen)
         implicit none
@@ -180,13 +86,6 @@
 
 
     ! Some functions that have to be external, because of the integrator.
-
-    !Just a test for the integrator. Nothing to see here
-    function gausstest(x)
-      use capmod
-      double precision :: x,gausstest
-      gausstest = gaussinmod(x)
-    end function gausstest
 
 
     !The integrand for the integral over u
@@ -308,20 +207,6 @@
     end subroutine captn_general
 
 
-    !This is fine as long as the escape velocity is large enough
-    function maxcap(mx)
-      use capmod
-      implicit none
-      double precision maxcap
-      double precision, intent(in) :: mx
-
-      maxcap = pi/3.d0*rho0/mx*Rsun**2 &
-      *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-      + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
-
-    end function maxcap
-
-
     !! captn_specific calculates the capture rate for constant cross section.
     ! subroutine captn_specific(mx_in,sigma_0,capped_SD,capped_SI)
     !   implicit none
@@ -340,32 +225,6 @@
       call captn_general(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
       call captn_general(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
     end subroutine captn_specific
-
-
-!------!------!------!------!------INITIALIZATION FCT
-
-    subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
-      !input velocities in km/s, not cm/s!!!
-      use capmod
-      use iso_c_binding, only: c_ptr
-      implicit none
-      character (len=300) solarmodel
-      double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
-      !common solarmodel
-      !external solarmodel
-
-      if  (.not. allocated(tab_r)) then !
-          print*,"Capgen initializing from model: ",solarmodel
-          call get_solar_params(solarmodel,nlines)
-      end if
-
-      usun = usun_in*1.d5
-      u0 =  u0_in*1.d5
-      rho0 =rho0_in
-      vesc_halo = vesc_in*1.d5
-
-    end subroutine captn_init
-
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
