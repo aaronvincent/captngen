@@ -159,6 +159,7 @@ end subroutine Twimp
 SUBROUTINE sigmav(vpow,qpow,xx,xn,nlines,sv) !dimensionless <sigma v>
   implicit none
   double precision, parameter :: pi=3.141592653
+  double precision dgamma
   integer, intent(in) :: vpow,qpow,nlines
   double precision :: n, fofn
   double precision, intent(in) :: xx, xn(nlines)
