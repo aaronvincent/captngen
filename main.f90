@@ -6,115 +6,114 @@
 
     PROGRAM GENCAP
     implicit none
-    character*300 :: modfile
-    double precision :: mx, sigma_0,capped_sd(250),capped_si(250)
-    double precision :: capped_si_spec(250),capped_sd_spec(250), AtomicNumber(29)
-    double precision :: maxcap, nwimpsin, evapRate(101), Tx, noise_indicator
-    double precision, allocatable :: Etrans(:), Etrans_all(:,:), msum(:), Ltrans(:), Ltrans_all(:,:)
+	logical :: spergel_press
+    character*300 :: modfile, filename
+    character*100 :: outfile(7)
+    double precision :: mx, Tx, jx, sigma_0,capped_sd,capped_si, maxcapture
+    double precision :: capped_si_spec,capped_sd_spec
+    double precision :: maxcap, nwimpsin, evapRate, noise_indicator
+    double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
-    integer :: nq, nv, i, j, nlines
-    logical :: nonlocal
-    double precision, allocatable :: tab_mencl(:), tab_r(:), tab_T(:), tab_starrho(:), tab_mfr(:,:)
-    double precision :: Pres, Lumi
-    double precision, parameter :: mnucg = 1.6726219d-24, pi=3.1415626d0, Rsun=6.9634d10
+    integer :: nq(7), nv(7), i, j, nlines, num_isotopes, spin_dependency, cpl
+    character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
+                        "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
+	spergel_press = .false.	
+	
     ! Choose velocity and momentum transfer powers in differential cross-section
-    nq = 0
-    nv = 0
-	nonlocal = .false.
+    nq = [0,-1,1,2,0,0,0]
+    nv = [0,0,0,0,-1,1,2]
+
+    outfile = ['const.dat','qm1--.dat','q1---.dat','q2---.dat','vm1--.dat','v1---.dat','v2---.dat']
 
     ! Choose solar model file
     !modfile = "solarmodels/model_gs98_nohead.dat"
     !modfile = "solarmodels/struct_b16_agss09_nohead.dat"
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
+    ! number of isotopes capt'n will loop over in the calculation: up to 29 isotopes
+    num_isotopes = 29
+
+    ! zero for spin_independent, one for spin_dependent
+    spin_dependency = 0
+
     ! Initialise capture calculations
-    call captn_init(modfile,1.d3,220.d0,220.d0,600.d0)
+    call captn_init(modfile,0.4d0,235.d0,235.d0,550.d0)
 
     ! Initialise transport calculations
     call getnlines(nlines)
     allocate(etrans(nlines))
-    allocate(Etrans_all(nlines,50))
-    allocate(Ltrans(nlines))
-    allocate(Ltrans_all(nlines,50))
     call get_alpha_kappa(nq,nv)
     
-    allocate(tab_mencl(nlines))
-    allocate(tab_r(nlines))
-    allocate(tab_T(nlines))
-    allocate(tab_starrho(nlines))
-    allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
-    allocate(msum(nlines))
 
-    !now actually read in the file
-    open(99,file=modfile)
-    do i=1,nlines
-    	read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+    do j = 1,7
+      open(94,file = outfile(j))
+      write(94,*) "Number of Isotopes: ", num_isotopes
+      write(94,*) "Spin Dependency: ", spin_dependency
+      write(94,*) "Power: ", outfile(j)
+      write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
+      do i = 1,10
+        mx = 5.d0 + dble(i)/5.
+        sigma_0 = 10d0**(-45+dble(i)/2.)
+        print*
+        print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
+
+        ! print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
+
+        ! print*,"Calling captn_general for SI scattering."
+        ! call captn_general(mx,sigma_0,29,nq,nv,capped_si)
+        ! print*, "Capture rate", capped_si, "s^-1"
+
+        ! print*,"Calling captn_general for SD scattering."
+        call captn_general(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
+        ! print*, "Capture rate", capped_sd, "s^-1"
+
+        ! print*,"Calling captn_specific for SI and SD scattering."
+        ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
+        ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
+
+        nwimpsin = 1.2d42
+        ! nwimpsin = capped_sd*3.d7*4.57d9
+        ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
+        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,spergel_press,Tx,noise_indicator,Etrans,Etranstot)
+        ! print*, "Etranstot: ", Etranstot !FIXME units?
+        ! print*,"Calling fastevap."
+        ! call fastevap(sigma_0,1.d0,28,EvapRate)
+        ! print*,"Evap rate: ", EvapRate, "s^-1"
+
+        write(94,*) sigma_0, mx, capped_sd, Etranstot
+      end do
+      close(94)
     end do
-    close(99)
+
     
-     AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
-                      18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
-                      39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
-                      54.93, 55.845, 58.933, 58.693/)
+    call captn_init_oper()
+    num_isotopes = 16
+    jx = 0.5
+    do cpl=1, 14
+      filename = "oper_"//trim(cplConsts(cpl))//"_model.dat"
+      open(55,file=filename)
+      write(55,*) "DM_Mass | ", "  Captures | ", "  MaxCaptures"
 
-    do i = 1,1
-      
-      mx = 5.d0 !dble(i)/2.d0
-      sigma_0 =  1.d-37 !10.d0**(-40+dble(i)/5.d0)
-      print*
-      print *, "i=", i
-      print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
-
-      print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
-
-      print*,"Calling captn_general for SI scattering."
-      call captn_general(mx,sigma_0,29,nq,nv,capped_si(i))
-      print*, "Capture rate", capped_si(i), "s^-1"
-
-      print*,"Calling captn_general for SD scattering."
-      call captn_general(mx,sigma_0,1,nq,nv,capped_sd(i))
-      print*, "Capture rate", capped_sd(i), "s^-1"
-
-      print*,"Calling captn_specific for SI and SD scattering."
-      call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec(i),capped_si_spec(i))
-      print*, "Capture rates (SI, SD): (", capped_si_spec(i), capped_sd_spec(i), ") s^-1"
-
-!      nwimpsin = capped_sd(i)*3.d7*4.57d9
-	  nwimpsin = 5.d44
-      print*,"Calling transgen, with nwimpsin = ", nwimpsin
-      call transgen(sigma_0,nwimpsin,1,nonlocal,Tx,noise_indicator,Etrans,Etranstot)
-      print*, "Etranstot: ", Etranstot !FIXME units?
-	  Etrans_all(:,i) = Etrans
-
-      print*,"Calling fastevap."
-      call fastevap(sigma_0,1.d0,28,EvapRate(i))
-      print*,"Evap rate: ", EvapRate(i), "s^-1"
-      
-      if (nonlocal) then
-      	open(55, file="/home/luke/summer_2020/mesa/test_files/Ltot_sp.dat", access="APPEND")
-      else if (.not. nonlocal) then
-      	open(55, file="/home/luke/summer_2020/mesa/test_files/Ltot_gr.dat", access="APPEND")
+      if (cpl==1) then
+        call populate_array(1.65d-8, cpl, 0)
+      else if (cpl==2) then
+        call populate_array(0.d0, cpl-1, 0)
+        call populate_array(1.65d-8, cpl+1, 0)
+      else
+        call populate_array(0.d0, cpl, 0)
+        call populate_array(1.65d-8, cpl+1, 0)
       endif
       
-      write(55,*) sigma_0, Etranstot
+      print*, "Running coupling constant: ", cplConsts(cpl)
+      do i = 1,10
+        mx = 5.d0 + dble(i)/5.
+        call captn_oper(mx,jx,num_isotopes,capped_sd)
+        maxcapture = maxcap(mx)
+        write(55,*) mx, capped_sd, maxcapture
+        print*, "mx: ",mx, "capped: ",capped_sd, "max_capture:",maxcapture
+      end do
       close(55)
-      
     end do
 
-    !Output Etrans to file
-    if (nonlocal) then 
-    	open(55,file = "gentest_sp.dat")
-    else if (.not. nonlocal) then 
-    	open(55,file = "gentest_gr.dat")
-    endif
-	do i=1,nlines
-		write(55,*) tab_r(i), Etrans_all(i,:)
-	enddo
-!    do i=1,50
-!      write(55,*) 10d0**(-42+dble(i)/5.), EvapRate(i)
-!      write(55,*) 10**(.02*i - 0.02), capped_sd(i),capped_si(i),capped_sd_spec(i),capped_si_spec(i)
-!    end do
-    close(55)
-
-    END PROGRAM GENCAP
+END PROGRAM GENCAP
