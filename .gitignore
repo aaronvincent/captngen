@@ -1,0 +1,11 @@
+# ignore .o files
+*.o
+
+# ignore .mod files
+*.mod
+
+# ignore .x files
+*.x
+
+# ignore any VScode settings
+.vscode/*

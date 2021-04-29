@@ -1,4 +1,4 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Nonlocal WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Spergel-Press WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
 !	-nx_func: Calculates the WIMP density profile using the fgoth interpolation
@@ -9,7 +9,7 @@
 ! All units are cgs except tab_r and tab_dr
 ! I apologize for the long function calls.
 
-module nonlocalmod
+module spergelpressmod
 use capmod
 implicit none
    
@@ -263,4 +263,4 @@ enddo
 
 end subroutine
 
-end module nonlocalmod
+end module spergelpressmod

@@ -17,6 +17,12 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
 
   integer :: i, j, k
+
+  ! User warning:
+  print*, "WARNING!"
+  print*, "HEY! This is the fast evaporation routine - it DOES NOT WORK in the LTE limit"
+  print*, "Make sure you aren't underestimating the evaporation rate!"
+
   mdmg = mdm*1.78d-24
   mnucg = mnuc*1.78d-24
 
@@ -153,6 +159,7 @@ end subroutine Twimp
 SUBROUTINE sigmav(vpow,qpow,xx,xn,nlines,sv) !dimensionless <sigma v>
   implicit none
   double precision, parameter :: pi=3.141592653
+  double precision dgamma
   integer, intent(in) :: vpow,qpow,nlines
   double precision :: n, fofn
   double precision, intent(in) :: xx, xn(nlines)

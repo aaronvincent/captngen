@@ -15,28 +15,31 @@
 !Output
 !Etrans erg/g/s (I think)
 
-subroutine transgen(sigma_0,Nwimps,niso,nonlocal,Tx,noise_indicator,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,spergel_press,Tx,noise_indicator,etrans,EtransTot)
+
 !mdm is stored in capmod
-! Tx is unchanged in the LTE scheme, and is the output one-zone WIMP temp in the nonlocal scheme
+! Tx is unchanged in the LTE scheme, and is the output one-zone WIMP temp in the spergel-press scheme
 use capmod
 use akmod
-use nonlocalmod
+use spergelpressmod
 implicit none
 !nlines might be redundant
-logical, intent(in) :: nonlocal
+logical, intent(in) :: spergel_press
 logical splinelog, DCT !for PCHIP
-integer, intent(in):: niso
+integer, intent(in):: niso, nv_in, nq_in, spin_in
 double precision, intent(in) :: sigma_0, Nwimps
 double precision, intent(out) :: noise_indicator
 integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, ri, ierr
 integer (kind=4) :: lensav 
 double precision :: epso,EtransTot
-double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in nonlocalmod
-double precision :: mxg, rchi, Tc,rhoc,K, integrand
+double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
+double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, integrand
 double precision :: capped, maxcap !this is the output
+double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
-double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso, n_0
+double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
+double precision :: nx(nlines),alphaofR(nlines), kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),cumNxIso
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
 ! More evenly spaced arrays for FFT
 double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines), Ltrans_cond(nlines)
@@ -52,7 +55,7 @@ double precision, allocatable :: wsave(:)
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press nonlocal scheme
+double precision :: Tx, guess_1, guess_2, tolerance ! For the Spergel & Press scheme
 
 lwk = 3*nlines !This is the length of pchipScratch. don't redefine this without also changing pchipScratch
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
@@ -61,8 +64,20 @@ smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i,
 biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,nlines/)
 
 mxg = mdm*1.78d-24
+q0_cgs = q0*5.344d-14
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
+nq = nq_in
+nv = nv_in
+
+if (spin_in == 1) then
+  sigma_SD = sigma_0
+  sigma_SI = 0.d0
+else if (spin_in == 0) then
+  sigma_SD = 0.d0
+  sigma_SI = sigma_0
+end if
+
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
@@ -73,29 +88,62 @@ if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in tra
 phi = - tab_vesc**2/2.d0
 dphidr = -tab_g
 
+!remember, nq and nv are set in darkInputs.txt for DarkMESA or if not, just in main
+call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 
 do i = 1,niso
-    !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
-    muarray(i) = mdm/AtomicNumber(i)/mnuc
-    sigma_N(i) = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2 !not yet multiplied by sigma_0
-    nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/AtomicNumber(i)/mnucg
-    !these shouldn't really be done every iteration, can fix later
-    call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
-    call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
+  a = AtomicNumber(i)
+  !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
+  muarray(i) = mdm/a/mnuc
+  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2 !not yet multiplied by sigma_0
+  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
+  !these shouldn't really be done every iteration, can fix later
+  call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
+  call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
 end do
 
 ! PS: I've commented out the following line -- the array bounds don't match, so it
 ! creates memory corruption(!) It also looks like it is only here by accident...
 !    alphaofR = alphaofR/(sigma_N*sum(nabund,1))
 
-!compute mean free path
+!need separate zeta factors for q- and v- dependent interactions
+do i = 1,nlines
+  zeta_q(i) = q0_cgs/(mxg*sqrt(2.d0*kB*tab_T(i)/mxg))
+  zeta_v(i) = v0/(sqrt(2.d0*kB*tab_T(i)/mxg))
+end do
+
+! mean free path calcs for each nq,nv case here
+! equations from 1311.2074 (eqns 69 to 74 on arxiv copy)
 if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
-    mfp(i) = 1/sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
+    mfp(i) = 1./sum(sigma_N*nabund(:,i)) !factor of 2 b/c  sigma_tot = 2 sigma_0
   end do
-! else if ((nq .eq. )) !q, v dependence goes here
+else if ((nq .eq. 1)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2))
+  end do
+else if ((nq .eq. 2)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4))
+  end do
+else if ((nq .eq. -1)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2)
+  end do
+else if ((nv .eq. 1)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))
+  end do
+else if ((nv .eq. 2)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))
+  end do
+else if ((nv .eq. -1)) then
+  do i = 1,nlines
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))
+  end do
 end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
@@ -124,7 +172,7 @@ enddo
 
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 
-! Cut out high frequency components. The subroutine fourier_smooth is located in nonlocalmod.f90
+! Cut out high frequency components. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components
 call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/Rsun
@@ -134,11 +182,25 @@ cumint(1) = 0.d0
 cumNx = 0.d0
 
 do i = 1,nlines
-
-! 1) get alpha & kappa averages
+  !get alpha & kappa averages
   alphaofR(i) = sum(alpha*sigma_N*nabund(:,i))/sum(sigma_N*nabund(:,i))
-  kappaofR(i) = mfp(i)*sum(sigma_0*sigma_N*nabund(:,i)/kappa)
+  if ((nq .eq. 0) .and. (nv .eq. 0)) then
+    kappaofR(i) = mfp(i)*sum(sigma_N*nabund(:,i)/kappa)
+  else if ((nq .eq. 1)) then
+    kappaofR(i) = mfp(i)*sum(6.*nabund(:,i)*sigma_N/(1.+muarray)/(zeta_q(i)**2)/kappa)
+  else if ((nq .eq. 2)) then
+    kappaofR(i) = mfp(i)*sum(40.*nabund(:,i)*sigma_N/((1.+muarray)**2)/(zeta_q(i)**4)/kappa)
+  else if ((nq .eq. -1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*zeta_q(i)**2/kappa)
+  else if ((nv .eq. 1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2)/kappa)
+  else if ((nv .eq. 2)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4)/kappa)
+  else if ((nv .eq. -1)) then
+    kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray)/kappa)
+  end if
   kappaofR(i) = 1./kappaofR(i)
+
   !perform the integral inside the nx integral
 
   integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
@@ -156,6 +218,8 @@ do i = 1,nlines
 end do
 
 nx = nx/cumNx*nwimps !normalize density
+
+!These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
@@ -164,7 +228,7 @@ nx = fgoth*nx + (1.-fgoth)*nxIso
 
 ! Ideally, we would have called nx_func here so that both schemes use the same nx.
 
-if (nonlocal .eqv. .false.) then ! if nonlocal=false, use Gould & Raffelt regime to calculate transport
+if (spergel_press .eqv. .false.) then ! if spergel_press=false, use Gould & Raffelt regime to calculate transport
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Gould Raffelt section
@@ -213,13 +277,13 @@ close(55)
 return
 
 
-else if (nonlocal) then ! if nonlocal=true, use Spergel & Press regime to calculate heat transport
+else if (spergel_press) then ! if spergel_press=true, use Spergel & Press regime to calculate heat transport
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Spergel Press section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! The nonlocal transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
-! The functions of interest are in nonlocalmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
+! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
+! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 
 ! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual
 ! Tx, so I just hard set them here.
