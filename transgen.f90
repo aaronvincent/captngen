@@ -71,11 +71,11 @@ nq = nq_in
 nv = nv_in
 
 if (spin_in == 1) then
-  sigma_SD = sigma_0
+  sigma_SD = 2.d0 * sigma_0 ! Since sigma_tot = 2*sigma_0
   sigma_SI = 0.d0
 else if (spin_in == 0) then
   sigma_SD = 0.d0
-  sigma_SI = sigma_0
+  sigma_SI = 2.d0 * sigma_0 ! Since sigma_tot = 2*sigma_0
 end if
 
 
@@ -95,9 +95,9 @@ kappaofR(:) = 0.d0
 
 do i = 1,niso
   a = AtomicNumber(i)
-  !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added
+  !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = mdm/a/mnuc
-  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2 !not yet multiplied by sigma_0
+  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
@@ -116,9 +116,11 @@ end do
 
 ! mean free path calcs for each nq,nv case here
 ! equations from 1311.2074 (eqns 69 to 74 on arxiv copy)
-if ((nq .eq. 0) .and. (nv .eq. 0)) then
+if (nq*nv .ne. 0) then
+  stop "Oh no! nq and nv can't both be nonzero."
+else if ((nq .eq. 0) .and. (nv .eq. 0)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(sigma_N*nabund(:,i)) !factor of 2 b/c  sigma_tot = 2 sigma_0
+    mfp(i) = 1./sum(sigma_N*nabund(:,i))
   end do
 else if ((nq .eq. 1)) then
   do i = 1,nlines
@@ -172,7 +174,7 @@ enddo
 
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 
-! Cut out high frequency components. The subroutine fourier_smooth is located in spergelpressmod.f90
+! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components
 call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/Rsun
@@ -218,9 +220,11 @@ do i = 1,nlines
 end do
 
 nx = nx/cumNx*nwimps !normalize density
+print *, "nx(r=0)=", nx(1)
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
+print *, K
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
 
@@ -228,7 +232,7 @@ nx = fgoth*nx + (1.-fgoth)*nxIso
 
 ! Ideally, we would have called nx_func here so that both schemes use the same nx.
 
-if (spergel_press .eqv. .false.) then ! if spergel_press=false, use Gould & Raffelt regime to calculate transport
+if (.not. spergel_press) then ! if spergel_press=false, use Gould & Raffelt regime to calculate transport
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Gould Raffelt section
@@ -298,7 +302,7 @@ Tx = newtons_meth(Tx_integral, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps
 nx = nx_func(Tx, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
 
 ! Etrans in erg/g/s (according to Spergel Press)
-Etrans = Etrans_nl(Tx, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso) ! erg/g/s
+Etrans = Etrans_sp(Tx, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso) ! erg/g/s
 
 ! Calculate Ltrans
 do i=1,nlines

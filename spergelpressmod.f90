@@ -2,7 +2,7 @@
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
 !	-nx_func: Calculates the WIMP density profile using the fgoth interpolation
-! 	-Etrans_nl: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
+! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx 
 
@@ -89,7 +89,7 @@ return
 end function
 
 
-function Etrans_nl(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
+function Etrans_sp(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
 implicit none
 ! Calculates WIMP transported energy (erg/g/s) using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 ! The Spergel Press formalism doesn't actually us dT/dr. 
@@ -102,7 +102,7 @@ double precision, intent(in) :: alpha(niso), kappa(niso), sigma_N(niso)
 double precision :: n_0, mxg, alphaofR(nlines), kappaofR(nlines)
 double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
-double precision :: Etrans_nl(nlines)
+double precision :: Etrans_sp(nlines)
 integer :: i, j
 ! T_x in K, dTdr in K/r, mfp in cm, sigma_0 in cm^2, 
 
@@ -117,12 +117,13 @@ do i=1,niso
 	enddo
 enddo
 
-sigma_nuc = 2.d0*sigma_N*sigma_0 ! Total WIMP-nucleus cross section in cm^2
+sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2
 
 ! n_x in cm^-3. This is a better nxIso estimate than in Transgen
 ! Ideally, we would call nx_func here so that both schemes use the same nx.
 n_x = exp(-mxg*phi/kB/T_x) 
 n_0 = Nwimps/trapz(R, 4.d0*pi*R**2.d0*n_x, nlines) ! Normalize so that integral(nx) = Nwimps
+print *, "In Etrans_sp: Nwimps=", Nwimps, "n_0=", n_0, "n_x(1)=", n_x(1), "kB=", kB
 n_x = n_0*n_x ! WIMP density in cm^-3
 
 ! Separate calc into species dependent and independent factors
@@ -137,14 +138,16 @@ do i=1,niso
 		sqrt(tab_T/mnucg*AtomicNumber(i) + T_x/mxg)
 enddo
 
-Etrans_nl = species_indep*species_dep ! erg/g/s
+print *, "max(species_indep)=", maxval(species_indep), "max(species_dep)=", maxval(species_dep)
+
+Etrans_sp = species_indep*species_dep ! erg/g/s
 
 !! Useful when troubleshooting
-!open(55, file="/home/luke/summer_2020/mesa/test_files/Etrans_nl_params.txt")
+!open(55, file="/home/luke/summer_2021/mesa/test_files/Etrans_sp_params.txt")
 !write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
 !	"nlines=", nlines, "niso=", niso
 !do i=1,nlines
-!	write(55,*) R(i), tab_T(i), n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i), Etrans_nl(i)
+!	write(55,*) R(i), tab_T(i), n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i), Etrans_sp(i)
 !enddo
 !close(55)
 
@@ -165,7 +168,7 @@ double precision :: Tx_integral
 ! integrand units: erg/cm/s
 R = tab_r*Rsun
 
-integrand = 4*pi*R**2*tab_starrho*Etrans_nl(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
+integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, dTdr, mfp, sigma_N, sigma_0, alpha, kappa, Nwimps, niso)
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(R, integrand, nlines)
