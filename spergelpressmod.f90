@@ -75,12 +75,6 @@ fgoth = 1./(1.+(K/.4)**2)
 
 nx_func = fgoth*nx_LTE + (1.-fgoth)*nx_iso
 
-if (any(isnan(dphidr))) print *, "NAN encountered in dphidr"
-if (any(isnan(alphaofR))) print *, "NAN encountered in alphaofR"
-if (any(isnan(dTdr))) print *, "NAN encountered in dTdr"
-
-! If the units are wrong, a NaN will likely show up in one of these
-if (any(isnan(cumint))) print *, "NAN encountered in cumint"
 if (any(isnan(nx_iso))) print *, "NAN encountered in nx_iso"
 if (any(isnan(nx_LTE))) print *, "NAN encountered in nx_LTE"
 
