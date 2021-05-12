@@ -40,8 +40,8 @@ double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
 double precision :: nx(nlines),alphaofR(nlines),kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),nxIso_func(nlines),cumNxIso
-double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for FFT
-! More evenly spaced arrays for FFT
+double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for Fourier smoothing
+! More evenly spaced arrays for Fourier
 double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines), Ltrans_cond(nlines)
 double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2), r_mesa(1999)
 double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
@@ -231,11 +231,6 @@ if (.not. spergel_press) then ! if spergel_press=false, use Gould & Raffelt regi
 
 Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
-if (any(isnan(tab_r))) print *, "NAN encountered in tab_r"
-if (any(isnan(kappaofR))) print *, "NAN encountered in kappa"
-if (any(isnan(hgoth))) print *, "NAN encountered in hgoth"
-if (any(isnan(nx))) print *, "NAN encountered in nx"
-if (any(isnan(tab_T))) print *, "NAN encountered in tab_T"
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
 !get derivative of luminosity - also needs smoothing. Fourier method doesn't work as well here

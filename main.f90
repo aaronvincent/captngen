@@ -18,7 +18,7 @@
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	spergel_press = .true.	
+	spergel_press = .false.	
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -32,10 +32,10 @@
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
     ! number of isotopes capt'n will loop over in the calculation: up to 29 isotopes
-    num_isotopes = 1
+    num_isotopes = 29
 
     ! zero for spin_independent, one for spin_dependent
-    spin_dependency = 1
+    spin_dependency = 0
 
     ! Initialise capture calculations
     call captn_init(modfile,0.4d0,235.d0,235.d0,550.d0)
@@ -52,9 +52,9 @@
       write(94,*) "Spin Dependency: ", spin_dependency
       write(94,*) "Power: ", outfile(j)
       write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
-      do i = 1,1
+      do i = 1,10
         mx = 5.d0 + dble(i)/5.
-        sigma_0 = 10.d0**(-37.d0) !10d0**(-45+dble(i)/2.)
+        sigma_0 = 10d0**(-45+dble(i)/2.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 
