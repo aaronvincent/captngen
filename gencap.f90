@@ -293,13 +293,12 @@
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
+    AtomicNumber(1:8) = tab_atomic
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
     end do
     tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
-
-    AtomicNumber(1:8) = tab_atomic
 
     RETURN
   end subroutine get_stellar_params
