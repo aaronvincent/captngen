@@ -18,7 +18,7 @@
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	spergel_press = .false.	
+	spergel_press = .true.	
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -32,7 +32,7 @@
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
     ! number of isotopes capt'n will loop over in the calculation: up to 29 isotopes
-    num_isotopes = 29
+    num_isotopes = 1
 
     ! zero for spin_independent, one for spin_dependent
     spin_dependency = 1
@@ -46,14 +46,14 @@
     call get_alpha_kappa(nq,nv)
     
 
-    do j = 1,1
+    do j = 1,7
       open(94,file = outfile(j))
       write(94,*) "Number of Isotopes: ", num_isotopes
       write(94,*) "Spin Dependency: ", spin_dependency
       write(94,*) "Power: ", outfile(j)
       write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
       do i = 1,1
-        mx = 5.d0 !+ dble(i)/5.
+        mx = 5.d0 + dble(i)/5.
         sigma_0 = 10.d0**(-37.d0) !10d0**(-45+dble(i)/2.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
@@ -75,8 +75,8 @@
         nwimpsin = 5.d44
         ! nwimpsin = capped_sd*3.d7*4.57d9
         ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        print *, "Calling transgen with", sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, spergel_press
-        call transgen(sigma_0,nwimpsin,1,nq(j),nv(j),spin_dependency,spergel_press,Tx,noise_indicator,Etrans,Etranstot)
+        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,spergel_press, &
+        	Tx,noise_indicator,Etrans,Etranstot)
         ! print*, "Etranstot: ", Etranstot !FIXME units?
         ! print*,"Calling fastevap."
         ! call fastevap(sigma_0,1.d0,28,EvapRate)
@@ -86,18 +86,6 @@
       end do
       close(94)
     end do
-
-if (spergel_press) then
-	open(95,file = 'Etrans_sp.dat')
-	do k=1,nlines
-		write(95,*) Etrans(k)
-	end do
-else if (.not. spergel_press) then
-	open(95,file = 'Etrans_gr.dat')
-	do k=1,nlines
-		write(95,*) Etrans(k)
-	end do
-end if
     
     call captn_init_oper()
     num_isotopes = 16
