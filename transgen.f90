@@ -298,7 +298,6 @@ EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines
 Etrans_test = Etrans
 call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
-nx = nx_func(Tx, dTdr, mfp, sigma_N, alpha, Nwimps, niso)
 !! useful when troubleshooting
 !open(55,file = "Ltrans_sp.dat")
 !do i=1,nlines
