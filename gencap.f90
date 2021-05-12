@@ -124,8 +124,6 @@
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
       double precision :: int_result
-      double precision :: integrand_array(1000)
-      integer :: i
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
       external integrand
