@@ -266,17 +266,17 @@ dLdr = dLdr/Rsun
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
-! Useful when troubleshooting
-! Check Ltrans
-open(55,file = "Ltrans_gr.dat")
-do i=1,nlines
-	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), &
-		nx(i), tab_starrho(i), nxLTE(i), nxIso(i)
-end do
-close(55)
-open(55, file="Lmax_gr.dat", access="APPEND")
-write(55,*) mfp(1), maxval(-Ltrans)
-close(55)
+!! Useful when troubleshooting
+!! Check Ltrans
+!open(55,file = "Ltrans_gr.dat")
+!do i=1,nlines
+!	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), &
+!		nx(i), tab_starrho(i), nxLTE(i), nxIso(i)
+!end do
+!close(55)
+!open(55, file="Lmax_gr.dat", access="APPEND")
+!write(55,*) mfp(1), maxval(-Ltrans)
+!close(55)
 
 return
 
