@@ -7,4 +7,4 @@ Can be run in standalone mode, or as a library (via make gencaplib.so).
 
 See main.f90 for examples of how to call the executable, gencaplib.x
 
-If you use this code, you can cite https://arxiv.org/abs/1808.10465 where it was first deployed.
+If you use this code, you can cite https://arxiv.org/abs/2105.06810 and/or https://arxiv.org/abs/1808.10465 where it was first deployed.
