@@ -8,6 +8,8 @@
 !nwimps: Total number of DM particles in the star. I know ADM is not WIMPs, stop complaining
 !niso: number of isotopes: 1 = spin-dependent
 !nq, nv: v^n, q^n numberwang
+! spin_in: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
+! spergel_press: if true, use Spergel-Press heat transport formalism, if false, use Gould-Raffelt
 
 !dm properties are set when you call capgen.
 
@@ -37,7 +39,7 @@ double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defin
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: sigma_SI, sigma_SD, a
-double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso)
+double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso), nxLTE(nlines)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
 double precision :: nx(nlines),alphaofR(nlines),kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),nxIso_func(nlines),cumNxIso
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for Fourier smoothing
@@ -94,9 +96,9 @@ dphidr = -tab_g
 
 ! smooth T derivative
 ! some gymnastics are necessary, because the temperature is not smooth at all
-! a simple spline -> derivative doesn't help. Fourier method works better
-! Take dT/dr with pchip
+! a simple spline -> derivative doesn't help. Fourier method (implemented below with fourier_smooth) works better
 splinelog = .false.
+! DPCHEZ just outputs dTdr (it doesn't do any smoothing)
 call DPCHEZ( nlines, tab_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
 	print*, 'DPCHEZ interpolant failed with error ', IERR
@@ -114,7 +116,7 @@ enddo
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 
 ! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
-! Keep lowest 5% of components
+! Keep lowest 5% of components, delete top 95% of frequency components
 call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/Rsun
 
@@ -183,7 +185,7 @@ rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 
 K = mfp(1)/rchi;
 
-!this loop does a number of things
+!this loop does a number of things: gets alpha and kappa averages, and calculates nxLTE
 cumint(1) = 0.d0
 cumNx = 0.d0
 
@@ -206,7 +208,22 @@ do i = 1,nlines
     kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray)/kappa)
   end if
   kappaofR(i) = 1./kappaofR(i)
+  
+  !perform the integral inside the nx integral
+  integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
+
+  if (i > 1) then
+  	cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
+  end if
+	
+  nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
+  nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
+
+  cumNx = cumNx + 4.*pi*tab_dr(i)*tab_r(i)**2*nxLTE(i)*Rsun**3.
+
 end do
+
+nxLTE = nxLTE/cumNx*nwimps !normalize density
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin - calculate it here to use in nxIso
 ! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual
@@ -214,14 +231,18 @@ end do
 guess_1 = 1.0d7 ! ***** A possible source of error if the true Tx is between these two values*****
 guess_2 = 1.01d7
 reltolerance = 1.0d-6
-Tx = newtons_meth(Tx_integral, dTdr, mfp, sigma_N, alpha, Nwimps, niso, guess_1, guess_2, reltolerance)
-! nx_func interpolates between nx_LTE and nx_iso using fgoth. It is defined in spergelpressmod.f90.
-nx = nx_func(Tx, dTdr, mfp, sigma_N, alpha, Nwimps, niso) 
+! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
+Tx = newtons_meth(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
+!nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
+! Using Spergel-Press nxIso is Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
+print *, fgoth
+
+nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
 if (.not. spergel_press) then ! if spergel_press=false, use Gould & Raffelt regime to calculate transport
 
@@ -233,9 +254,8 @@ Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab
 
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
-!get derivative of luminosity - also needs smoothing. Fourier method doesn't work as well here
-!Hermite polynomial interpolation seems to work ok.
-!Cubic hermite polynomial to smooth dLdr
+!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
+! There is no smoothing currently implemented here
 splinelog = .false.
 call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
@@ -245,22 +265,18 @@ ENDIF
 dLdr = dLdr/Rsun
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
-! Etrans_test is to check how the noise in Etrans. noise_indicator is the sum of the components above the cutoff
-Etrans_test = Etrans
-call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
-EtransTot = trapz(tab_r,abs(dLdR)*Rsun,nlines)
 
-!! Useful when troubleshooting
-!! Check Ltrans
-!open(55,file = "Ltrans_gr.dat")
-!do i=1,nlines
-!	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), &
-!		nx(i), tab_starrho(i)
-!end do
-!close(55)
-!open(55, file="Lmax_gr.dat", access="APPEND")
-!write(55,*) mfp(1), maxval(-Ltrans)
-!close(55)
+! Useful when troubleshooting
+! Check Ltrans
+open(55,file = "Ltrans_gr.dat")
+do i=1,nlines
+	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), &
+		nx(i), tab_starrho(i), nxLTE(i), nxIso(i)
+end do
+close(55)
+open(55, file="Lmax_gr.dat", access="APPEND")
+write(55,*) mfp(1), maxval(-Ltrans)
+close(55)
 
 return
 
@@ -278,34 +294,32 @@ if ((nq .ne. 0) .or. (nv .ne. 0)) then
 endif
 
 ! Etrans in erg/g/s (according to Spergel Press)
-Etrans = Etrans_sp(Tx, dTdr, mfp, sigma_N, alpha, Nwimps, niso) ! erg/g/s
+Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
 
 ! Calculate Ltrans
 do i=1,nlines
 	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
 enddo
 
-! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
-
-! Check the noise in Etrans (same as GR scheme) - note that dTdr_even is just a work array, I'm not actually using 
-! anything about dTdr in the noise calculation
-Etrans_test = Etrans
-call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
-
 !! useful when troubleshooting
 !open(55,file = "Ltrans_sp.dat")
 !do i=1,nlines
-!	write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
+!	write(55,*) tab_r(i), Ltrans, Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
 !end do
 !close(55)
 !!open(55, file="Lmax_sp.dat", access="APPEND")
 !!write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
 !!close(55)
 
-return
-
-
 endif
+
+! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
+EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
+
+! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff
+Etrans_test = Etrans
+call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
+
+return
 
 end subroutine transgen
