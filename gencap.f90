@@ -18,6 +18,7 @@
 !     option was turned off from DarkMESA side.
 
     module capmod
+
       use sharedmod
       implicit none
       double precision, parameter :: GNewt = 6.672d-8
@@ -70,10 +71,6 @@
         trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
         do i = 2,flen-1
           trapz = trapz + y(i)*(x(i)-x(i-1))
-
-          if (trapz .lt. 0.d0) then
-            print*, "negative encountered in trapz: i = ", i
-          end if
         end do
 
         return
@@ -290,13 +287,12 @@
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
+    AtomicNumber(1:8) = tab_atomic
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
     end do
     tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
-
-    AtomicNumber(1:8) = tab_atomic
 
     RETURN
   end subroutine get_stellar_params
