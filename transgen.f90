@@ -125,7 +125,6 @@ call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 
-
 do i = 1,niso
   a = AtomicNumber(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
@@ -226,21 +225,19 @@ end do
 nxLTE = nxLTE/cumNx*nwimps !normalize density
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin - calculate it here to use in nxIso
-! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual
-! Tx, so I just hard set them here.
-guess_1 = 1.0d7 ! ***** A possible source of error if the true Tx is between these two values*****
-guess_2 = 1.01d7
+! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual Tx
+guess_1 = maxval(tab_T)
+guess_2 = maxval(tab_T)+1.d0
 reltolerance = 1.0d-6
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 Tx = newtons_meth(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 !nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
-! Using Spergel-Press nxIso is Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
+! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
 hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
-print *, fgoth
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
@@ -250,7 +247,9 @@ if (.not. spergel_press) then ! if spergel_press=false, use Gould & Raffelt regi
 ! Gould Raffelt section
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+! remove hgoth and fgoth while testing
+!Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 
 if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
@@ -266,14 +265,14 @@ dLdr = dLdr/Rsun
 
 Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
-!! Useful when troubleshooting
-!! Check Ltrans
-!open(55,file = "Ltrans_gr.dat")
-!do i=1,nlines
-!	write(55,*) tab_r(i), Ltrans(i), Etrans(i), kappaofR(i), mfp(i), tab_T(i), dTdR(i), hgoth(i), dLdR(i), &
-!		nx(i), tab_starrho(i), nxLTE(i), nxIso(i)
-!end do
-!close(55)
+! Useful when troubleshooting
+! Check Ltrans
+open(55,file = "/home/luke/summer_2021/mesa/test_files/etrans_gr.dat")
+do i=1,nlines
+	write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nxLTE(i), &
+	dphidr(i), Ltrans(i), dLdr(i)
+end do
+close(55)
 !open(55, file="Lmax_gr.dat", access="APPEND")
 !write(55,*) mfp(1), maxval(-Ltrans)
 !close(55)
