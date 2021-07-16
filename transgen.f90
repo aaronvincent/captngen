@@ -226,11 +226,11 @@ nxLTE = nxLTE/cumNx*nwimps !normalize density
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin - calculate it here to use in nxIso
 ! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual Tx
-guess_1 = maxval(tab_T)
-guess_2 = maxval(tab_T)+1.d0
+guess_1 = maxval(tab_T)*1.1d0
+guess_2 = maxval(tab_T)/10.d0
 reltolerance = 1.0d-6
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
-Tx = newtons_meth(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
+Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 !nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
 
@@ -270,7 +270,7 @@ Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 open(55,file = "/home/luke/summer_2021/mesa/test_files/etrans_gr.dat")
 do i=1,nlines
 	write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nxLTE(i), &
-	dphidr(i), Ltrans(i), dLdr(i)
+	dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1)
 end do
 close(55)
 !open(55, file="Lmax_gr.dat", access="APPEND")
