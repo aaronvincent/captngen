@@ -80,14 +80,14 @@ enddo
 
 Etrans_sp = species_indep*species_dep ! erg/g/s
 
-! Useful when troubleshooting
-open(55, file="/home/luke/summer_2021/mesa/test_files/Etrans_sp_params.txt")
-write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
-	"nlines=", nlines, "niso=", niso
-do i=1,nlines
-	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i)
-enddo
-close(55)
+!! Useful when troubleshooting
+!open(55, file="/home/luke/summer_2021/mesa/test_files/Etrans_sp_params.txt")
+!write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
+!	"nlines=", nlines, "niso=", niso
+!do i=1,nlines
+!	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i)
+!enddo
+!close(55)
 
 return
 end function
@@ -238,5 +238,34 @@ do i=1,nlines
 enddo
 
 end subroutine
+
+function rolling_avg(y, nlines)
+! Takes a 1D array f of length N, returns an array of length N whose ith entry
+! is the average of f(i) and its 4 nearest neighbours
+integer, intent(in) ::  nlines
+double precision, intent(in) :: y(nlines)
+integer :: i, j
+double precision :: rolling_avg(nlines)
+
+do i=5,nlines-4
+    rolling_avg(i) = 0.d0
+    do j=-4,4
+        rolling_avg(i) = rolling_avg(i) + y(i+j)
+    enddo
+    rolling_avg(i) = rolling_avg(i)/9.d0
+enddo
+! do boundary values manually
+rolling_avg(1) = (y(1)+y(2)+y(3))/3.d0
+rolling_avg(2) = (y(1)+y(2)+y(3)+y(4))/4.d0
+rolling_avg(3) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6))/6.d0
+rolling_avg(4) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6)+y(7)+y(8))/8.d0
+rolling_avg(nlines-1) = (y(nlines-7)+y(nlines-6)+y(nlines-5)+y(nlines-4) &
+							+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/8.d0
+rolling_avg(nlines-1) = (y(nlines-5)+y(nlines-4)+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/6.d0
+rolling_avg(nlines-1) = (y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/4.d0
+rolling_avg(nlines) = (y(nlines-2)+y(nlines-1)+y(nlines))/3.d0
+
+return
+end function
 
 end module spergelpressmod
