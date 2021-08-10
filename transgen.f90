@@ -5,28 +5,29 @@
 !!! Uses capmod from capgen.f90
 
 !Input:
-!nwimps: Total number of DM particles in the star. I know ADM is not WIMPs, stop complaining
-!niso: number of isotopes: 1 = spin-dependent
-!nq, nv: v^n, q^n numberwang
+! sigma_0: DM scattering cross-section
+! nwimps: Total number of DM particles in the star. I know ADM is not WIMPs, stop complaining
+! niso: number of isotopes: 1 = spin-dependent
+! nq, nv: v^n, q^n numberwang
 ! spin_in: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
-! spergel_press: if true, use Spergel-Press heat transport formalism, if false, use Gould-Raffelt
+! transport_formalism: 1=Gould & Raffelt, 2=rescaled G&R, 3=Spergel & Press
 
 !dm properties are set when you call capgen.
 
 
 !Output
-!Etrans erg/g/s (I think)
+!Etrans erg/g/s
 
-subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,spergel_press,Tx,noise_indicator,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
 
 !mdm is stored in capmod
-! Tx is unchanged in the LTE scheme, and is the output one-zone WIMP temp in the spergel-press scheme
+! Tx is the output one-zone WIMP temp 
 use capmod
 use akmod
 use spergelpressmod
 implicit none
 !nlines might be redundant
-logical, intent(in) :: spergel_press
+integer, intent(in) :: transport_formalism
 logical splinelog, DCT !for PCHIP
 integer, intent(in):: niso, nv_in, nq_in, spin_in
 double precision, intent(in) :: sigma_0, Nwimps
@@ -53,11 +54,12 @@ double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlin
 integer lwk !for pchip
 double precision :: pchipScratch(3*nlines) !for pchip
 double precision, allocatable :: wsave(:)
-
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
 double precision :: Tx, guess_1, guess_2, reltolerance ! For the Spergel & Press scheme
+double precision :: T_eq_Tx_index, r_T, a1, b1, c1, a2, b2, c2, A_MC, x0_MC, sigma_MC, b_MC, chi_MC(nlines), g_MC(nlines)
+double precision :: A_LTE, x0_LTE, sigma_LTE, b_LTE, Ltrans_LTE(nlines), chi_LTE(nlines), g_LTE(nlines), T_index_array(1)
 
 lwk = 3*nlines !This is the length of pchipScratch. don't redefine this without also changing pchipScratch
 epso = tab_r(2)/10.d0 ! small number to prevent division by zero
@@ -97,34 +99,33 @@ dphidr = -tab_g
 ! smooth T derivative
 ! some gymnastics are necessary, because the temperature is not smooth at all
 ! a simple spline -> derivative doesn't help. Fourier method (implemented below with fourier_smooth) works better
+
+! DPCHEZ just outputs dTdr using a cubic spline (it doesn't do any smoothing)
 splinelog = .false.
-! DPCHEZ just outputs dTdr (it doesn't do any smoothing)
 call DPCHEZ( nlines, tab_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
 	print*, 'DPCHEZ interpolant failed with error ', IERR
 	return
 ENDIF
 
-if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
-
 ! Smooth dTdr with FFT
 ! First build evenly spaced r and dTdr arrays
 do i=1,nlines
 	r_even(i) =  i*1./dble(nlines)
 enddo
-
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
-
 ! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components, delete top 95% of frequency components
 call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/Rsun
 
-!remember, nq and nv are set in darkInputs.txt for DarkMESA or if not, just in main
+if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
+
+! calculate sigma_i, interpolate alpha_i, and kappa_i from tables
+! nq and nv are set in darkInputs.txt for DarkMESA or in main.f90 for gentest.x
 call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
-
 do i = 1,niso
   a = AtomicNumber(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
@@ -135,10 +136,6 @@ do i = 1,niso
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
   call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
 end do
-
-! PS: I've commented out the following line -- the array bounds don't match, so it
-! creates memory corruption(!) It also looks like it is only here by accident...
-!    alphaofR = alphaofR/(sigma_N*sum(nabund,1))
 
 !need separate zeta factors for q- and v- dependent interactions
 do i = 1,nlines
@@ -181,13 +178,13 @@ else if ((nv .eq. -1)) then
 end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
-
 K = mfp(1)/rchi;
 
-!this loop does a number of things: gets alpha and kappa averages, and calculates nxLTE
+! this loop does a number of things: gets alpha and kappa averages (average over isotopes) to get alpha(r), kappa(r),
+! and calculates nxLTE
+
 cumint(1) = 0.d0
 cumNx = 0.d0
-
 do i = 1,nlines
   !get alpha & kappa averages
   alphaofR(i) = sum(alpha*sigma_N*nabund(:,i))/sum(sigma_N*nabund(:,i))
@@ -208,7 +205,7 @@ do i = 1,nlines
   end if
   kappaofR(i) = 1./kappaofR(i)
   
-  !perform the integral inside the nx integral
+  !perform the integral inside the exponent in nx
   integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 
   if (i > 1) then
@@ -224,15 +221,14 @@ end do
 
 nxLTE = nxLTE/cumNx*nwimps !normalize density
 
-! Tx is the Spergel & Press one-zone WIMP temperature in Kelvin - calculate it here to use in nxIso
-! One-zone WIMP temp guesses in K. They both have to be either greater than or less than the actual Tx
-guess_1 = maxval(tab_T)*1.1d0
+! Tx is the Spergel & Press one-zone WIMP temperature in K - calculate it here to use in nxIso
+guess_1 = maxval(tab_T)*1.1d0 ! One-zone WIMP temp guesses in K.
 guess_2 = maxval(tab_T)/10.d0
 reltolerance = 1.0d-6
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
-!nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
+!nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
@@ -241,76 +237,128 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
-if (.not. spergel_press) then ! if spergel_press=false, use Gould & Raffelt regime to calculate transport
+! 3 options to calculate etrans: 1: G&R, 2: G&R rescaled by skew-gaussians, 3: S&P
+select case (transport_formalism)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Gould Raffelt section
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	case (1) ! transport_formalism=1 -> use Gould & Raffelt
 
-! remove hgoth and fgoth while testing
-!Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*fgoth*hgoth*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
-Ltrans = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+		Ltrans = fgoth*hgoth*Ltrans_LTE
 
-if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
+		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
-!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
-! There is no smoothing currently implemented here
-splinelog = .false.
-call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
-if (ierr .lt. 0) then
-  print*, 'DPCHEZ interpolant failed with error ', IERR
-  return
-ENDIF
-dLdr = dLdr/Rsun
+		!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
+		! There is no smoothing currently implemented here
+		splinelog = .false.
+		call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+		if (ierr .lt. 0) then
+			print*, 'DPCHEZ interpolant failed with error ', IERR
+			return
+		ENDIF
+		dLdr = dLdr/Rsun
 
-Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
-! Useful when troubleshooting
-! Check Ltrans
-open(55,file = "/home/luke/summer_2021/mesa/test_files/etrans_gr.dat")
-do i=1,nlines
-	write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nxLTE(i), &
-	dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1)
-end do
-close(55)
-!open(55, file="Lmax_gr.dat", access="APPEND")
-!write(55,*) mfp(1), maxval(-Ltrans)
-!close(55)
-
-return
+!		! Useful when troubleshooting
+!		! Check Ltrans
+!		open(55,file = "scalar_params_gr.dat")
+!		write(55,*) fgoth, rchi, Rsun
+!		close(55)
+!		open(55,file = "etrans_gr.dat")
+!		do i=1,nlines
+!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nx(i), &
+!			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
+!		end do
+!		close(55)
 
 
-else if (spergel_press) then ! if spergel_press=true, use Spergel & Press regime to calculate heat transport
+	case (2) ! transport_formalism=2 -> use Gould & Raffelt rescaled to agree with MC simulations of a realistic star
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Spergel Press section
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
-! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
+		! skew gaussian rescaling is explained in MCrescaling.pdf
 
-if ((nq .ne. 0) .or. (nv .ne. 0)) then 
-	stop "Spergel-Press heat tranport formalism can't handle momentum/velocity-dependent cross sections." 
-endif
+		T_index_array = (minloc(tab_T-Tx)) ! Just a stupid rank mismatch thing
+		T_eq_Tx_index = T_index_array(1)
+		r_T = tab_r(T_eq_Tx_index)! dimensionless
 
-! Etrans in erg/g/s (according to Spergel Press)
-Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+		a1 = -41.64d0
+		b1 = -3.26d0
+		c1 = 1.1481d0
+		a2 = 8.888d15
+		b2 = -70.3d0
+		c2 = 11.79d0
 
-! Calculate Ltrans
-do i=1,nlines
-	Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-enddo
+		A_MC = a1*exp(-((log(K)-b1)/c1)**2.d0) + a2*exp(-((log(K)-b2)/c2)**2.d0)
+		x0_MC = 0.18d0
+		sigma_MC = 0.34d0
+		b_MC = -0.03658d0*K**(-1.818d0) - 3.227d0
+		chi_MC = (log10(tab_r+epso/r_T) - x0_MC)/sigma_MC
+		g_MC = A_MC*exp(-chi_MC**2.d0/2.d0)*(1+erf(b_MC*chi_MC/sqrt(2.d0)))
 
-!! useful when troubleshooting
-!open(55,file = "Ltrans_sp.dat")
-!do i=1,nlines
-!	write(55,*) tab_r(i), Ltrans, Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
-!end do
-!close(55)
-!!open(55, file="Lmax_sp.dat", access="APPEND")
-!!write(55,*) mfp(1), maxval(abs(Ltrans)), sigma_0
-!!close(55)
+		A_LTE = 27.17d0*K
+		x0_LTE = 0.17d0
+		sigma_LTE = 0.35d0
+		b_MC = -4.35d0
+		chi_LTE = (log10(tab_r+epso/r_T) - x0_LTE)/sigma_LTE
+		g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
 
-endif
+		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
+		Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
+		
+		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
+
+		!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
+		! There is no smoothing currently implemented here
+		splinelog = .false.
+		call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+		if (ierr .lt. 0) then
+			print*, 'DPCHEZ interpolant failed with error ', IERR
+			return
+		ENDIF
+		dLdr = dLdr/Rsun
+
+		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+
+!		! Useful when troubleshooting
+!		open(55,file = "scalar_params_gr_skew.dat")
+!		write(55,*) fgoth, rchi, Rsun
+!		close(55)
+!		open(55,file = "etrans_gr_skew.dat")
+!		do i=1,nlines
+!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nx(i), &
+!			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
+!		end do
+!		close(55)
+
+
+	case (3) ! transport_formalism=3 -> use Spergel & Press
+
+		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
+		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
+
+		if ((nq .ne. 0) .or. (nv .ne. 0)) then 
+			stop "Spergel-Press heat tranport formalism can't handle momentum/velocity-dependent cross sections." 
+		endif
+
+		! Etrans in erg/g/s (according to Spergel Press)
+		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+
+		! Calculate Ltrans
+		do i=1,nlines
+			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+		enddo
+
+!		! useful when troubleshooting
+!		open(55,file = "etrans_sp.dat")
+!		do i=1,nlines
+!			write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
+!		end do
+!		close(55)
+
+	case default
+	
+	stop "Invalid transport formalism. Should be an integer: 1, 2, or 3."
+	
+end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
 EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)

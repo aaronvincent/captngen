@@ -6,7 +6,7 @@
 
     PROGRAM GENCAP
     implicit none
-	logical :: spergel_press
+	integer :: transport_formalism
     character*300 :: modfile, filename
     character*100 :: outfile(7)
     double precision :: mx, Tx, jx, sigma_0,capped_sd,capped_si, maxcapture
@@ -18,7 +18,7 @@
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	spergel_press = .false.	
+	transport_formalism = 1 ! 1=Gould & Raffelt, 2=G&R rescaled to agree with MC, 3=Spergel & Press
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -75,7 +75,7 @@
         nwimpsin = 5.d44
         ! nwimpsin = capped_sd*3.d7*4.57d9
         ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,spergel_press, &
+        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,transport_formalism, &
         	Tx,noise_indicator,Etrans,Etranstot)
         ! print*, "Etranstot: ", Etranstot !FIXME units?
         ! print*,"Calling fastevap."
