@@ -20,7 +20,7 @@
 
 subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
 
-!mdm is stored in capmod
+! mdm is stored in capmod
 ! Tx is the output one-zone WIMP temp 
 use capmod
 use akmod
