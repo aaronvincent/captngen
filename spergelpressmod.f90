@@ -148,6 +148,43 @@ newtons_meth = x_3 ! The solution to the nonlinear equation
 return
 end function
 
+function binary_search(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
+integer, intent(in) :: niso
+integer :: i
+double precision :: f ! Tx_integral
+double precision, intent(in) :: Nwimps, reltolerance, guess_1, guess_2
+double precision, intent(in) :: sigma_N(niso)
+double precision :: x_1, x_2, x_3, f1, f2, f3, error
+double precision :: binary_search
+
+! x_1 and x_2 are temperatures (K)
+x_1 = guess_1
+x_2 = guess_2
+error = reltolerance + 1.d0	! So that the first iteration is executed
+
+! Binary search loop
+i = 0
+do while (error > reltolerance)
+	x_3 = (x_1 + x_2)/2.d0
+	f1 = f(x_1, sigma_N, Nwimps, niso)
+	f2 = f(x_2, sigma_N, Nwimps, niso)
+	f3 = f(x_3, sigma_N, Nwimps, niso)
+	if (f3 == 0.d0) then
+		exit
+	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
+		x_1 = x_3
+	else if (f2*f3 .gt. 0) then
+		x_2 = x_3
+	endif
+	error = abs(x_2-x_1)/x_2
+	i = i + 1
+enddo
+
+binary_search = x_3
+
+return
+end function
+
 subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, nlines, lensav, ierr)
 ! Cuts out the high frequency components of y. E.g. if cutoff=0.05, the top 95% of frequency components are cut
 ! Also returns a "noise indicator" - The sum of the frequency components above the cutoff
@@ -201,5 +238,34 @@ do i=1,nlines
 enddo
 
 end subroutine
+
+function rolling_avg(y, nlines)
+! Takes a 1D array f of length N, returns an array of length N whose ith entry
+! is the average of f(i) and its 4 nearest neighbours
+integer, intent(in) ::  nlines
+double precision, intent(in) :: y(nlines)
+integer :: i, j
+double precision :: rolling_avg(nlines)
+
+do i=5,nlines-4
+    rolling_avg(i) = 0.d0
+    do j=-4,4
+        rolling_avg(i) = rolling_avg(i) + y(i+j)
+    enddo
+    rolling_avg(i) = rolling_avg(i)/9.d0
+enddo
+! do boundary values manually
+rolling_avg(1) = (y(1)+y(2)+y(3))/3.d0
+rolling_avg(2) = (y(1)+y(2)+y(3)+y(4))/4.d0
+rolling_avg(3) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6))/6.d0
+rolling_avg(4) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6)+y(7)+y(8))/8.d0
+rolling_avg(nlines-1) = (y(nlines-7)+y(nlines-6)+y(nlines-5)+y(nlines-4) &
+							+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/8.d0
+rolling_avg(nlines-1) = (y(nlines-5)+y(nlines-4)+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/6.d0
+rolling_avg(nlines-1) = (y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/4.d0
+rolling_avg(nlines) = (y(nlines-2)+y(nlines-1)+y(nlines))/3.d0
+
+return
+end function
 
 end module spergelpressmod
