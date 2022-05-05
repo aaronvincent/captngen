@@ -5,11 +5,23 @@ program postProcess
     double precision :: jx, v0, vesc, rho0, mx, couplingStrength
     double precision :: capped, maxcap, maxcapture
     character*300 :: filename, modfile
+    character*2 :: cplString
 
     ! load these as cmd line args?
-    filename = "NREOdata/extractedNREO.dat"
-    cpl = 4
+    ! filename = "NREOdata/extractedNREO.dat"
+    ! cpl = 4
 
+    if ( command_argument_count() /= 2 ) then
+        stop "Must pass exactly two command line arguments"
+    end if
+
+    call get_command_argument(1, cplString)
+    call get_command_argument(2, filename)
+    read(cplString, *) cpl ! Fortran only reads strings from the cmd line, so convert to dbl here
+
+    if ( cpl > 15 .or. cpl < 1 .or. cpl == 2 ) then
+        stop "The coupling number must be 1,3->15"
+    end if
 
     modfile = "solarmodels/struct_b16_agss09_reduce10_nohead.dat"
     jx = 0.5
