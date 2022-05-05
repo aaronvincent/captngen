@@ -7,6 +7,7 @@ WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
 MAIN = main.o
+CAPTURE = calcCaptures.o
 MFSHR = sharedcap.o
 MFOBJ = gencap.o
 MFCAP = opercap.o
@@ -32,6 +33,9 @@ gentest.x: $(MAIN) gencaplib.so
 	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
 #	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
+calcCaps.x: $(CAPTURE) gencaplib.so
+	${FC} $(FOPT) -L. -Wl,-rpath,. -o calcCaps.x $(CAPTURE) gencaplib.so
+
 
 $(NUMFOBJ): %.o : $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
@@ -55,6 +59,9 @@ $(TRGOBJ): %.o: %.f90
 	$(FC) $(FOPT) -c $<
 
 $(MAIN): %.o: %.f90
+	$(FC) $(FOPT) -c  $<
+
+$(CAPTURE): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
 $(NUMOBJ): %.o: $(NUMDIR)/%.f
