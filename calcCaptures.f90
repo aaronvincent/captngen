@@ -1,8 +1,8 @@
 ! re-running on data from GAMBIT to find the capture rates
 program postProcess
     implicit none
-    integer :: num_isotopes, cpl, io, ppos
-    double precision :: jx, v0, vesc, rho0, mx, couplingStrength
+    integer :: num_isotopes, cpl, id, io, ppos
+    double precision :: jx, logL, v0, vesc, rho0, mx, couplingStrength
     double precision :: capped, maxcap, maxcapture
     character*300 :: filename, modfile
     character*2 :: cplString
@@ -36,13 +36,17 @@ program postProcess
     mx = 0.
     couplingStrength = 0.
     open(unit=9, file=filename, status="old")
+    read(9, *, iostat=io) ! read past the header
+    if ( io < 0 ) then
+        stop "The file was empty!"
+    end if
     open(unit=10, file=filename(1:ppos-1)//"-caps.dat", status="replace")
-    write(10, *) "v0 vesc rho0 mx couplingStrength capped maxcapture"
+    write(10, *) "id logL v0 vesc rho0 mx couplingStrength capped maxcapture"
     do
         ! load v0 vesc rho0 mx couplingStrength
-        read(9, *, IOSTAT=io) v0, vesc, rho0, mx, couplingStrength
+        read(9, *, IOSTAT=io) id, logL, v0, vesc, rho0, mx, couplingStrength
         if ( io == 0 ) then
-            print*, v0, vesc, rho0, mx, couplingStrength
+            print*, id, logL, v0, vesc, rho0, mx, couplingStrength
             
             call captn_init(modfile,rho0,v0,v0,vesc)
             call captn_init_oper()
@@ -51,7 +55,7 @@ program postProcess
             call captn_oper(mx,jx,num_isotopes,capped)
             maxcapture = maxcap(mx)
             print*, capped, maxcapture
-            write(10, *) v0, vesc, rho0, mx, couplingStrength, capped, maxcapture
+            write(10, *) id, logL, v0, vesc, rho0, mx, couplingStrength, capped, maxcapture
         else if ( io > 0) then
             print*, io
             stop "Error on reading data from file"
