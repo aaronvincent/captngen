@@ -165,15 +165,16 @@ end function integrand_oper
 ! call captn_oper to run capt'n with the effective operator method
 subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
+    use omp_lib
     implicit none
     integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
-    double precision :: a, muminus, umax, umin, vesc, result
+    double precision :: a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
-    double precision, allocatable :: u_int_res(:)
+    ! double precision, allocatable :: u_int_res(:)
 
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
@@ -197,7 +198,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
         return
     end if
-    allocate(u_int_res(nlines))
+    ! allocate(u_int_res(nlines))
 
     do eli = 1, niso
         do q_pow = 1, 11
@@ -298,15 +299,26 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end do !eli
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
-    capped = 0.d0
     umin = 0.d0
+    capped = 0.d0
+    !$OMP parallel default(none) &
+    !$OMP private(rindex_shared, a_shared, w_shared, q_shared, vesc, elementalResult, a, mu, muplus, muminus, J, umax, &
+    !$OMP   integrateResult, factor_final, partialCapped, &
+    !$OMP   umin,epsabs,epsrel,limit,abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
+    !$OMP shared(nlines, tab_vesc, vesc_shared_arr, niso, mdm, vesc_halo, prefactor_array, tab_starrho, tab_mfr_oper, tab_r, &
+    !$OMP   tab_dr, capped)
+    ! The integrator doesn't play nice with the parallelization
+    partialCapped = 0.d0
+    PRINT *, "Hello from process: ", OMP_GET_THREAD_NUM()
+    !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)
         rindex_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
         do eli=1,niso !isotopeChosen, isotopeChosen
-            u_int_res(ri) = 0.d0
+            ! u_int_res(ri) = 0.d0
+            elementalResult = 0.d0
             a = AtomicNumber_oper(eli)
             a_shared = a !make accessible via the module
 
@@ -328,22 +340,26 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
                 do q_pow=1,11
                     if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
-                        result = 0.d0
+                        integrateResult = 0.d0
                         q_shared = q_pow - 1
                         !Call integrator
                         call dsntdqagse(integrand_oper,vdist_over_u,umin,umax, &
-                            epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+                            epsabs,epsrel,limit,integrateResult,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
-                        u_int_res(ri) = u_int_res(ri) + result * prefactor_array(eli,q_pow,w_pow)
+                        elementalResult = elementalResult + integrateResult * prefactor_array(eli,q_pow,w_pow)
                     end if
                 end do !q_pow
             end do !w_pow
 
             factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
-            capped = capped + u_int_res(ri) * factor_final
+            partialCapped = partialCapped + elementalResult * factor_final
         end do !eli
     end do !ri
+    !$OMP critical
+    capped = capped + partialCapped
+    !$OMP end critical
+    !$OMP end parallel
 
     capped = 4.d0*pi*Rsun**3*capped
 
