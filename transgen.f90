@@ -10,7 +10,7 @@
 ! niso: number of isotopes: 1 = spin-dependent
 ! nq, nv: v^n, q^n numberwang
 ! spin_in: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
-! transport_formalism: 1=Gould & Raffelt, 2=rescaled G&R, 3=Spergel & Press
+! transport_formalism: 1=Gould & Raffelt, 2=Spergel & Press, 3=rescaled Spergel & Press
 
 !dm properties are set when you call capgen.
 
@@ -237,7 +237,7 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
-! 3 options to calculate etrans: 1: G&R, 2: G&R rescaled by skew-gaussians, 3: S&P
+! 4 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
 select case (transport_formalism)
 
 	case (1) ! transport_formalism=1 -> use Gould & Raffelt
@@ -272,51 +272,51 @@ select case (transport_formalism)
 !		close(55)
 
 
-	case (2) ! transport_formalism=2 -> use Gould & Raffelt rescaled to agree with MC simulations of a realistic star
+	! case (2) ! transport_formalism=2 -> use Gould & Raffelt rescaled to agree with MC simulations of a realistic star
 
-		! skew gaussian rescaling is explained in MCrescaling.pdf
+	! 	skew gaussian rescaling is explained in MCrescaling.pdf
 
-		T_index_array = (minloc(tab_T-Tx)) ! Just a stupid rank mismatch thing
-		T_eq_Tx_index = T_index_array(1)
-		r_T = tab_r(T_eq_Tx_index)! dimensionless
+	! 	T_index_array = (minloc(tab_T-Tx)) ! Just a stupid rank mismatch thing
+	! 	T_eq_Tx_index = T_index_array(1)
+	! 	r_T = tab_r(T_eq_Tx_index)! dimensionless
 
-		a1 = -41.64d0
-		b1 = -3.26d0
-		c1 = 1.1481d0
-		a2 = 8.888d15
-		b2 = -70.3d0
-		c2 = 11.79d0
+	! 	a1 = -41.64d0
+	! 	b1 = -3.26d0
+	! 	c1 = 1.1481d0
+	! 	a2 = 8.888d15
+	! 	b2 = -70.3d0
+	! 	c2 = 11.79d0
 
-		A_MC = a1*exp(-((log(K)-b1)/c1)**2.d0) + a2*exp(-((log(K)-b2)/c2)**2.d0)
-		x0_MC = 0.18d0
-		sigma_MC = 0.34d0
-		b_MC = -0.03658d0*K**(-1.818d0) - 3.227d0
-		chi_MC = (log10(tab_r+epso/r_T) - x0_MC)/sigma_MC
-		g_MC = A_MC*exp(-chi_MC**2.d0/2.d0)*(1+erf(b_MC*chi_MC/sqrt(2.d0)))
+	! 	A_MC = a1*exp(-((log(K)-b1)/c1)**2.d0) + a2*exp(-((log(K)-b2)/c2)**2.d0)
+	! 	x0_MC = 0.18d0
+	! 	sigma_MC = 0.34d0
+	! 	b_MC = -0.03658d0*K**(-1.818d0) - 3.227d0
+	! 	chi_MC = (log10(tab_r+epso/r_T) - x0_MC)/sigma_MC
+	! 	g_MC = A_MC*exp(-chi_MC**2.d0/2.d0)*(1+erf(b_MC*chi_MC/sqrt(2.d0)))
 
-		A_LTE = 27.17d0*K
-		x0_LTE = 0.17d0
-		sigma_LTE = 0.35d0
-		b_MC = -4.35d0
-		chi_LTE = (log10(tab_r+epso/r_T) - x0_LTE)/sigma_LTE
-		g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
+	! 	A_LTE = 27.17d0*K
+	! 	x0_LTE = 0.17d0
+	! 	sigma_LTE = 0.35d0
+	! 	b_MC = -4.35d0
+	! 	chi_LTE = (log10(tab_r+epso/r_T) - x0_LTE)/sigma_LTE
+	! 	g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
 
-		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
-		Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
+	! 	Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
+	! 	Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
 		
-		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
+	! 	if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
-		!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
-		! There is no smoothing currently implemented here
-		splinelog = .false.
-		call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
-		if (ierr .lt. 0) then
-			print*, 'DPCHEZ interpolant failed with error ', IERR
-			return
-		ENDIF
-		dLdr = dLdr/Rsun
+	! 	!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
+	! 	! There is no smoothing currently implemented here
+	! 	splinelog = .false.
+	! 	call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+	! 	if (ierr .lt. 0) then
+	! 		print*, 'DPCHEZ interpolant failed with error ', IERR
+	! 		return
+	! 	ENDIF
+	! 	dLdr = dLdr/Rsun
 
-		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
 !		! Useful when troubleshooting
 !		open(55,file = "scalar_params_gr_skew.dat")
@@ -330,7 +330,7 @@ select case (transport_formalism)
 !		close(55)
 
 
-	case (3) ! transport_formalism=3 -> use Spergel & Press
+	case (2) ! transport_formalism=3 -> use Spergel & Press
 
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
@@ -353,6 +353,21 @@ select case (transport_formalism)
 !			write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
+	case(3) ! transport_formalism=4 -> use rescaled Spergel & Press
+
+		! The rescaled Spergel & Press transport scheme from Banks et. al https://arxiv.org/abs/2111.06895
+
+		! Etrans in erg/g/s (according to Spergel Press)
+		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+
+		Ltrans = 0.5*(1/(1+(K_0+K)**2.))*Etrans
+		
+		! need  to initialize a new K_0 but i need to pick the right type
+		! need to add the values of K_0 idealized and real
+		! should I do a choice between idealized and real ?? maybe ask Aaron
+
+
+
 
 	case default
 	
