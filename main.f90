@@ -18,7 +18,7 @@
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	transport_formalism = 1 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
+	transport_formalism = 3 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]

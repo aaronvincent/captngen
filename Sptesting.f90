@@ -46,7 +46,7 @@
     call get_alpha_kappa(nq,nv)
     
 
-    do j = 1,1
+    do j = 1,1   ! can be run from 1 to 7
       open(94,file = outfile(j))
       write(94,*) "Number of Isotopes: ", num_isotopes
       write(94,*) "Spin Dependency: ", spin_dependency

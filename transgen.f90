@@ -37,7 +37,7 @@ integer i, ri, ierr
 integer (kind=4) :: lensav 
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
-double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, integrand
+double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, K_0, L, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso), nxLTE(nlines)
@@ -179,6 +179,8 @@ end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 K = mfp(1)/rchi;
+print *, K
+!K = 1;
 
 ! this loop does a number of things: gets alpha and kappa averages (average over isotopes) to get alpha(r), kappa(r),
 ! and calculates nxLTE
@@ -341,11 +343,17 @@ select case (transport_formalism)
 
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
-
+		
+		!open a file to write Ltrans data to
+		open(6, file = 'Ltransdata.dat')
 		! Calculate Ltrans
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+			write(6,*) i, Ltrans(i)
 		enddo
+
+		!close the Ltrans data file
+		close(6)
 
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
@@ -357,17 +365,36 @@ select case (transport_formalism)
 
 		! The rescaled Spergel & Press transport scheme from Banks et. al https://arxiv.org/abs/2111.06895
 
+		! setting the K_0 values. This is all realistic right now. I can make this into an array later to make this quicker.
+		if ((nq .eq. 0) .and. (nv .eq. 0)) then
+			K_0 = 0.40
+		else if ((nq .eq. 1)) then
+			K_0 = 1.05
+		else if ((nq .eq. 2)) then
+			K_0 = 1.72
+		else if ((nq .eq. -1)) then
+			K_0 = 0.21
+		else if ((nv .eq. 1)) then
+			K_0 = 0.73
+		else if ((nv .eq. 2)) then
+			K_0 = 1.20
+		else if ((nv .eq. -1)) then
+			K_0 = 0.11
+		end if
+
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+		print *, K_0
+		open(7, file = 'Ltransdata2.dat')
 
-		Ltrans = 0.5*(1/(1+(K_0+K)**2.))*Etrans
-		
-		! need  to initialize a new K_0 but i need to pick the right type
-		! need to add the values of K_0 idealized and real
+		do i=1,nlines
+			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+			L = 0.5*(1/(1+(K_0+K)**2.))*Ltrans(i)
+			write(7,*) i, L
+		enddo
+		close(7)
+
 		! should I do a choice between idealized and real ?? maybe ask Aaron
-
-
-
 
 	case default
 	
