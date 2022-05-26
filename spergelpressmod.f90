@@ -30,12 +30,14 @@ r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
 mxg = mdm*1.782662d-24
 
+print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 nx_isothermal = exp(-mxg*phi/kB/T_x) 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
+print*, n_0
 
-if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
+if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal", n_0
 
 return
 end function
@@ -55,6 +57,8 @@ double precision :: Etrans_sp(nlines)
 integer :: i, j
 ! T_x in K, sigma_N in cm^2, 
 
+
+
 R = tab_r*Rsun ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
 mxg = mdm*1.782662d-24 ! WIMP mass in g
@@ -65,6 +69,7 @@ enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
+print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
 n_x = nx_isothermal(T_x, Nwimps)
 
@@ -102,10 +107,15 @@ double precision, intent(in) :: T_x, Nwimps
 double precision, intent(in) :: sigma_N(niso)
 double precision :: R(nlines), integrand(nlines)
 double precision :: Tx_integral
+
+
+
 ! integrand units: erg/cm/s
 R = tab_r*Rsun
 
+print*, 'TX here'
 integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
+
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(R, integrand, nlines)
@@ -157,6 +167,7 @@ double precision, intent(in) :: sigma_N(niso)
 double precision :: x_1, x_2, x_3, f1, f2, f3, error
 double precision :: binary_search
 
+
 ! x_1 and x_2 are temperatures (K)
 x_1 = guess_1
 x_2 = guess_2
@@ -164,11 +175,16 @@ error = reltolerance + 1.d0	! So that the first iteration is executed
 
 ! Binary search loop
 i = 0
+
+!print*, error, reltolerance  ! these dont change based on mx
+print*, 'binary here' ! the loop eblow calls the Tx_integral function
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
+	!print*, 'got here'
 	f1 = f(x_1, sigma_N, Nwimps, niso)
 	f2 = f(x_2, sigma_N, Nwimps, niso)
 	f3 = f(x_3, sigma_N, Nwimps, niso)
+	!print*, f1
 	if (f3 == 0.d0) then
 		exit
 	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
