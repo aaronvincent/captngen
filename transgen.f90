@@ -67,6 +67,8 @@ epso = tab_r(2)/10.d0 ! small number to prevent division by zero
 smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i, i=1,decsize /)
 biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,nlines/)
 
+
+
 mxg = mdm*1.78d-24
 q0_cgs = q0*5.344d-14
 Tc = tab_T(1)
@@ -179,7 +181,7 @@ end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 K = mfp(1)/rchi;
-print *, K
+!print *, K
 !K = 1;
 
 ! this loop does a number of things: gets alpha and kappa averages (average over isotopes) to get alpha(r), kappa(r),
@@ -221,16 +223,23 @@ do i = 1,nlines
 
 end do
 
+
+
+
 nxLTE = nxLTE/cumNx*nwimps !normalize density
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in K - calculate it here to use in nxIso
 guess_1 = maxval(tab_T)*1.1d0 ! One-zone WIMP temp guesses in K.
 guess_2 = maxval(tab_T)/10.d0
 reltolerance = 1.0d-6
+
+print*, 'transgen here'
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
 !nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
+
+
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
@@ -239,10 +248,14 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
+
+
 ! 4 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
 select case (transport_formalism)
 
 	case (1) ! transport_formalism=1 -> use Gould & Raffelt
+
+		open(5, file = 'LtransdataGR.dat')
 
 		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 		Ltrans = fgoth*hgoth*Ltrans_LTE
@@ -258,6 +271,8 @@ select case (transport_formalism)
 			return
 		ENDIF
 		dLdr = dLdr/Rsun
+		write(5,*) Ltrans
+		close(5)
 
 		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
 
