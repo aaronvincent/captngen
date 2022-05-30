@@ -53,7 +53,7 @@
       write(94,*) "Power: ", outfile(j)
       write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
       do i = 1,1
-        mx = 9d0 !dble(i)/5.   currently mx breaks at like 8 Gev
+        mx = 5.d0 !dble(i)/5.   currently mx breaks at like 8 Gev
         sigma_0 = 10.d0**(-35.d0)!10d0**(-45+dble(i)/2.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
