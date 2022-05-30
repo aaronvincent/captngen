@@ -30,14 +30,15 @@ r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
 mxg = mdm*1.782662d-24
 
-print*, 'nx_iso here'
+!print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 nx_isothermal = exp(-mxg*phi/kB/T_x) 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
-print*, n_0
+!print*, n_0
 
-if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal", n_0
+if (any(isnan(nx_isothermal))) nx_isothermal = 0 !print *, "NAN encountered in nx_isothermal", n_0
+!print*, nx_isothermal
 
 return
 end function
@@ -69,7 +70,7 @@ enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
-print*,'Etrans here'
+!print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
 n_x = nx_isothermal(T_x, Nwimps)
 
@@ -113,7 +114,7 @@ double precision :: Tx_integral
 ! integrand units: erg/cm/s
 R = tab_r*Rsun
 
-print*, 'TX here'
+!print*, 'TX here'
 integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
 
 
@@ -177,7 +178,7 @@ error = reltolerance + 1.d0	! So that the first iteration is executed
 i = 0
 
 !print*, error, reltolerance  ! these dont change based on mx
-print*, 'binary here' ! the loop eblow calls the Tx_integral function
+!print*, 'binary here' ! the loop below calls the Tx_integral function
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
 	!print*, 'got here'
@@ -197,6 +198,7 @@ do while (error > reltolerance)
 enddo
 
 binary_search = x_3
+print*, "BINARY"
 
 return
 end function
