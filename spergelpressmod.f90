@@ -24,20 +24,34 @@ double precision, intent(in) :: T_x, Nwimps
 double precision :: nx_isothermal(nlines)
 double precision :: n_0, mxg
 double precision :: R(nlines), phi(nlines)
+integer :: i, d
 ! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
+
 
 r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
-mxg = mdm*1.782662d-24
-
+mxg = mdm*1.782662d-24  ! g
+d = int(mdm)/5
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
-nx_isothermal = exp(-mxg*phi/kB/T_x) 
+
+nx_isothermal = exp(-mxg*phi/kB/T_x/2)
+
+open(80, file = "NXISO.csv")
+
+
+do i=1,nlines
+	write(80,*) nx_isothermal(i), phi(i)
+enddo
+close(80)
+
+
+!print*, trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines), "trapz"
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
-!print*, n_0
+!print*, n_0, "= n_0"
 
-if (any(isnan(nx_isothermal))) nx_isothermal = 0 !print *, "NAN encountered in nx_isothermal", n_0
+if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
 !print*, nx_isothermal
 
 return
@@ -116,7 +130,7 @@ R = tab_r*Rsun
 
 !print*, 'TX here'
 integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
-
+!print*, integrand
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(R, integrand, nlines)
@@ -177,28 +191,39 @@ error = reltolerance + 1.d0	! So that the first iteration is executed
 ! Binary search loop
 i = 0
 
-!print*, error, reltolerance  ! these dont change based on mx
-!print*, 'binary here' ! the loop below calls the Tx_integral function
+!print*, error, reltolerance
+print*, 'binary here' ! the loop below calls the Tx_integral function
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
 	!print*, 'got here'
 	f1 = f(x_1, sigma_N, Nwimps, niso)
-	f2 = f(x_2, sigma_N, Nwimps, niso)
+	
+	print*, "f2"
+	f2 = f(x_2, sigma_N, Nwimps, niso)    !this causes issues when mx > 8
+	print*, f2
+	call sleep(10)
+
 	f3 = f(x_3, sigma_N, Nwimps, niso)
-	!print*, f1
+	
+
+	
+
 	if (f3 == 0.d0) then
+		print*, "f3"
 		exit
 	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
+		print*, "f1"
 		x_1 = x_3
 	else if (f2*f3 .gt. 0) then
+		print*, "f2"
 		x_2 = x_3
 	endif
 	error = abs(x_2-x_1)/x_2
 	i = i + 1
+print*, error, reltolerance, i
 enddo
 
 binary_search = x_3
-print*, "BINARY"
 
 return
 end function
