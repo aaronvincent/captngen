@@ -1,23 +1,25 @@
 ! re-running on data from GAMBIT to find the capture rates
 program postProcess
     implicit none
-    integer :: num_isotopes, cpl, id, io, ppos
+    integer :: num_isotopes, cpl, id, io, ppos, headerLen, i
     double precision :: jx, logL, v0, vesc, rho0, mx, couplingStrength
     double precision :: capped, maxcap, maxcapture
-    character*300 :: filename, modfile
+    character*300 :: filename, modfile, headerLenStr
     character*2 :: cplString
 
     ! load these as cmd line args?
     ! filename = "NREOdata/extractedNREO.dat"
     ! cpl = 4
 
-    if ( command_argument_count() /= 2 ) then
+    if ( command_argument_count() /= 3 ) then
         stop "Must pass exactly two command line arguments"
     end if
 
     call get_command_argument(1, cplString)
     call get_command_argument(2, filename)
+    call get_command_argument(3, headerLenStr)
     read(cplString, *) cpl ! Fortran only reads strings from the cmd line, so convert to dbl here
+    read(headerLen, *) headerLenStr
     ppos = scan(trim(filename), ".", back=.true.)
     if ( ppos < 1 ) then
         stop "There was no file extension on your input file"
@@ -36,11 +38,14 @@ program postProcess
     mx = 0.
     couplingStrength = 0.
     open(unit=9, file=filename, status="old")
-    read(9, *, iostat=io) ! read past the header
+    do i = 1, headerLen
+        print*, "test"
+        read(9, *, iostat=io) ! read past the header
+    end do
     if ( io < 0 ) then
         stop "The file was empty!"
     end if
-    open(unit=10, file=filename(1:ppos-1)//"-caps.dat", status="replace")
+    open(unit=10, file=filename(1:ppos-1)//"-caps-more1.dat", status="replace")
     write(10, *) "id logL v0 vesc rho0 mx couplingStrength capped maxcapture"
     do
         ! load v0 vesc rho0 mx couplingStrength
