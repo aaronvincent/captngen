@@ -142,10 +142,14 @@ end subroutine captn_init_oper
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function integrand_oper(u, foveru)
     use opermod
-    double precision :: u, w, integrand_oper, foveru !int, vesc
-    external foveru
-
-    ! vesc = tab_vesc(ri_for_omega)
+    implicit none
+    interface
+        function foveru(arg1)
+            double precision :: arg1, foveru
+        end function foveru
+    end interface
+    double precision :: u, integrand_oper
+    double precision :: w
 
     w = sqrt(u**2+vesc_shared_arr(rindex_shared)**2)
 
@@ -167,6 +171,16 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
     use omp_lib
     implicit none
+    interface
+        function integrand_oper(arg1, func1)
+            double precision :: arg1, integrand_oper
+            interface
+                function func1(arg2)
+                    double precision :: arg2, func1
+                end function func1
+            end interface
+        end function integrand_oper
+    end interface
     integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
@@ -175,18 +189,16 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
     ! double precision, allocatable :: u_int_res(:)
-
+    
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
     double precision :: prefactor_array(niso,11,2)
-
+    
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
-    external integrand_oper
-    external integrand_oper_extrawterm
-
+    
     epsabs=1.d-6
     epsrel=1.d-6
     limit=1000
@@ -309,7 +321,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     !$OMP   tab_dr, capped)
     ! The integrator doesn't play nice with the parallelization
     partialCapped = 0.d0
-    PRINT *, "Hello from process: ", OMP_GET_THREAD_NUM()
+    !$ PRINT *, "Hello from process: ", OMP_GET_THREAD_NUM()
     !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)

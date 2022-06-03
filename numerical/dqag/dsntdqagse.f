@@ -152,11 +152,26 @@ c***references  (none)
 c***routines called  d1mach,dqelg,dqk21,dqpsrt
 c***end prologue  dqagse
 c
+      implicit none
+      interface
+         function f(arg1, func1)
+            real*8 :: arg1, f
+            interface
+               function func1(arg2)
+                  real*8 :: arg2, func1
+               end function func1
+            end interface
+         end function f
+c
+         function foveru(arg1)
+            real*8 :: arg1, foveru
+         end function foveru
+      end interface
       real*8 a,abseps,abserr,alist,area,area1,area12,area2,a1,
      1  a2,b,blist,b1,b2,correc,dabs,defabs,defab1,defab2,d1mach,dmax1,
      2  dres,elist,epmach,epsabs,epsrel,erlarg,erlast,errbnd,errmax,
-     3  error1,error2,erro12,errsum,ertest,f,oflow,resabs,reseps,result,
-     4  res3la,rlist,rlist2,small,uflow,foveru
+     3  error1,error2,erro12,errsum,ertest,oflow,resabs,reseps,result,
+     4  res3la,rlist,rlist2,small,uflow
       integer id,ier,ierro,iord,iroff1,iroff2,iroff3,jupbnd,k,ksgn,
      1  ktmin,last,limit,maxerr,neval,nres,nrmax,numrl2
       logical extrap,noext
@@ -164,7 +179,6 @@ c
       dimension alist(limit),blist(limit),elist(limit),iord(limit),
      1 res3la(3),rlist(limit),rlist2(52)
 c
-      external f,foveru
 c
 c            the dimension of rlist2 is determined by the value of
 c            limexp in subroutine dqelg (rlist2 should be of dimension
