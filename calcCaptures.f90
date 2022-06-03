@@ -12,14 +12,14 @@ program postProcess
     ! cpl = 4
 
     if ( command_argument_count() /= 3 ) then
-        stop "Must pass exactly two command line arguments"
+        stop "Must pass exactly three command line arguments"
     end if
 
     call get_command_argument(1, cplString)
     call get_command_argument(2, filename)
     call get_command_argument(3, headerLenStr)
     read(cplString, *) cpl ! Fortran only reads strings from the cmd line, so convert to dbl here
-    read(headerLen, *) headerLenStr
+    read(headerLenStr, *) headerLen
     ppos = scan(trim(filename), ".", back=.true.)
     if ( ppos < 1 ) then
         stop "There was no file extension on your input file"
