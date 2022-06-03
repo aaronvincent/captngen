@@ -39,7 +39,6 @@ program postProcess
     couplingStrength = 0.
     open(unit=9, file=filename, status="old")
     do i = 1, headerLen
-        print*, "test"
         read(9, *, iostat=io) ! read past the header
     end do
     if ( io < 0 ) then
