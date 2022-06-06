@@ -25,6 +25,7 @@ module opermod
 
     integer :: q_shared
     logical :: w_shared
+    !$OMP threadprivate(q_shared, w_shared)
     
     contains
 
@@ -169,7 +170,6 @@ end function integrand_oper
 ! call captn_oper to run capt'n with the effective operator method
 subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
-    use omp_lib
     implicit none
     interface
         function integrand_oper(arg1, func1)
@@ -314,14 +314,11 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     umin = 0.d0
     capped = 0.d0
     !$OMP parallel default(none) &
-    !$OMP private(rindex_shared, a_shared, w_shared, q_shared, vesc, elementalResult, a, mu, muplus, muminus, J, umax, &
-    !$OMP   integrateResult, factor_final, partialCapped, &
-    !$OMP   umin,epsabs,epsrel,limit,abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines, tab_vesc, vesc_shared_arr, niso, mdm, vesc_halo, prefactor_array, tab_starrho, tab_mfr_oper, tab_r, &
-    !$OMP   tab_dr, capped)
-    ! The integrator doesn't play nice with the parallelization
+    !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
+    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
+    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
+    !$OMP   umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
-    !$ PRINT *, "Hello from process: ", OMP_GET_THREAD_NUM()
     !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)
