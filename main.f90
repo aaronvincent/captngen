@@ -11,7 +11,7 @@
     character*100 :: outfile(7)
     double precision :: mx, Tx, jx, sigma_0,capped_sd,capped_si, maxcapture
     double precision :: capped_si_spec,capped_sd_spec
-    double precision :: maxcap, nwimpsin, evapRate, noise_indicator
+    double precision :: maximum_capture, nwimpsin, evapRate, noise_indicator
     double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
     integer :: nq(7), nv(7), i, j, k, nlines, num_isotopes, spin_dependency, cpl
@@ -59,7 +59,7 @@
     !     print*
     !     print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 
-    !     ! print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
+    !     ! print*, "Geometrical limit on capture rate: ", maximum_capture(mx), "s^-1"
 
     !     ! print*,"Calling captn_general for SI scattering."
     !     ! call captn_general(mx,sigma_0,29,nq,nv,capped_si)
@@ -110,7 +110,7 @@
      do i = 1,1
        mx = 10. !5.d0 + dble(i)/5.
        call captn_oper(mx,jx,num_isotopes,capped_sd)
-       maxcapture = maxcap(mx)
+       maxcapture = maximum_capture(mx)
        write(55,*) mx, capped_sd, maxcapture
        print*, "mx: ",mx, "capped: ",capped_sd, "max_capture:",maxcapture
      end do
