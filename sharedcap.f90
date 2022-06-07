@@ -10,6 +10,7 @@
 
 
 module sharedmod
+    use omp_lib
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938
@@ -23,6 +24,7 @@ module sharedmod
 
     integer :: nlines, rindex_shared!, ri_for_omega
     double precision :: mdm, vesc_shared, a_shared, mu, muplus
+    !$OMP threadprivate(rindex_shared, a_shared)
     
     contains
 
