@@ -146,7 +146,7 @@
       end if
 
       if (.not. allocated(tab_r)) then
-        stop "You haven't yet called captn_init to load the solar model!"
+        stop "You haven't yet called init_sun to load the solar model!"
       end if
 
       capped = 0.d0
