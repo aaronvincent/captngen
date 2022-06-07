@@ -44,7 +44,7 @@ program postProcess
     if ( io < 0 ) then
         stop "The file was empty!"
     end if
-    open(unit=10, file=filename(1:ppos-1)//"-caps-more1.dat", status="replace")
+    open(unit=10, file=filename(1:ppos-1)//"-caps-more2.dat", status="replace")
     write(10, *) "id logL v0 vesc rho0 mx couplingStrength capped maxcapture"
     do
         ! load v0 vesc rho0 mx couplingStrength
