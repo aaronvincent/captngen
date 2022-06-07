@@ -61,12 +61,12 @@
 
     !     ! print*, "Geometrical limit on capture rate: ", maximum_capture(mx), "s^-1"
 
-    !     ! print*,"Calling captn_general for SI scattering."
-    !     ! call captn_general(mx,sigma_0,29,nq,nv,capped_si)
+    !     ! print*,"Calling capture_rate for SI scattering."
+    !     ! call capture_rate(mx,sigma_0,29,nq,nv,capped_si)
     !     ! print*, "Capture rate", capped_si, "s^-1"
 
-    !     ! print*,"Calling captn_general for SD scattering."
-    !     call captn_general(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
+    !     ! print*,"Calling capture_rate for SD scattering."
+    !     call capture_rate(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
     !     ! print*, "Capture rate", capped_sd, "s^-1"
 
     !     ! print*,"Calling captn_specific for SI and SD scattering."

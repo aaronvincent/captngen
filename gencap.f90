@@ -107,7 +107,7 @@
     end function integrand
 
 
-    subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
+    subroutine capture_rate(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
       use capmod
       implicit none
       integer, intent(in):: nq_in, nv_in, niso, spin_in
@@ -201,7 +201,7 @@
       if (capped .gt. maxcapped) then
         capped = maxcapped
       end if
-    end subroutine captn_general
+    end subroutine capture_rate
 
 
     !! captn_specific calculates the capture rate for constant cross section.
@@ -210,8 +210,8 @@
     !   double precision, intent(in) :: mx_in, sigma_0
     !   double precision :: capped_SD,capped_SI
 
-    !   call captn_general(mx_in,sigma_0,1,0,0,1,capped_SD)
-    !   call captn_general(mx_in,sigma_0,29,0,0,0,capped_SI)
+    !   call capture_rate(mx_in,sigma_0,1,0,0,1,capped_SD)
+    !   call capture_rate(mx_in,sigma_0,29,0,0,0,capped_SI)
     ! end subroutine captn_specific
 
     subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
@@ -219,8 +219,8 @@
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
       double precision :: capped_SD,capped_SI
 
-      call captn_general(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
-      call captn_general(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
+      call capture_rate(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
+      call capture_rate(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
     end subroutine captn_specific
 
 
