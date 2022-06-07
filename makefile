@@ -22,14 +22,14 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
  INTRVL.o HVAL.o HPVAL.o
 
 
-gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+libgencap.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 # -L tells the linker where to look for shared libraries
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
 # -Wl lets us send options to the linker (which are comma seperated)
-gentest.x: $(MAIN) gencaplib.so
-	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
+gentest.x: $(MAIN) libgencap.so
+	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) libgencap.so
 #	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
 
