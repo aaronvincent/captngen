@@ -135,17 +135,17 @@ end function gausstest
 
 !   this is eqn 2.15 in 1504.04378
 !This is fine as long as the escape velocity is large enough
-  function maxcap(mx)
+  function maximum_capture(mx)
     use sharedmod
     implicit none
-    double precision maxcap
+    double precision maximum_capture
     double precision, intent(in) :: mx
 
-    maxcap = pi/3.d0*rho0/mx*Rsun**2 &
+    maximum_capture = pi/3.d0*rho0/mx*Rsun**2 &
     *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
     + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
 
-  end function maxcap
+  end function maximum_capture
 
 
 !------!------!------!------!------INITIALIZATION FCT

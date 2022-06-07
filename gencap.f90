@@ -116,7 +116,7 @@
       double precision, intent(in) :: mx_in, sigma_0
       double precision :: capped !this is the output
       double precision :: sigma_SD, sigma_SI
-      double precision :: maxcap, maxcapped, a, muminus, sigma_N, umax, umin, vesc
+      double precision :: maximum_capture, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
       double precision :: ier,alist,blist,rlist,elist,iord,last!for integrator
       double precision :: int_result
@@ -197,7 +197,7 @@
         print*,"infinite amount of dark matter in the Sun. Best to look into that."
       end if
 
-      maxcapped = maxcap(mx_in)
+      maxcapped = maximum_capture(mx_in)
       if (capped .gt. maxcapped) then
         capped = maxcapped
       end if
