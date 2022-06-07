@@ -207,7 +207,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     j_chi = jx_in
     
     if (.not. allocated(tab_r)) then 
-        print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
+        print*,"Errorface of errors: you haven't called init_sun to load the solar model!"
         return
     end if
     ! allocate(u_int_res(nlines))

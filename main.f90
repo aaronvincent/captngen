@@ -39,7 +39,7 @@
     spin_dependency = 1
 
     ! Initialise capture calculations
-    call captn_init(modfile,0.4d0,235.d0,235.d0,550.d0)
+    call init_sun(modfile,0.4d0,235.d0,235.d0,550.d0)
 
     ! ! Initialise transport calculations
     ! call getnlines(nlines)

@@ -14,7 +14,7 @@ module sharedmod
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938
-    !these are now set in captn_init
+    !these are now set in init_sun
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
@@ -150,7 +150,7 @@ end function gausstest
 
 !------!------!------!------!------INITIALIZATION FCT
 
-  subroutine captn_init(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine init_sun(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     !input velocities in km/s, not cm/s!!!
     use sharedmod
     use iso_c_binding, only: c_ptr
@@ -170,4 +170,4 @@ end function gausstest
     rho0 =rho0_in
     vesc_halo = vesc_in*1.d5
 
-  end subroutine captn_init
+  end subroutine init_sun
