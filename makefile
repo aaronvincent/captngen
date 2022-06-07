@@ -78,4 +78,4 @@ $(RFUNC): %.o: $(RDIR)/%.f
 
 
 clean:
-	rm -f *.o *.mod *.so gentest.x
+	rm -f *.o *.mod *.so gentest.x calcCaps.x
