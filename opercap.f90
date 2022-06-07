@@ -185,7 +185,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
-    double precision :: maxcap, maxcapped, a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
+    double precision :: maximum_capture, maxcapped, a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
     ! double precision, allocatable :: u_int_res(:)
@@ -372,7 +372,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
     capped = 4.d0*pi*Rsun**3*capped
 
-    maxcapped = maxcap(mx_in)
+    maxcapped = maximum_capture(mx_in)
     if (capped .gt. maxcapped) then
       capped = maxcapped
     end if

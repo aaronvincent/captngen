@@ -7,7 +7,7 @@ PROGRAM GENCAP
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Variables used for original qv scaled capt'n
     integer :: i, j, num_isotopes, spin_dependency
-    double precision :: mx, sigma_0, capped, maxcapture, rho0, usun, u0, vesc, maxcap
+    double precision :: mx, sigma_0, capped, maxcapture, rho0, usun, u0, vesc, maximum_capture
     ! double precision :: capped_si_spec, capped_sd_spec ! Used in captn_specific()
     character(len=300) :: modfile, filename
     character(len=2) :: spinString(2) = [character(len=2) :: "SI", "SD"]
@@ -72,7 +72,7 @@ PROGRAM GENCAP
 
             print*
             call captn_general(mx, sigma_0, num_isotopes, nq(j), nv(j), spin_dependency, capped)
-            maxcapture = maxcap(mx)
+            maxcapture = maximum_capture(mx)
             print*, "sigma_0: ", sigma_0, "cm^2 ", &
                     "mx: ", mx, "GeV ", &
                     "Capture rate: ", capped, "s^-1 ", &
@@ -125,7 +125,7 @@ PROGRAM GENCAP
         do i = 1,10
             mx = 1.d1 ** (dble(i)/5.)
             call captn_oper(mx, jx, num_isotopes, capped)
-            maxcapture = maxcap(mx)
+            maxcapture = maximum_capture(mx)
             print*, "Coupling Value: ", couplingVal, "GeV^-4 ", &
                     "DM mass: ", mx, "GeV ", &
                     "Capture rate: ", capped, "s^-1 ", &
