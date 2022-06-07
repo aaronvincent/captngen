@@ -45,7 +45,7 @@ PROGRAM GENCAP
     usun = 235.d0 ! km s^-1
     u0 = 235.d0 ! km s^-1
     vesc = 550.d0 ! km s^-1
-    call captn_init(modfile,rho0,usun,u0,vesc)
+    call init_sun(modfile,rho0,usun,u0,vesc)
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Choose the energy transport formalism: Gould & Raffelt [arxiv:], Rescaled G&R to Monte Carlo [arxiv:], or Spergel & Press [arxiv:]
