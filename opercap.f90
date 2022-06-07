@@ -25,6 +25,7 @@ module opermod
 
     integer :: q_shared
     logical :: w_shared
+    !$OMP threadprivate(q_shared, w_shared)
     
     contains
 
@@ -142,10 +143,14 @@ end subroutine captn_init_oper
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function integrand_oper(u, foveru)
     use opermod
-    double precision :: u, w, integrand_oper, foveru !int, vesc
-    external foveru
-
-    ! vesc = tab_vesc(ri_for_omega)
+    implicit none
+    interface
+        function foveru(arg1)
+            double precision :: arg1, foveru
+        end function foveru
+    end interface
+    double precision :: u, integrand_oper
+    double precision :: w
 
     w = sqrt(u**2+vesc_shared_arr(rindex_shared)**2)
 
@@ -166,26 +171,34 @@ end function integrand_oper
 subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
     implicit none
+    interface
+        function integrand_oper(arg1, func1)
+            double precision :: arg1, integrand_oper
+            interface
+                function func1(arg2)
+                    double precision :: arg2, func1
+                end function func1
+            end interface
+        end function integrand_oper
+    end interface
     integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
-    double precision :: a, muminus, umax, umin, vesc, result
+    double precision :: a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
-    double precision, allocatable :: u_int_res(:)
-
+    ! double precision, allocatable :: u_int_res(:)
+    
     ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
     double precision :: prefactor_array(niso,11,2)
-
+    
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
-    external integrand_oper
-    external integrand_oper_extrawterm
-
+    
     epsabs=1.d-6
     epsrel=1.d-6
     limit=1000
@@ -197,7 +210,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
         return
     end if
-    allocate(u_int_res(nlines))
+    ! allocate(u_int_res(nlines))
 
     do eli = 1, niso
         do q_pow = 1, 11
@@ -298,15 +311,23 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end do !eli
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
-    capped = 0.d0
     umin = 0.d0
+    capped = 0.d0
+    !$OMP parallel default(none) &
+    !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
+    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
+    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
+    !$OMP   umin,limit,epsabs,epsrel)
+    partialCapped = 0.d0
+    !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)
         rindex_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
         do eli=1,niso !isotopeChosen, isotopeChosen
-            u_int_res(ri) = 0.d0
+            ! u_int_res(ri) = 0.d0
+            elementalResult = 0.d0
             a = AtomicNumber_oper(eli)
             a_shared = a !make accessible via the module
 
@@ -328,22 +349,26 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
                 do q_pow=1,11
                     if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
-                        result = 0.d0
+                        integrateResult = 0.d0
                         q_shared = q_pow - 1
                         !Call integrator
                         call dsntdqagse(integrand_oper,vdist_over_u,umin,umax, &
-                            epsabs,epsrel,limit,result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+                            epsabs,epsrel,limit,integrateResult,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
-                        u_int_res(ri) = u_int_res(ri) + result * prefactor_array(eli,q_pow,w_pow)
+                        elementalResult = elementalResult + integrateResult * prefactor_array(eli,q_pow,w_pow)
                     end if
                 end do !q_pow
             end do !w_pow
 
             factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
-            capped = capped + u_int_res(ri) * factor_final
+            partialCapped = partialCapped + elementalResult * factor_final
         end do !eli
     end do !ri
+    !$OMP critical
+    capped = capped + partialCapped
+    !$OMP end critical
+    !$OMP end parallel
 
     capped = 4.d0*pi*Rsun**3*capped
 
