@@ -28,8 +28,8 @@ libgencap.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG
 # -L tells the linker where to look for shared libraries
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
 # -Wl lets us send options to the linker (which are comma seperated)
-gentest.x: $(MAIN) libgencap.so
-	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) libgencap.so
+captngen_test.x: $(MAIN) libgencap.so
+	${FC} $(FOPT) -L. -Wl,-rpath,. -o captngen_test.x $(MAIN) libgencap.so
 #	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
 
@@ -71,4 +71,4 @@ $(RFUNC): %.o: $(RDIR)/%.f
 
 
 clean:
-	rm -f *.o *.mod *.so gentest.x
+	rm -f *.o *.mod *.so captngen_test.x
