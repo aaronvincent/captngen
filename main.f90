@@ -41,10 +41,10 @@
     ! Initialise capture calculations
     call init_sun(modfile,0.4d0,235.d0,235.d0,550.d0)
 
-    ! ! Initialise transport calculations
-    ! call getnlines(nlines)
-    ! allocate(etrans(nlines))
-    ! call get_alpha_kappa(nq,nv)
+    ! Initialise transport calculations
+    call getnlines(nlines)
+    allocate(etrans(nlines))
+    call get_alpha_kappa(nq,nv)
     
 
     ! do j = 1,1
