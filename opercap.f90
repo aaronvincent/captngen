@@ -127,7 +127,7 @@ subroutine init_nreo()
     end do
 
     ! initiate the coupling_Array (full of the coupling constants) with all zeros
-    ! populate_array will place the non-zero value into a chosen slot at runtime
+    ! init_couplings will place the non-zero value into a chosen slot at runtime
     coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
@@ -378,7 +378,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end if
 end subroutine capture_rate_nreo
 
-subroutine populate_array(val, couple, isospin)
+subroutine init_couplings(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
@@ -412,4 +412,4 @@ subroutine populate_array(val, couple, isospin)
     ! val is the value you want to populate with
     ! set the value picked in the slot chosen
     coupling_Array(cpl,iso) = val
-end subroutine populate_array
+end subroutine init_couplings
