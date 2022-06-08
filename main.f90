@@ -69,8 +69,8 @@
     !     call capture_rate(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
     !     ! print*, "Capture rate", capped_sd, "s^-1"
 
-    !     ! print*,"Calling captn_specific for SI and SD scattering."
-    !     ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
+    !     ! print*,"Calling capture_rate_constant for SI and SD scattering."
+    !     ! call capture_rate_constant(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
     !     ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
     !     nwimpsin = 5.d44
