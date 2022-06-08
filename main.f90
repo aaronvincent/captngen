@@ -88,7 +88,7 @@
     !   close(94)
     ! end do
     
-   call captn_init_oper()
+   call init_nreo()
    num_isotopes = 16
    jx = 0.5
    do cpl=1, 14
