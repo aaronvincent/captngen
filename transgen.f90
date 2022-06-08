@@ -122,7 +122,7 @@ dTdr = dTdr/Rsun
 if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
 
 ! calculate sigma_i, interpolate alpha_i, and kappa_i from tables
-! nq and nv are set in darkInputs.txt for DarkMESA or in main.f90 for gentest.x
+! nq and nv are set in darkInputs.txt for DarkMESA or in main.f90 for captngen_test.x
 call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
