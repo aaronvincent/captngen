@@ -109,7 +109,7 @@
      print*, "Running coupling constant: ", cplConsts(cpl)
      do i = 1,1
        mx = 10. !5.d0 + dble(i)/5.
-       call captn_oper(mx,jx,num_isotopes,capped_sd)
+       call capture_rate_nreo(mx,jx,num_isotopes,capped_sd)
        maxcapture = maximum_capture(mx)
        write(55,*) mx, capped_sd, maxcapture
        print*, "mx: ",mx, "capped: ",capped_sd, "max_capture:",maxcapture
