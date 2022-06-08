@@ -124,7 +124,7 @@ PROGRAM GENCAP
         print*, "Running coupling constant: ", cplConsts(cpl)
         do i = 1,10
             mx = 1.d1 ** (dble(i)/5.)
-            call captn_oper(mx, jx, num_isotopes, capped)
+            call capture_rate_nreo(mx, jx, num_isotopes, capped)
             maxcapture = maximum_capture(mx)
             print*, "Coupling Value: ", couplingVal, "GeV^-4 ", &
                     "DM mass: ", mx, "GeV ", &
