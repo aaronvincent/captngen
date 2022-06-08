@@ -97,13 +97,13 @@
      write(55,*) "DM_Mass | ", "  Captures | ", "  MaxCaptures"
 
      if (cpl==1) then
-       call populate_array(1.65d-8, cpl, 0)
+       call init_couplings(1.65d-8, cpl, 0)
      else if (cpl==2) then
-       call populate_array(0.d0, cpl-1, 0)
-       call populate_array(1.65d-8, cpl+1, 0)
+       call init_couplings(0.d0, cpl-1, 0)
+       call init_couplings(1.65d-8, cpl+1, 0)
      else
-       call populate_array(0.d0, cpl, 0)
-       call populate_array(1.65d-8, cpl+1, 0)
+       call init_couplings(0.d0, cpl, 0)
+       call init_couplings(1.65d-8, cpl+1, 0)
      endif
      
      print*, "Running coupling constant: ", cplConsts(cpl)
