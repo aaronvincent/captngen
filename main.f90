@@ -41,52 +41,52 @@
     ! Initialise capture calculations
     call init_sun(modfile,0.4d0,235.d0,235.d0,550.d0)
 
-    ! ! Initialise transport calculations
-    ! call getnlines(nlines)
-    ! allocate(etrans(nlines))
-    ! call get_alpha_kappa(nq,nv)
+    ! Initialise transport calculations
+    call getnlines(nlines)
+    allocate(etrans(nlines))
+    call get_alpha_kappa(nq,nv)
     
 
-    ! do j = 1,1
-    !   open(94,file = outfile(j))
-    !   write(94,*) "Number of Isotopes: ", num_isotopes
-    !   write(94,*) "Spin Dependency: ", spin_dependency
-    !   write(94,*) "Power: ", outfile(j)
-    !   write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
-    !   do i = 1,1
-    !     mx = 5.d0 !+ dble(i)/5.
-    !     sigma_0 = 10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
-    !     print*
-    !     print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
+    do j = 1,1
+      open(94,file = outfile(j))
+      write(94,*) "Number of Isotopes: ", num_isotopes
+      write(94,*) "Spin Dependency: ", spin_dependency
+      write(94,*) "Power: ", outfile(j)
+      write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
+      do i = 1,1
+        mx = 5.d0 !+ dble(i)/5.
+        sigma_0 = 10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
+        print*
+        print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 
-    !     ! print*, "Geometrical limit on capture rate: ", maximum_capture(mx), "s^-1"
+        ! print*, "Geometrical limit on capture rate: ", maximum_capture(mx), "s^-1"
 
-    !     ! print*,"Calling capture_rate for SI scattering."
-    !     ! call capture_rate(mx,sigma_0,29,nq,nv,capped_si)
-    !     ! print*, "Capture rate", capped_si, "s^-1"
+        ! print*,"Calling capture_rate for SI scattering."
+        ! call capture_rate(mx,sigma_0,29,nq,nv,capped_si)
+        ! print*, "Capture rate", capped_si, "s^-1"
 
-    !     ! print*,"Calling capture_rate for SD scattering."
-    !     call capture_rate(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
-    !     ! print*, "Capture rate", capped_sd, "s^-1"
+        ! print*,"Calling capture_rate for SD scattering."
+        call capture_rate(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
+        ! print*, "Capture rate", capped_sd, "s^-1"
 
-    !     ! print*,"Calling captn_specific for SI and SD scattering."
-    !     ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
-    !     ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
+        ! print*,"Calling capture_rate_constant for SI and SD scattering."
+        ! call capture_rate_constant(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
+        ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
-    !     nwimpsin = 5.d44
-    !     ! nwimpsin = capped_sd*3.d7*4.57d9
-    !     ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-    !     call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,transport_formalism, &
-    !     	Tx,noise_indicator,Etrans,Etranstot)
-    !     ! print*, "Etranstot: ", Etranstot !FIXME units?
-    !     ! print*,"Calling fastevap."
-    !     ! call fastevap(sigma_0,1.d0,28,EvapRate)
-    !     ! print*,"Evap rate: ", EvapRate, "s^-1"
+        nwimpsin = 5.d44
+        ! nwimpsin = capped_sd*3.d7*4.57d9
+        ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
+        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,transport_formalism, &
+        	Tx,noise_indicator,Etrans,Etranstot)
+        ! print*, "Etranstot: ", Etranstot !FIXME units?
+        ! print*,"Calling fastevap."
+        ! call fastevap(sigma_0,1.d0,28,EvapRate)
+        ! print*,"Evap rate: ", EvapRate, "s^-1"
 
-    !     write(94,*) sigma_0, mx, capped_sd, Etranstot
-    !   end do
-    !   close(94)
-    ! end do
+        write(94,*) sigma_0, mx, capped_sd, Etranstot
+      end do
+      close(94)
+    end do
     
    call init_nreo()
    num_isotopes = 16

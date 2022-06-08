@@ -204,24 +204,24 @@
     end subroutine capture_rate
 
 
-    !! captn_specific calculates the capture rate for constant cross section.
-    ! subroutine captn_specific(mx_in,sigma_0,capped_SD,capped_SI)
+    !! capture_rate_constant calculates the capture rate for constant cross section.
+    ! subroutine capture_rate_constant(mx_in,sigma_0,capped_SD,capped_SI)
     !   implicit none
     !   double precision, intent(in) :: mx_in, sigma_0
     !   double precision :: capped_SD,capped_SI
 
     !   call capture_rate(mx_in,sigma_0,1,0,0,1,capped_SD)
     !   call capture_rate(mx_in,sigma_0,29,0,0,0,capped_SI)
-    ! end subroutine captn_specific
+    ! end subroutine capture_rate_constant
 
-    subroutine captn_specific(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
+    subroutine capture_rate_constant(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
       implicit none
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
       double precision :: capped_SD,capped_SI
 
       call capture_rate(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
       call capture_rate(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
-    end subroutine captn_specific
+    end subroutine capture_rate_constant
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
