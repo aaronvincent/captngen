@@ -167,8 +167,8 @@ function integrand_oper(u, foveru)
 end function integrand_oper
 
 
-! call captn_oper to run capt'n with the effective operator method
-subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
+! call capture_rate_nreo to run capt'n with the effective operator method
+subroutine capture_rate_nreo(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
     implicit none
     interface
@@ -190,7 +190,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
     ! double precision, allocatable :: u_int_res(:)
     
-    ! specific to captn_oper
+    ! specific to capture_rate_nreo
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
@@ -376,7 +376,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
       print*,"Capt'n General says: Oh my, it looks like you are capturing an", &
         "infinite amount of dark matter in the Sun. Best to look into that."
     end if
-end subroutine captn_oper
+end subroutine capture_rate_nreo
 
 subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
