@@ -181,7 +181,7 @@ end if
 
 rchi = (3.*(kB*Tc)/(2.*pi*GN*rhoc*mxg))**.5;
 K = mfp(1)/rchi;
-!print *, K
+print *, K, "= K"
 !K = 1;
 
 ! this loop does a number of things: gets alpha and kappa averages (average over isotopes) to get alpha(r), kappa(r),
@@ -347,7 +347,7 @@ select case (transport_formalism)
 !		close(55)
 
 
-	case (2) ! transport_formalism=3 -> use Spergel & Press
+	case (2) ! transport_formalism=2 -> use Spergel & Press
 
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
@@ -376,7 +376,7 @@ select case (transport_formalism)
 !			write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
-	case(3) ! transport_formalism=4 -> use rescaled Spergel & Press
+	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press
 
 		! The rescaled Spergel & Press transport scheme from Banks et. al https://arxiv.org/abs/2111.06895
 
@@ -399,12 +399,11 @@ select case (transport_formalism)
 
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
-		print *, K_0
 		open(7, file = 'Ltransdata2.dat')
 
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-			L = 0.5*(1/(1+(K_0+K)**2.))*Ltrans(i)
+			L = 0.5*(1/(1+(K_0/K)**2.))*Ltrans(i)
 			write(7,*) i, L
 		enddo
 		close(7)

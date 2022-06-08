@@ -35,7 +35,8 @@ d = int(mdm)/5
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
-nx_isothermal = exp(-mxg*phi/kB/T_x/2)
+!nx_isothermal = exp(-mxg*phi/kB/T_x)
+nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) fix makes the same results for 5 GeV
 
 open(80, file = "NXISO.csv")
 
@@ -201,7 +202,7 @@ do while (error > reltolerance)
 	print*, "f2"
 	f2 = f(x_2, sigma_N, Nwimps, niso)    !this causes issues when mx > 8
 	print*, f2
-	call sleep(10)
+	!call sleep(10)
 
 	f3 = f(x_3, sigma_N, Nwimps, niso)
 	
