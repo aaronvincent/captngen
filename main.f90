@@ -8,7 +8,7 @@ PROGRAM GENCAP
 ! Variables used for original qv scaled capt'n
     integer :: i, j, num_isotopes, spin_dependency
     double precision :: mx, sigma_0, capped, maxcapture, rho0, usun, u0, vesc, maximum_capture
-    ! double precision :: capped_si_spec, capped_sd_spec ! Used in captn_specific()
+    ! double precision :: capped_si_spec, capped_sd_spec ! Used in capture_rate_constant()
     character(len=300) :: modfile, filename
     character(len=2) :: spinString(2) = [character(len=2) :: "SI", "SD"]
     character(len=9) :: outfile(7) = [character(len=9) :: "const.dat","qm1.dat","q1.dat","q2.dat","vm1.dat","v1.dat","v2.dat"]
@@ -78,7 +78,7 @@ PROGRAM GENCAP
                     "Capture rate: ", capped, "s^-1 ", &
                     "Geometric limit: ", maxcapture, "s^-1 "
 
-            ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
+            ! call capture_rate_constant(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
             ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
             nwimpsin = 5.d44
