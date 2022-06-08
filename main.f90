@@ -102,7 +102,7 @@ PROGRAM GENCAP
     num_isotopes = 16
     jx = 0.5
     couplingVal = 1.65d-8
-    call captn_init_oper()
+    call init_nreo()
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the new NREO formalism calculation

@@ -65,7 +65,7 @@ module opermod
     end function GFFI_A_oper
 end module opermod
 
-subroutine captn_init_oper()
+subroutine init_nreo()
     use opermod
     implicit none
     integer :: i, j, k, l, m
@@ -135,7 +135,7 @@ subroutine captn_init_oper()
     do i = 1, 16
         yConverse_array(i) = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.))
     end do
-end subroutine captn_init_oper
+end subroutine init_nreo
 
 ! this is the integral over R in eqn 2.3 in 1501.03729
 ! note that Omega there is expanded and broken into terms of the form const. * q^2n * exp{E_R/E_i}
