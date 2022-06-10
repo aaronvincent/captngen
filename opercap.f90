@@ -212,6 +212,15 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end if
     ! allocate(u_int_res(nlines))
 
+    !$OMP parallel default(none) &
+    !$OMP private(q_pow, w_pow, &
+    !$OMP   mu_T, funcType, prefactor_functype, q_functype, tau, taup, term_W, WFuncConst, term_R, RFuncConst, prefactor_current, &
+    !$OMP   vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, q_index, &
+    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
+    !$OMP shared(W_array, coupling_array, j_chi, yconverse_array, &
+    !$OMP   nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
+    !$OMP   umin,limit,epsabs,epsrel)
+    !$OMP do
     do eli = 1, niso
         do q_pow = 1, 11
             do w_pow = 1, 2
@@ -219,9 +228,11 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
             end do
         end do
     end do
+    !$OMP end do
 
     ! First I set the entries in prefactor_array(niso,11,2)
     ! These are the constants that mulitply the corresonding integral evaluation
+    !$OMP do
     do eli=1,niso !isotopeChosen, isotopeChosen
         ! I'll need mu_T to include in the prefactor when there is a v^2 term
         a = AtomicNumber_oper(eli)
@@ -309,6 +320,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
             end do !tau
         end do !functype
     end do !eli
+    !$OMP end do
+    !$OMP end parallel
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
