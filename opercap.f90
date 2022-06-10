@@ -213,13 +213,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     ! allocate(u_int_res(nlines))
 
     !$OMP parallel default(none) &
-    !$OMP private(q_pow, w_pow, &
-    !$OMP   mu_T, funcType, prefactor_functype, q_functype, tau, taup, term_W, WFuncConst, term_R, RFuncConst, prefactor_current, &
-    !$OMP   vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, q_index, &
-    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(W_array, coupling_array, j_chi, yconverse_array, &
-    !$OMP   nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
-    !$OMP   umin,limit,epsabs,epsrel)
+    !$OMP private(a, mu_T, q_functype, prefactor_functype, WFuncConst, RFuncConst, q_index, prefactor_current) &
+    !$OMP shared(niso, prefactor_array, mdm, W_array, coupling_array, j_chi, yconverse_array)
     !$OMP do
     do eli = 1, niso
         do q_pow = 1, 11
