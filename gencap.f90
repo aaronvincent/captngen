@@ -88,8 +88,13 @@
     !The integrand for the integral over u
     function integrand(u,foveru)
       use capmod
-      double precision :: u, w, integrand, foveru
-      external foveru
+      implicit none
+      interface
+        function foveru(arg1)
+          double precision :: arg1, foveru
+        end function foveru
+      end interface
+      double precision :: u, w, integrand
 
       w = sqrt(u**2+vesc_shared**2)
 
@@ -110,11 +115,21 @@
     subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
       use capmod
       implicit none
+      interface
+        function integrand(arg1, func1)
+          double precision :: arg1, integrand
+          interface
+            function func1(arg2)
+              double precision :: arg2, func1
+            end function func1
+          end interface
+        end function integrand
+      end interface
       integer, intent(in):: nq_in, nv_in, niso, spin_in
       ! integer, intent(in):: spin_in
       integer eli, ri, limit
       double precision, intent(in) :: mx_in, sigma_0
-      double precision :: capped !this is the output
+      double precision :: capped, partialCapped !this is the output
       double precision :: sigma_SD, sigma_SI
       double precision :: maxcap, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
@@ -122,8 +137,6 @@
       double precision :: int_result
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
-      external integrand
-      external gausstest !this is just for testing
 
       epsabs=1.d-8
       epsrel=1.d-8
@@ -149,9 +162,18 @@
         stop "You haven't yet called captn_init to load the solar model!"
       end if
 
+      ! Bottom part of the integral is always zero -- happy little slow DM particles can always be captured.
+      umin = 0.d0
       capped = 0.d0
 
       !Loop over the shells of constant radius in the star
+      !$OMP parallel default(none) &
+      !$OMP private(partialCapped, vesc, a, sigma_N, mu, muplus, muminus, umax, &
+      !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last, int_result) &
+      !$OMP shared(nlines, tab_vesc, niso, AtomicNumber, mx_in, sigma_SI, sigma_SD, vesc_halo, epsabs,epsrel,limit, umin, &
+      !$OMP   tab_starrho, tab_mfr, tab_r, tab_dr, capped)
+      partialCapped = 1.d0
+      !$OMP do
       do ri = 1, nlines
 
         vesc = tab_vesc(ri)
@@ -179,16 +201,20 @@
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           int_result = int_result * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
-          capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
-
-          if (isnan(capped)) then
-            capped = 0.d0
+          partialCapped = partialCapped + tab_r(ri)**2*int_result*tab_dr(ri)
+          if (isnan(partialCapped)) then
+            partialCapped = 0.d0
             stop 'NaN encountered whilst trying compute capture rate.'
           end if
 
         end do
 
       end do
+      !$OMP end do
+      !$OMP critical
+      capped = capped + partialCapped
+      !$OMP end critical
+      !$OMP end parallel
 
       capped = 4.d0*pi*Rsun**3*capped
 
