@@ -38,7 +38,7 @@ integer (kind=4) :: lensav
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
-double precision :: capped, maximum_capture !this is the output
+double precision :: capped, capture_maximum !this is the output
 double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso), nxLTE(nlines)
 double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
