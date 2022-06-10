@@ -154,8 +154,11 @@ c           compute the 21-point kronrod approximation to
 c           the integral, and estimate the absolute error.
 c
       resg = 0.0d+00
+      print*, "there5 fc", fc, "centr", centr
       fc = f(centr,foveru)
+      print*, "there3 resk:", resk, "wgk(11) and fc:", wgk(11), fc
       resk = wgk(11)*fc
+      print*, "there4 resk:", resk, "wgk(11) and fc:", wgk(11), fc
       resabs = dabs(resk)
       do 10 j=1,5
         jtw = 2*j
@@ -166,8 +169,8 @@ c
         fv2(jtw) = fval2
         fsum = fval1+fval2
         resg = resg+wg(j)*fsum
-        resk = resk+wgk(jtw)*fsum
-        resabs = resabs+wgk(jtw)*(dabs(fval1)+dabs(fval2))
+      resk = resk+wgk(jtw)*fsum
+      resabs = resabs+wgk(jtw)*(dabs(fval1)+dabs(fval2))
    10 continue
       do 15 j = 1,5
         jtwm1 = 2*j-1
@@ -177,15 +180,17 @@ c
         fv1(jtwm1) = fval1
         fv2(jtwm1) = fval2
         fsum = fval1+fval2
-        resk = resk+wgk(jtwm1)*fsum
-        resabs = resabs+wgk(jtwm1)*(dabs(fval1)+dabs(fval2))
+      resk = resk+wgk(jtwm1)*fsum
+      resabs = resabs+wgk(jtwm1)*(dabs(fval1)+dabs(fval2))
    15 continue
       reskh = resk*0.5d+00
       resasc = wgk(11)*dabs(fc-reskh)
       do 20 j=1,10
         resasc = resasc+wgk(j)*(dabs(fv1(j)-reskh)+dabs(fv2(j)-reskh))
    20 continue
+      print*, "there1 result:", result, "resk:", resk
       result = resk*hlgth
+      print*, "there2 result:", result, "resk:", resk
       resabs = resabs*dhlgth
       resasc = resasc*dhlgth
       abserr = dabs((resk-resg)*hlgth)

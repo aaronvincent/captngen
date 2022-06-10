@@ -11,7 +11,7 @@ PROGRAM GENCAP
     ! double precision :: capped_si_spec, capped_sd_spec ! Used in captn_specific()
     character(len=300) :: modfile, filename
     character(len=2) :: spinString(2) = [character(len=2) :: "SI", "SD"]
-    character(len=9) :: outfile(7) = [character(len=9) :: "const.dat","qm1.dat","q1.dat","q2.dat","vm1.dat","v1.dat","v2.dat"]
+    character(len=9) :: outfile(7) = [character(len=9) :: "const","qm1","q1","q2","vm1","v1","v2"]
     integer :: nq(7) = [integer :: 0, -1, 1, 2,  0, 0, 0] ! Choose velocity and momentum transfer powers in differential cross-section
     integer :: nv(7) = [integer :: 0,  0, 0, 0, -1, 1, 2]
 !-----------------------------------------------------------------------------------------------------------------------------------
@@ -47,25 +47,25 @@ PROGRAM GENCAP
     vesc = 550.d0 ! km s^-1
     call captn_init(modfile,rho0,usun,u0,vesc)
 
-!-----------------------------------------------------------------------------------------------------------------------------------
-! Choose the energy transport formalism: Gould & Raffelt [arxiv:], Rescaled G&R to Monte Carlo [arxiv:], or Spergel & Press [arxiv:]
-!       WHICH PAPERS DID THE TRANSPORT FORMALISMS COME FROM?
-    transport_formalism = 1 ! 1=G&R, 2=Rescaled G&R, 3=S&P
+! !-----------------------------------------------------------------------------------------------------------------------------------
+! ! Choose the energy transport formalism: Gould & Raffelt [arxiv:], Rescaled G&R to Monte Carlo [arxiv:], or Spergel & Press [arxiv:]
+! !       WHICH PAPERS DID THE TRANSPORT FORMALISMS COME FROM?
+!     transport_formalism = 1 ! 1=G&R, 2=Rescaled G&R, 3=S&P
 
-!-----------------------------------------------------------------------------------------------------------------------------------
-! Initialise transport calculations
-    call getnlines(nlines)
-    allocate(etrans(nlines))
-    call get_alpha_kappa(nq,nv)
+! !-----------------------------------------------------------------------------------------------------------------------------------
+! ! Initialise transport calculations
+!     call getnlines(nlines)
+!     allocate(etrans(nlines))
+!     call get_alpha_kappa(nq,nv)
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the original qv scaling capture calculation
     do j = 1,7
-        open(94,file = trim(outfile(j)))
+        open(94,file = trim(outfile(j))//"-parallel-new.dat")
         write(94,*) "Number of Isotopes: ", num_isotopes
         write(94,*) "Spin Dependency: ", spinString(spin_dependency+1)
         write(94,*) "Power: ", outfile(j)
-        write(94,*) "Sigma_0 | ", "DM Mass | ", "Captured Dark Matter | ",   "MaxCaptures | ", "Number of WIMPs in | ", "Etranstot"
+        write(94,*) "Sigma_0 | ", "DM Mass | ", "Captured Dark Matter | ",   "MaxCaptures | "!, "Number of WIMPs in | ", "Etranstot"
         do i = 1,10
             mx = 1.d1 ** (dble(i)/5.)
             sigma_0 = 10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
@@ -81,21 +81,21 @@ PROGRAM GENCAP
             ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
             ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
-            nwimpsin = 5.d44
-            ! nwimpsin = capped*3.d7*4.57d9
-            call transgen(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
-                            noise_indicator, Etrans, Etranstot)
-            print*, "Number of WIMPs in: ", nwimpsin, &
-                    "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
+            ! nwimpsin = 5.d44
+            ! ! nwimpsin = capped*3.d7*4.57d9
+            ! call transgen(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
+            !                 noise_indicator, Etrans, Etranstot)
+            ! print*, "Number of WIMPs in: ", nwimpsin, &
+            !         "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
 
             ! call fastevap(sigma_0, 1.d0, 28, EvapRate)
             ! print*, "Evap rate: ", EvapRate, "s^-1"
 
-            write(94,*) sigma_0, mx, capped, maxcapture, nwimpsin, Etranstot
+            write(94,*) sigma_0, mx, capped, maxcapture!, nwimpsin, Etranstot
         end do
         close(94)
     end do
-
+stop "Done"
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Specific set up for the Non-Relativistic Effective Operator calculation [arxiv:1501.03729]

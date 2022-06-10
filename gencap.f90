@@ -192,14 +192,14 @@
           muplus = (1.+mu)/2.
           muminus = (mu-1.d0)/2.
 
-          ! Bottom part of the integral is always zero -- happy little slow DM particles can always be captured.
-          umin = 0.d0
           ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
           umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
-
+print*, "before",partialCapped, int_result
+print*, "fc: ", integrand(27500000.d0,vdist_over_u)
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+print*, "after",partialCapped, int_result
           int_result = int_result * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
           partialCapped = partialCapped + tab_r(ri)**2*int_result*tab_dr(ri)
           if (isnan(partialCapped)) then

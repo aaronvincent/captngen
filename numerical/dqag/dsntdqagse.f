@@ -241,7 +241,9 @@ c            ------------------------------
       ier = 0
       neval = 0
       last = 0
+      print*, "here1 result:", result
       result = 0.0d+00
+      print*, "here2 result:", result
       abserr = 0.0d+00
       alist(1) = a
       blist(1) = b
@@ -257,7 +259,9 @@ c
       uflow = d1mach(1)
       oflow = d1mach(2)
       ierro = 0
+      print*, "here3 result:", result
       call dsntdqk21(f,foveru,a,b,result,abserr,defabs,resabs)
+      print*, "here4 result:", result
 c
 c           test on accuracy.
 c
@@ -367,6 +371,7 @@ c
 c ***jump out of do-loop
         if(errsum.le.errbnd) go to 115
 c ***jump out of do-loop
+      !   print*, "here result:", result
         if(ier.ne.0) go to 100
         if(last.eq.2) go to 80
         if(noext) go to 90
@@ -437,7 +442,9 @@ c
       if(ier+ierro.eq.0) go to 110
       if(ierro.eq.3) abserr = abserr+correc
       if(ier.eq.0) ier = 3
+      print*, "here result:", result
       if(result.ne.0.0d+00.and.area.ne.0.0d+00) go to 105
+      print*, "not here"
       if(abserr.gt.errsum) go to 115
       if(area.eq.0.0d+00) go to 130
       go to 110
