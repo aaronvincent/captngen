@@ -24,7 +24,7 @@ module sharedmod
 
     integer :: nlines, rindex_shared!, ri_for_omega
     double precision :: mdm, vesc_shared, a_shared, mu, muplus
-    !$OMP threadprivate(rindex_shared, a_shared)
+    !$OMP threadprivate(vesc_shared, rindex_shared, a_shared)
     
     contains
 

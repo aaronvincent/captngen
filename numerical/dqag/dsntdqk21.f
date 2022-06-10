@@ -51,11 +51,25 @@ c***references  (none)
 c***routines called  d1mach
 c***end prologue  dqk21
 c
+      implicit none
+      interface
+        function f(arg1, func1)
+          real*8 :: arg1, f
+          interface
+            function func1(arg2)
+              real*8 :: arg2, func1
+            end function func1
+          end interface
+        end function f
+c
+        function foveru(arg1)
+          real*8 :: arg1, foveru
+        end function foveru
+      end interface
       real*8 a,absc,abserr,b,centr,dabs,dhlgth,dmax1,dmin1,
-     1  d1mach,epmach,f,fc,fsum,fval1,fval2,fv1,fv2,hlgth,resabs,resasc,
-     2  resg,resk,reskh,result,uflow,wg,wgk,xgk,foveru
+     1  d1mach,epmach,fc,fsum,fval1,fval2,fv1,fv2,hlgth,resabs,resasc,
+     2  resg,resk,reskh,result,uflow,wg,wgk,xgk
       integer j,jtw,jtwm1
-      external f,foveru
 c
       dimension fv1(10),fv2(10),wg(5),wgk(11),xgk(11)
 c
