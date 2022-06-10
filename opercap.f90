@@ -213,8 +213,12 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     ! allocate(u_int_res(nlines))
 
     !$OMP parallel default(none) &
-    !$OMP private(a, mu_T, q_functype, prefactor_functype, WFuncConst, RFuncConst, q_index, prefactor_current) &
-    !$OMP shared(niso, prefactor_array, mdm, W_array, coupling_array, j_chi, yconverse_array)
+    !$OMP private(a, mu_T, q_functype, prefactor_functype, WFuncConst, RFuncConst, q_index, prefactor_current, &
+    !$OMP   partialCapped, vesc, elementalResult, mu, muplus, muminus, J, umax, integrateResult, &
+    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last, factor_final) &
+    !$OMP shared(niso, prefactor_array, mdm, W_array, coupling_array, j_chi, yconverse_array, &
+    !$OMP   umin, capped, nlines, tab_vesc, vesc_shared_arr, vesc_halo, epsabs,epsrel,limit, tab_r, tab_starrho, tab_mfr_oper, &
+    !$OMP   tab_dr)
     !$OMP do
     do eli = 1, niso
         do q_pow = 1, 11
@@ -316,16 +320,10 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         end do !functype
     end do !eli
     !$OMP end do
-    !$OMP end parallel
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
     capped = 0.d0
-    !$OMP parallel default(none) &
-    !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
-    !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
-    !$OMP   umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
     do ri=1,nlines
