@@ -37,7 +37,7 @@ $(NUMFOBJ): %.o : $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
 
 $(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
-	$(FC) $(FOPT) -c  $<
+	$(FC) $(FOPT) -Wno-argument-mismatch -c  $<
 
 $(TSOBJ): %.o : $(TSDIR)/%.f
 	$(FC) $(FOPT) -c  $<
