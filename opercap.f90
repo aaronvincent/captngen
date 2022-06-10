@@ -365,6 +365,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
             partialCapped = partialCapped + elementalResult * factor_final
         end do !eli
     end do !ri
+    !$OMP end do
     !$OMP critical
     capped = capped + partialCapped
     !$OMP end critical
