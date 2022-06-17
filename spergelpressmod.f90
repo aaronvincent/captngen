@@ -4,7 +4,7 @@
 !	-nx_isothermal: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
-!	-newtons_meth: solves Tx_integral=0 which defines Tx 
+!	-newtons_meth: solves Tx_integral=0 which defines Tx
 
 ! All units are cgs except tab_r and tab_dr
 ! I apologize for the long function calls.
@@ -12,7 +12,7 @@
 module spergelpressmod
 use capmod
 implicit none
-   
+
 double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24
 
 contains
@@ -29,9 +29,11 @@ double precision :: R(nlines), phi(nlines)
 r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
 mxg = mdm*1.782662d-24
-
+! open(95,"randphi.dat")
+! write(95,*) r , phi
+! close(95)
 ! WIMP number density in isothermal approximation
-nx_isothermal = exp(-mxg*phi/kB/T_x) 
+nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
 
@@ -53,7 +55,7 @@ double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
 double precision :: Etrans_sp(nlines)
 integer :: i, j
-! T_x in K, sigma_N in cm^2, 
+! T_x in K, sigma_N in cm^2,
 
 R = tab_r*Rsun ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
@@ -95,7 +97,7 @@ end function
 
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
 implicit none
-! Calculates the Tx defining integral 
+! Calculates the Tx defining integral
 
 integer, intent(in) :: niso
 double precision, intent(in) :: T_x, Nwimps
