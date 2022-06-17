@@ -1,5 +1,5 @@
 FC=gfortran
-FOPT= -O3 -fPIC -std=legacy# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
+FOPT= -O3 -fPIC -std=legacy -fopenmp# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 # TSDIR = ./numerical/TSPACK
@@ -37,7 +37,7 @@ $(NUMFOBJ): %.o : $(NUMDIR)/%.f
 	$(FC) $(FOPT) -c  $<
 
 $(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
-	$(FC) $(FOPT) -c  $<
+	$(FC) $(FOPT) -Wno-argument-mismatch -c  $<
 
 $(TSOBJ): %.o : $(TSDIR)/%.f
 	$(FC) $(FOPT) -c  $<
