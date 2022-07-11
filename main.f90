@@ -18,7 +18,7 @@
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	transport_formalism = 3 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
+	transport_formalism = 2 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -46,7 +46,7 @@
     call get_alpha_kappa(nq,nv)
     
 
-    do j = 1,1
+    do j = 5,5
       open(94,file = outfile(j))
       write(94,*) "Number of Isotopes: ", num_isotopes
       write(94,*) "Spin Dependency: ", spin_dependency
@@ -54,7 +54,7 @@
       write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
       do i = 1,1
         mx = 10.d0 !dble(i)/5.
-        sigma_0 = 1.d-40!10d0**(-45+dble(i)/2.)
+        sigma_0 = 5.d-36!10d0**(-45+dble(i)/2.)
         print*
         print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
 

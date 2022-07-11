@@ -233,7 +233,7 @@ guess_1 = maxval(tab_T)*1.1d0 ! One-zone WIMP temp guesses in K.
 guess_2 = maxval(tab_T)/10.d0
 reltolerance = 1.0d-6
 
-print*, 'transgen here'
+
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
@@ -351,9 +351,9 @@ select case (transport_formalism)
 
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
-
-		if ((nq .ne. 0) .or. (nv .ne. 0)) then 
-			stop "Spergel-Press heat tranport formalism can't handle momentum/velocity-dependent cross sections." 
+		
+		if (nq .ne. 0) then 
+			stop "Spergel-Press heat tranport formalism can't handle momentum-dependent cross sections." 
 		endif
 
 		! Etrans in erg/g/s (according to Spergel Press)
@@ -364,7 +364,7 @@ select case (transport_formalism)
 		! Calculate Ltrans
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-			write(5,*) i, Ltrans(i)
+			write(5,*) tab_r(i), Ltrans(i)
 		enddo
 
 		!close the Ltrans data file
@@ -404,7 +404,7 @@ select case (transport_formalism)
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
 			L = 0.5*(1/(1+(K_0/K)**2.))*Ltrans(i)
-			write(7,*) i, L
+			write(7,*) tab_r(i), L
 		enddo
 		close(7)
 

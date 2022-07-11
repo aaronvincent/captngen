@@ -24,14 +24,14 @@ double precision, intent(in) :: T_x, Nwimps
 double precision :: nx_isothermal(nlines)
 double precision :: n_0, mxg
 double precision :: R(nlines), phi(nlines)
-integer :: i, d
+integer :: i
 ! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
 
 
 r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
 mxg = mdm*1.782662d-24  ! g
-d = int(mdm)/5
+
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
@@ -42,18 +42,18 @@ open(80, file = "NXISO.csv")
 
 
 do i=1,nlines
-	write(80,*) nx_isothermal(i), phi(i)
+ 	write(80,*) nx_isothermal(i), phi(i)
 enddo
 close(80)
 
 
-!print*, trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines), "trapz"
+
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
-!print*, n_0, "= n_0"
+
 
 if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
-!print*, nx_isothermal
+
 
 return
 end function
@@ -66,7 +66,7 @@ implicit none
 integer, intent(in) :: niso
 double precision, intent(in) :: T_x, Nwimps
 double precision, intent(in) :: sigma_N(niso)
-double precision :: n_0, mxg
+double precision :: n_0, mxg, A
 double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
 double precision :: Etrans_sp(nlines)
@@ -89,14 +89,24 @@ sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works
 ! isothermal WIMP number density in cm^-3.
 n_x = nx_isothermal(T_x, Nwimps)
 
+if (nv .eq. 0) then
+	A = 8.0
+else if ((nv .eq. 1)) then
+	A = 48.0
+else if ((nv .eq. 2)) then
+	A = 384.0
+else if ((nv .eq. -1)) then
+	A = 2.0
+end if
+
 ! Separate calc into species dependent and independent factors
-species_indep = 8.0d0*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
+species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
 
 ! Now sum over species to get the species dependent factor
 species_dep=0.d0
 do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		sqrt(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)
+		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1/2+nq+nv)
 enddo
 
 Etrans_sp = species_indep*species_dep ! erg/g/s
@@ -192,36 +202,20 @@ error = reltolerance + 1.d0	! So that the first iteration is executed
 ! Binary search loop
 i = 0
 
-!print*, error, reltolerance
-print*, 'binary here' ! the loop below calls the Tx_integral function
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
-	!print*, 'got here'
 	f1 = f(x_1, sigma_N, Nwimps, niso)
-	
-	print*, "f2"
 	f2 = f(x_2, sigma_N, Nwimps, niso)    !this causes issues when mx > 8
-	print*, f2
-	!call sleep(10)
-
 	f3 = f(x_3, sigma_N, Nwimps, niso)
-	
-
-	
-
 	if (f3 == 0.d0) then
-		print*, "f3"
 		exit
 	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
-		print*, "f1"
 		x_1 = x_3
 	else if (f2*f3 .gt. 0) then
-		print*, "f2"
 		x_2 = x_3
 	endif
 	error = abs(x_2-x_1)/x_2
 	i = i + 1
-print*, error, reltolerance, i
 enddo
 
 binary_search = x_3
