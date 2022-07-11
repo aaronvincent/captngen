@@ -250,7 +250,7 @@ nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
 
 
-! 4 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
+! 3 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
 select case (transport_formalism)
 
 	case (1) ! transport_formalism=1 -> use Gould & Raffelt
