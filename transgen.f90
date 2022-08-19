@@ -167,15 +167,15 @@ else if ((nq .eq. -1)) then
   end do
 else if ((nv .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))
+    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))   ! need an extra 2 factor for some reason
   end do
 else if ((nv .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))
+    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))
   end do
 else if ((nv .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))
+    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))
   end do
 end if
 
@@ -352,10 +352,10 @@ select case (transport_formalism)
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 		
-		if (nq .ne. 0) then 
-			stop "Spergel-Press heat tranport formalism can't handle momentum-dependent cross sections." 
-		endif
-
+		! if (nq .ne. 0) then 
+		! 	stop "Spergel-Press heat tranport formalism can't handle momentum-dependent cross sections." 
+		! endif
+		print*, "here"
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
 		
