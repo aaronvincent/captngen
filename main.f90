@@ -56,7 +56,7 @@
         mx = 10.d0 !dble(i)/5.
         sigma_0 = 5.d-36!10d0**(-45+dble(i)/2.)
         print*
-        print*, "mx: ", mx, "sigma_0:", sigma_0, "cm^2"
+        print*, "mx: ", mx, "GeV sigma_0:", sigma_0, "cm^2"
 
         ! print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
 
