@@ -18,7 +18,7 @@
 !Output
 !Etrans erg/g/s
 
-subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
+subroutine transgen(j,sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
 
 ! mdm is stored in capmod
 ! Tx is the output one-zone WIMP temp 
@@ -33,11 +33,11 @@ integer, intent(in):: niso, nv_in, nq_in, spin_in
 double precision, intent(in) :: sigma_0, Nwimps
 double precision, intent(out) :: noise_indicator
 integer, parameter :: decsize = 75 !this should be done a bit more carefully
-integer i, ri, ierr
+integer i, j, ri, ierr
 integer (kind=4) :: lensav 
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
-double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, K_0, L, integrand
+double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: sigma_SI, sigma_SD, a
 double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso), nxLTE(nlines)
@@ -58,6 +58,7 @@ double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spli
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
 double precision :: Tx, guess_1, guess_2, reltolerance ! For the Spergel & Press scheme
+double precision :: nK_0(7) ! For the recalibrated Spergel & Press scheme
 double precision :: T_eq_Tx_index, r_T, a1, b1, c1, a2, b2, c2, A_MC, x0_MC, sigma_MC, b_MC, chi_MC(nlines), g_MC(nlines)
 double precision :: A_LTE, x0_LTE, sigma_LTE, b_LTE, Ltrans_LTE(nlines), chi_LTE(nlines), g_LTE(nlines), T_index_array(1)
 
@@ -146,7 +147,7 @@ do i = 1,nlines
 end do
 
 ! mean free path calcs for each nq,nv case here
-! equations from 1311.2074 (eqns 69 to 74 on arxiv copy)
+! equations from 1311.2074 (eqns 69 to 74 on arxiv copy) with corrections from Hannah Banks
 if (nq*nv .ne. 0) then
   stop "Oh no! nq and nv can't both be nonzero."
 else if ((nq .eq. 0) .and. (nv .eq. 0)) then
@@ -167,15 +168,15 @@ else if ((nq .eq. -1)) then
   end do
 else if ((nv .eq. 1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*(1.+muarray)*3./2./(zeta_v(i)**2))   ! need an extra 2 factor for some reason
+    mfp(i) = 1./sum(nabund(:,i)*sigma_N*(1.+muarray)*3./(zeta_v(i)**2))
   end do
 else if ((nv .eq. 2)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*((1.+muarray)**2)*15./4./(zeta_v(i)**4))
+    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*((1.+muarray)**2)*15./2./(zeta_v(i)**4))
   end do
 else if ((nv .eq. -1)) then
   do i = 1,nlines
-    mfp(i) = 1./sum(2*nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray))
+    mfp(i) = 1./sum(4*nabund(:,i)*sigma_N*zeta_v(i)**2/(1.+muarray))
   end do
 end if
 
@@ -248,14 +249,12 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
-
-
-! 4 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
+! 3 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
 select case (transport_formalism)
 
 	case (1) ! transport_formalism=1 -> use Gould & Raffelt
-
-		open(4, file = 'LtransdataGR.dat')
+		print*, "GR"
+		open(4, file = 'LtransGR.dat')
 
 		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 		Ltrans = fgoth*hgoth*Ltrans_LTE
@@ -349,18 +348,18 @@ select case (transport_formalism)
 
 	case (2) ! transport_formalism=2 -> use Spergel & Press
 
+		print*, "SP"
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 		
 		! if (nq .ne. 0) then 
 		! 	stop "Spergel-Press heat tranport formalism can't handle momentum-dependent cross sections." 
 		! endif
-		print*, "here"
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
 		
 		!open a file to write Ltrans data to
-		open(5, file = 'Ltransdata.dat')
+		open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
@@ -368,7 +367,7 @@ select case (transport_formalism)
 		enddo
 
 		!close the Ltrans data file
-		close(6)
+		close(5)
 
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
@@ -379,36 +378,21 @@ select case (transport_formalism)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press
 
 		! The rescaled Spergel & Press transport scheme from Banks et. al https://arxiv.org/abs/2111.06895
+		
+		print*, "SP Recalculated"
 
-		! setting the K_0 values. This is all realistic right now. I can make this into an array later to make this quicker.
-		if ((nq .eq. 0) .and. (nv .eq. 0)) then
-			K_0 = 0.40
-		else if ((nq .eq. 1)) then
-			K_0 = 1.05
-		else if ((nq .eq. 2)) then
-			K_0 = 1.72
-		else if ((nq .eq. -1)) then
-			K_0 = 0.21
-		else if ((nv .eq. 1)) then
-			K_0 = 0.73
-		else if ((nv .eq. 2)) then
-			K_0 = 1.20
-		else if ((nv .eq. -1)) then
-			K_0 = 0.11
-		end if
+		nK_0 = [0.40,0.21,1.05,1.72,0.11,0.73,1.20]
 
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
-		open(7, file = 'Ltransdata2.dat')
+		open(7, file = 'LtransNewSP.dat')
 
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-			L = 0.5*(1/(1+(K_0/K)**2.))*Ltrans(i)
+			L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			write(7,*) tab_r(i), L
 		enddo
 		close(7)
-
-		! should I do a choice between idealized and real ?? maybe ask Aaron
 
 	case default
 	
