@@ -14,11 +14,12 @@
     double precision :: maxcap, nwimpsin, evapRate, noise_indicator
     double precision, allocatable :: Etrans(:)
     double precision :: EtransTot
-    integer :: nq(7), nv(7), i, j, k, nlines, num_isotopes, spin_dependency, cpl
+    integer :: nq(7), nv(7), i, j, k, s, nlines, num_isotopes, spin_dependency, cpl
     character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
                         "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-	transport_formalism = 2 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
+  ! use this is just one formalism, if doing multiple see loop below
+	transport_formalism = 3 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
 	
     ! Choose velocity and momentum transfer powers in differential cross-section
     nq = [0,-1,1,2,0,0,0]
@@ -45,49 +46,65 @@
     allocate(etrans(nlines))
     call get_alpha_kappa(nq,nv)
     
+  
+    ! uncomment this and end do at the end to change and run multiple formalisms in a loop
+    ! do transport_formalism = 1,3   ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
+      
+      ! 1 = velocity and momentum independent
+      ! 2 = q^-2
+      ! 3 = q^2
+      ! 4 = q^4
+      ! 5 = v^-2
+      ! 6 = v^2
+      ! 7 = v^4
+      
+      do j = 1,1
+        open(94,file = outfile(j))
+        write(94,*) "Number of Isotopes: ", num_isotopes
+        write(94,*) "Spin Dependency: ", spin_dependency
+        write(94,*) "Power: ", outfile(j)
+        write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
+        ! sigma_0 = 9.d-41  ! use this do loop to cycle through sigma_0
+        ! do s = 1,100
+          ! sigma_0 = sigma_0 + 10.d0**(CEILING((LOG10(sigma_0) + 1.d-4))-1)
+          do i = 1,1
+            mx = 10.d0 !dble(i)/5.
+            sigma_0 = 5.d-36!10d0**(-45+dble(i)/2.)
+            
+            print*, "mx: ", mx, "GeV sigma_0:", sigma_0, "cm^2"
 
-    do j = 5,5
-      open(94,file = outfile(j))
-      write(94,*) "Number of Isotopes: ", num_isotopes
-      write(94,*) "Spin Dependency: ", spin_dependency
-      write(94,*) "Power: ", outfile(j)
-      write(94,*) "Sigma_0 | ", "DM Mass | ", "Capptured Dark Matter | ", "Etranstot"
-      do i = 1,1
-        mx = 10.d0 !dble(i)/5.
-        sigma_0 = 5.d-36!10d0**(-45+dble(i)/2.)
-        print*
-        print*, "mx: ", mx, "GeV sigma_0:", sigma_0, "cm^2"
+            ! print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
 
-        ! print*, "Geometrical limit on capture rate: ", maxcap(mx), "s^-1"
+            ! print*,"Calling captn_general for SI scattering."
+            ! call captn_general(mx,sigma_0,29,nq,nv,capped_si)
+            ! print*, "Capture rate", capped_si, "s^-1"
 
-        ! print*,"Calling captn_general for SI scattering."
-        ! call captn_general(mx,sigma_0,29,nq,nv,capped_si)
-        ! print*, "Capture rate", capped_si, "s^-1"
+            ! print*,"Calling captn_general for SD scattering."
+            call captn_general(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
+            
+            ! print*, "Capture rate", capped_sd, "s^-1"
 
-        ! print*,"Calling captn_general for SD scattering."
-        call captn_general(mx,sigma_0,num_isotopes,nq(j),nv(j),spin_dependency,capped_sd)
-        
-        ! print*, "Capture rate", capped_sd, "s^-1"
+            ! print*,"Calling captn_specific for SI and SD scattering."
+            ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
+            ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
-        ! print*,"Calling captn_specific for SI and SD scattering."
-        ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
-        ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
+            nwimpsin = 1.22d42
+            ! nwimpsin = capped_sd*3.d7*4.57d9
+            ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
+            !print*, 'main here'
+            call transgen(j,sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,transport_formalism, &
+              Tx,noise_indicator,Etrans,Etranstot)
+            ! print*, "Etranstot: ", Etranstot !FIXME units?
+            ! print*,"Calling fastevap."
+            ! call fastevap(sigma_0,1.d0,28,EvapRate)
+            ! print*,"Evap rate: ", EvapRate, "s^-1"
 
-        nwimpsin = 1.22d42
-        ! nwimpsin = capped_sd*3.d7*4.57d9
-        ! print*,"Calling transgen, with nwimpsin = ", nwimpsin
-        !print*, 'main here'
-        call transgen(sigma_0,nwimpsin,num_isotopes,nq(j),nv(j),spin_dependency,transport_formalism, &
-        	Tx,noise_indicator,Etrans,Etranstot)
-        ! print*, "Etranstot: ", Etranstot !FIXME units?
-        ! print*,"Calling fastevap."
-        ! call fastevap(sigma_0,1.d0,28,EvapRate)
-        ! print*,"Evap rate: ", EvapRate, "s^-1"
-
-        write(94,*) sigma_0, mx, capped_sd, Etranstot
+            write(94,*) sigma_0, mx, capped_sd, Etranstot
+          end do
+        !end do   ! end do for looping siogma_0
+        close(94)
       end do
-      close(94)
-    end do
+    ! end do   ! end do for looping transport formalisms
     
 !    call captn_init_oper()
 !    num_isotopes = 16

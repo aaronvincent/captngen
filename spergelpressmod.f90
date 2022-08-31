@@ -36,25 +36,13 @@ mxg = mdm*1.782662d-24  ! g
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
-!nx_isothermal = exp(-mxg*phi/kB/T_x)
-nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) fix makes the same results for 5 GeV
-
-open(80, file = "NXISO.csv")
-
-
-do i=1,nlines
- 	write(80,*) nx_isothermal(i), phi(i)
-enddo
-close(80)
-
-
+!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
+nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
 
-
 if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
-
 
 return
 end function
@@ -79,7 +67,7 @@ integer :: i, j, p
 R = tab_r*Rsun ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
 mxg = mdm*1.782662d-24 ! WIMP mass in g
-initial_q = q0*1.782662d-24 !q0 in g
+initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
 do i=1,niso
@@ -162,15 +150,11 @@ double precision, intent(in) :: sigma_N(niso)
 double precision :: R(nlines), integrand(nlines)
 double precision :: Tx_integral
 
-open(12, file = "integrand.csv")
-
 ! integrand units: erg/cm/s
 R = tab_r*Rsun
 
 !print*, 'TX here'
 integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
-write(12,*) integrand
-close(12)
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(R, integrand, nlines)
