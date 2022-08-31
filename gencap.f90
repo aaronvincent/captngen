@@ -68,23 +68,13 @@
         double precision trapz
         integer i
 
-        open(3, file = "trapazoid.csv")
-
         trapz = y(1)*(x(2)-x(1))/2. 
-        write(3,*) x(1),x(2), y(1), trapz
-
 
         do i = 2,flen-1
           trapz = trapz + y(i)*(x(i)-x(i-1))
-          write(3,*) i, x(i), x(i-1), y(i), trapz
-
         end do
 
         trapz = trapz + y(flen)*(x(flen)-x(flen-1))/2.
-
-        write(3,*) x(flen), x(flen-1),y(flen), trapz
-
-        close(3)
 
         return
       end function
