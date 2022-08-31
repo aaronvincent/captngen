@@ -352,9 +352,6 @@ select case (transport_formalism)
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 		
-		! if (nq .ne. 0) then 
-		! 	stop "Spergel-Press heat tranport formalism can't handle momentum-dependent cross sections." 
-		! endif
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
 		
