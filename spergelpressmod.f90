@@ -24,16 +24,21 @@ double precision, intent(in) :: T_x, Nwimps
 double precision :: nx_isothermal(nlines)
 double precision :: n_0, mxg
 double precision :: R(nlines), phi(nlines)
+integer :: i
 ! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
+
 
 r = tab_r*Rsun ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
-mxg = mdm*1.782662d-24
-! open(95,"randphi.dat")
-! write(95,*) r , phi
-! close(95)
+mxg = mdm*1.782662d-24  ! g
+
+
+!print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
-nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)
+
+!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
+nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
+
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
 
@@ -50,16 +55,20 @@ implicit none
 integer, intent(in) :: niso
 double precision, intent(in) :: T_x, Nwimps
 double precision, intent(in) :: sigma_N(niso)
-double precision :: n_0, mxg
+double precision :: n_0, mxg, B, A, initial_q
 double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
 double precision :: Etrans_sp(nlines)
-integer :: i, j
+integer :: i, j, p
 ! T_x in K, sigma_N in cm^2,
+
+
 
 R = tab_r*Rsun ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
 mxg = mdm*1.782662d-24 ! WIMP mass in g
+initial_q = q0*5.344d-14 !cgs conversion for q0
+
 ! n_nuc in cm^-3
 do i=1,niso
 	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/AtomicNumber(i)/mnucg ! tab_starrho in gcm^-3
@@ -67,20 +76,56 @@ enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
+!print*, sigma_N, sigma_nuc
+
+!print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
 n_x = nx_isothermal(T_x, Nwimps)
 
-! Separate calc into species dependent and independent factors
-species_indep = 8.0d0*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
+p = (nv + nq)
+if ((p .eq. 0)) then
+	A = 8.d0
+	B = 0.d0
+else if ((p .eq. 1)) then
+	A = 48.d0
+	B = 8.d0/3.d0
+else if ((p .eq. 2)) then
+	A = 384.d0
+	B = 4.d0
+else if ((p .eq. -1)) then
+	A = 2.d0
+	B = 2.d0
+end if
 
-! Now sum over species to get the species dependent factor
 species_dep=0.d0
-do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		sqrt(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)
-enddo
 
-Etrans_sp = species_indep*species_dep ! erg/g/s
+if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
+	! Separate calc into species dependent and independent factors
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
+	do i=1,niso
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
+		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0)
+	enddo
+	Etrans_sp = species_indep*species_dep ! erg/g/s
+else if (nv .ne. 0) then
+	! Separate calc into species dependent and independent factors
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-tab_T)/tab_starrho/v0**(2.d0*nv) ! The species independent part
+	do i=1,niso
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
+		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nv)
+	enddo
+	Etrans_sp = species_indep*species_dep
+else if (nq .ne. 0) then
+	! Separate calc into species dependent and independent factors
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-tab_T)/tab_starrho*B/(initial_q)**(2.d0*nq)* &
+		(2.**nq)*mxg**(2.d0*nq) ! The species independent part
+	do i=1,niso
+	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
+		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*AtomicNumber(i)))**(2.d0*nq)
+	enddo
+	Etrans_sp = species_indep*species_dep
+end if
+
 
 !! Useful when troubleshooting
 !open(55, file="/home/luke/summer_2021/mesa/test_files/Etrans_sp_params.txt")
@@ -104,9 +149,11 @@ double precision, intent(in) :: T_x, Nwimps
 double precision, intent(in) :: sigma_N(niso)
 double precision :: R(nlines), integrand(nlines)
 double precision :: Tx_integral
+
 ! integrand units: erg/cm/s
 R = tab_r*Rsun
 
+!print*, 'TX here'
 integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
 
 ! integral is Etrans_tot (erg/s)
@@ -159,6 +206,7 @@ double precision, intent(in) :: sigma_N(niso)
 double precision :: x_1, x_2, x_3, f1, f2, f3, error
 double precision :: binary_search
 
+
 ! x_1 and x_2 are temperatures (K)
 x_1 = guess_1
 x_2 = guess_2
@@ -166,6 +214,7 @@ error = reltolerance + 1.d0	! So that the first iteration is executed
 
 ! Binary search loop
 i = 0
+
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
 	f1 = f(x_1, sigma_N, Nwimps, niso)
