@@ -408,7 +408,7 @@ select case (transport_formalism)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) tab_r(i), L
 		enddo
-		close(7)
+		! close(7)
 
 	case default
 
@@ -417,8 +417,8 @@ select case (transport_formalism)
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-!EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
-EtransTot = 1
+EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
+! EtransTot = 1
 
 ! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff
 Etrans_test = Etrans
