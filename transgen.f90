@@ -18,10 +18,10 @@
 !Output
 !Etrans erg/g/s
 
-subroutine transgen(j,sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
+subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
 
 ! mdm is stored in capmod
-! Tx is the output one-zone WIMP temp 
+! Tx is the output one-zone WIMP temp
 use capmod
 use akmod
 use spergelpressmod
@@ -34,7 +34,7 @@ double precision, intent(in) :: sigma_0, Nwimps
 double precision, intent(out) :: noise_indicator
 integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, j, ri, ierr
-integer (kind=4) :: lensav 
+integer (kind=4) :: lensav
 double precision :: epso,EtransTot
 double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
@@ -58,7 +58,7 @@ double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spli
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
 double precision :: Tx, guess_1, guess_2, reltolerance ! For the Spergel & Press scheme
-double precision :: nK_0(7) ! For the recalibrated Spergel & Press scheme
+double precision :: nK_0!(7) ! For the recalibrated Spergel & Press scheme
 double precision :: T_eq_Tx_index, r_T, a1, b1, c1, a2, b2, c2, A_MC, x0_MC, sigma_MC, b_MC, chi_MC(nlines), g_MC(nlines)
 double precision :: A_LTE, x0_LTE, sigma_LTE, b_LTE, Ltrans_LTE(nlines), chi_LTE(nlines), g_LTE(nlines), T_index_array(1)
 
@@ -86,7 +86,7 @@ if (spin_in == 1) then
   endif
 else if (spin_in == 0) then
   sigma_SD = 0.d0
-  sigma_SI = sigma_0 
+  sigma_SI = sigma_0
 end if
 
 
@@ -209,14 +209,14 @@ do i = 1,nlines
     kappaofR(i) = mfp(i)*sum(nabund(:,i)*sigma_N*2*zeta_v(i)**2/(1.+muarray)/kappa)
   end if
   kappaofR(i) = 1./kappaofR(i)
-  
+
   !perform the integral inside the exponent in nx
   integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 
   if (i > 1) then
   	cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
   end if
-	
+
   nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
   nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
@@ -319,7 +319,7 @@ select case (transport_formalism)
 
 	! 	Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
 	! 	Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
-		
+
 	! 	if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
 
 	! 	!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
@@ -351,16 +351,16 @@ select case (transport_formalism)
 		print*, "SP"
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
-		
+
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
-		
+
 		!open a file to write Ltrans data to
-		open(5, file = 'LtransSP.dat')
+		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-			write(5,*) tab_r(i), Ltrans(i)
+			! write(5,*) tab_r(i), Ltrans(i)
 		enddo
 
 		!close the Ltrans data file
@@ -375,26 +375,45 @@ select case (transport_formalism)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press
 
 		! The rescaled Spergel & Press transport scheme from Banks et. al https://arxiv.org/abs/2111.06895
-		
+
 		print*, "SP Recalculated"
 
-		nK_0 = [0.40,0.21,1.05,1.72,0.11,0.73,1.20]
+    !there's a clever lookup way of doing this...
+		! nK_0 = [0.40,0.21,1.05,1.72,0.11,0.73,1.20]
+    if (nv .eq. -1) then
+      nK_0 = 0.11
+    else if (nv .eq. 1) then
+      nK_0 = 0.73
+    else if (nv .eq. 2) then
+        nK_0 = 1.20
+    else if (nq .eq. -1) then
+        nK_0 = 0.21
+    else if (nq .eq. 1) then
+        nK_0 = 1.05
+    else if (nq .eq. -1) then
+        nK_0 = 1.72
+    else
+        nK_0 = 0.4
+    end if
+
+
 
 		! Etrans in erg/g/s (according to Spergel Press)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
-		open(7, file = 'LtransNewSP.dat')
+		! open(7, file = 'LtransNewSP.dat')
 
 		do i=1,nlines
 			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
-			L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
-			write(7,*) tab_r(i), L
+      Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
+			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
+			! write(7,*) tab_r(i), L
 		enddo
 		close(7)
 
 	case default
-	
+
 	stop "Invalid transport formalism. Should be an integer: 1, 2, or 3."
-	
+
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.

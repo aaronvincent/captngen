@@ -20,23 +20,19 @@ PROGRAM GENCAP
     double precision :: Tx, nwimpsin, noise_indicator, EtransTot
     ! double precision :: evapRate ! Used in fastevap()
     double precision, allocatable :: Etrans(:)
-    double precision :: EtransTot
-    integer :: nq(7), nv(7), i, j, k, s, nlines, num_isotopes, spin_dependency, cpl
-    character (len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0", "c5-0", "c6-0", "c7-0", &
-                        "c8-0", "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
+!-----------------------------------------------------------------------------------------------------------------------------------
+! Variables used in the NREO formalism calculation
+    integer :: cpl
+    double precision :: jx, couplingVal
+    character(len=5) :: cplConsts(14) = [character(len=5) :: "c1-0", "c3-0", "c4-0",  "c5-0",  "c6-0",  "c7-0",  "c8-0", &
+                                                            "c9-0", "c10-0", "c11-0", "c12-0", "c13-0", "c14-0", "c15-0"]
 
-  ! use this is just one formalism, if doing multiple see loop below
-	transport_formalism = 3 ! 1=Gould & Raffelt, 2=Spergel & Press, 3=Rescaled Spergel & Press
 
-    ! Choose velocity and momentum transfer powers in differential cross-section
-    nq = [0,-1,1,2,0,0,0]
-    nv = [0,0,0,0,-1,1,2]
-
-    outfile = ['const.dat','qm1--.dat','q1---.dat','q2---.dat','vm1--.dat','v1---.dat','v2---.dat']
-
-    ! Choose solar model file
-    !modfile = "solarmodels/model_gs98_nohead.dat"
-    !modfile = "solarmodels/struct_b16_agss09_nohead.dat"
+!-----------------------------------------------------------------------------------------------------------------------------------
+! Choose solar model file:
+    ! modfile = "solarmodels/model_gs98_nohead.dat"
+    ! modfile = "solarmodels/struct_b16_agss09_nohead.dat"
+    ! modfile = "solarmodels/struct_b16_agss09_reduce10_nohead.dat" !only every 10th entry from star radius is included
     modfile = "solarmodels/struct_b16_agss09_nohead_Tsmoothed.dat" !temperature smoothed to not nonsense
 
 !-----------------------------------------------------------------------------------------------------------------------------------
