@@ -1898,8 +1898,9 @@ C           PRINT NUMBER OF OTHER ERRORS
    60    CONTINUE
          IF (NMESSG.LT.0) RETURN
 C        CLEAR THE ERROR TABLES
-         DO 70 I=1,10
-   70       KOUNT(I) = 0
+         DO I=1,10
+            KOUNT(I) = 0
+         END DO
          KOUNTX = 0
          RETURN
    80 CONTINUE
