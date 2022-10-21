@@ -10084,7 +10084,7 @@ SUBROUTINE PCHFE ( N, X, F, D, INCFD, SKIP, NE, XE, FE, IERR )
 !  EVALUATE CUBIC AT XE(I),  I = JFIRST (1) J-1 .
 !
     CALL CHFEV (X(IR-1),X(IR), F(1,IR-1),F(1,IR), D(1,IR-1),D(1,IR), &
-               NJ, XE(JFIRST), FE(JFIRST), NEXT, IERC)
+               NJ, (/ XE(JFIRST) /), (/ FE(JFIRST) /), NEXT, IERC)
      IF (IERC .LT. 0)  GO TO 5005
 
      IF (NEXT(2) == 0)  GO TO 42
