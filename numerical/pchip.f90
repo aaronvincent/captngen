@@ -7420,6 +7420,12 @@ SUBROUTINE EVERCK (LOUT, KPRINT, FAIL)
       real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(:), FE(:)
     end subroutine
 
+    subroutine PCHFE ( N, X, F, D, INCFD, SKIP, NE, XE, FE, IERR )
+      integer ( kind = 4 )  N, INCFD, NE, IERR
+      real ( kind = 4 ) X(*), F(INCFD,*), D(INCFD,*), XE(:), FE(*)
+      LOGICAL  SKIP
+    end subroutine
+
   end interface
 
   integer ( kind = 4 ) LOUT, KPRINT
@@ -7557,6 +7563,15 @@ SUBROUTINE EVPCCK (LOUT, KPRINT, X, Y, F, FX, FY, XE, YE, FE, DE, FE2, FAIL)
 !
   implicit none
 
+  interface
+
+    subroutine PCHFE ( N, X, F, D, INCFD, SKIP, NE, XE, FE, IERR )
+      integer ( kind = 4 )  N, INCFD, NE, IERR
+      real ( kind = 4 ) X(*), F(INCFD,*), D(INCFD,*), XE(:), FE(*)
+      LOGICAL  SKIP
+    end subroutine
+
+  end interface
   integer ( kind = 4 ) LOUT, KPRINT
   LOGICAL  FAIL
   real ( kind = 4 ) X(10), Y(10), F(10,10), FX(10,10), FY(10,10)
