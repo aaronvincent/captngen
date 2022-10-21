@@ -7406,9 +7406,8 @@ SUBROUTINE EVERCK (LOUT, KPRINT, FAIL)
   interface
 
     subroutine CHFEV ( X1, X2, F1, F2, D1, D2, NE, XE, FE, NEXT, IERR )
-      real, dimension(..) :: XE, FE
       integer ( kind = 4 )  NE, NEXT(2), IERR
-      real ( kind = 4 ) X1, X2, F1, F2, D1, D2!, XE(*), FE(*)
+      real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(:), FE(:)
     end subroutine
 
   end interface
