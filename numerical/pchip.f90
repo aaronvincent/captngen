@@ -7100,6 +7100,15 @@ SUBROUTINE EVCHCK (LOUT, KPRINT, NPTS, XEV, FEV, DEV, FEV2, FAIL)
 !
   implicit none
 
+  interface
+
+    subroutine CHFEV ( X1, X2, F1, F2, D1, D2, NE, XE, FE, NEXT, IERR )
+      integer ( kind = 4 )  NE, NEXT(2), IERR
+      real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(:), FE(:)
+    end subroutine
+
+  end interface
+
   integer ( kind = 4 ) LOUT, KPRINT, NPTS
   real ( kind = 4 ) XEV(*), FEV(*), DEV(*), FEV2(*)
   LOGICAL  FAIL
@@ -10003,6 +10012,15 @@ SUBROUTINE PCHFE ( N, X, F, D, INCFD, SKIP, NE, XE, FE, IERR )
 !                   and following arguments have **NOT** been validated.
 !
   implicit none
+
+  interface
+
+    subroutine CHFEV ( X1, X2, F1, F2, D1, D2, NE, XE, FE, NEXT, IERR )
+      integer ( kind = 4 )  NE, NEXT(2), IERR
+      real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(:), FE(:)
+    end subroutine
+
+  end interface
 
   integer ( kind = 4 )  N, INCFD, NE, IERR
   real ( kind = 4 ) X(*), F(INCFD,*), D(INCFD,*), XE(*), FE(*)
