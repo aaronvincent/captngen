@@ -68,10 +68,13 @@
         double precision trapz
         integer i
 
-        trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
+        trapz = y(1)*(x(2)-x(1))/2. 
+
         do i = 2,flen-1
           trapz = trapz + y(i)*(x(i)-x(i-1))
         end do
+
+        trapz = trapz + y(flen)*(x(flen)-x(flen-1))/2.
 
         return
       end function
