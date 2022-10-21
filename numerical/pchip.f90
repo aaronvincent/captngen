@@ -3252,7 +3252,15 @@ SUBROUTINE DPCHCS ( SWITCH, N, H, SLOPE, D, INCFD, IERR )
 !
   DO I = 2, NLESS1
 
-     IF ( DPCHST(SLOPE(I-1),SLOPE(I)) )  100, 300, 900
+   !   IF ( DPCHST(SLOPE(I-1),SLOPE(I)) )  100, 300, 900
+     if ( DPCHST(SLOPE(I-1),SLOPE(I)) < 0 ) then
+        go to 100
+     else if (DPCHST(SLOPE(I-1),SLOPE(I)) == 0) then
+        go to 300
+     else if (DPCHST(SLOPE(I-1),SLOPE(I)) > 0) then
+        go to 900
+     end if
+
 
   100    CONTINUE
 !
@@ -3274,7 +3282,14 @@ SUBROUTINE DPCHCS ( SWITCH, N, H, SLOPE, D, INCFD, IERR )
 !
 !  DETERMINE WHICH INTERVAL CONTAINS THE EXTREMUM.
 !
-        IF ( DPCHST(DEXT, SLOPE(I-1)) )  200, 900, 250
+        ! IF ( DPCHST(DEXT, SLOPE(I-1)) )  200, 900, 250
+        if ( DPCHST(DEXT, SLOPE(I-1)) < 0 ) then
+           go to 200
+        else if ( DPCHST(DEXT, SLOPE(I-1)) == 0) then
+           go to 900
+        else if ( DPCHST(DEXT, SLOPE(I-1)) > 0) then
+           go to 250
+        end if
 
   200       CONTINUE
 !
@@ -5182,7 +5197,14 @@ SUBROUTINE DPCHIM ( N, X, F, D, INCFD, IERR )
 !  SET D(I)=0 UNLESS DATA ARE STRICTLY MONOTONIC.
 !
      D(1,I) = 0.0D+00
-     IF ( DPCHST(DEL1,DEL2) )  42, 41, 45
+     ! IF ( DPCHST(DEL1,DEL2) )  42, 41, 45
+     if ( DPCHST(DEL1,DEL2) < 0 ) then
+        go to 42
+     else if ( DPCHST(DEL1,DEL2) == 0) then
+        go to 41
+     else if ( DPCHST(DEL1,DEL2) > 0) then
+        go to 45
+     end if
 !
 !  COUNT NUMBER OF CHANGES IN DIRECTION OF MONOTONICITY.
 !
@@ -9193,7 +9215,14 @@ SUBROUTINE PCHCS ( SWITCH, N, H, SLOPE, D, INCFD, IERR )
 !
   DO I = 2, NLESS1
 
-     IF ( PCHST(SLOPE(I-1),SLOPE(I)) )  100, 300, 900
+     ! IF ( PCHST(SLOPE(I-1),SLOPE(I)) )  100, 300, 900
+     if ( PCHST(SLOPE(I-1),SLOPE(I)) < 0 ) then
+        go to 100
+     else if ( PCHST(SLOPE(I-1),SLOPE(I)) == 0) then
+        go to 300
+     else if ( PCHST(SLOPE(I-1),SLOPE(I)) > 0) then
+        go to 900
+     end if
 
   100    CONTINUE
 !
@@ -9214,7 +9243,14 @@ SUBROUTINE PCHCS ( SWITCH, N, H, SLOPE, D, INCFD, IERR )
 !
 !  DETERMINE WHICH INTERVAL CONTAINS THE EXTREMUM.
 !
-        IF ( PCHST(DEXT, SLOPE(I-1)) )  200, 900, 250
+        ! IF ( PCHST(DEXT, SLOPE(I-1)) )  200, 900, 250
+        if ( PCHST(DEXT, SLOPE(I-1)) < 0 ) then
+           go to 200
+        else if ( PCHST(DEXT, SLOPE(I-1)) == 0) then
+           go to 900
+        else if ( PCHST(DEXT, SLOPE(I-1)) > 0) then
+           go to 250
+        end if
 
   200       CONTINUE
 !
@@ -11081,7 +11117,14 @@ SUBROUTINE PCHIM ( N, X, F, D, INCFD, IERR )
 !  SET D(I)=0 UNLESS DATA ARE STRICTLY MONOTONIC.
 !
      D(1,I) = 0.0E+00
-     IF ( PCHST(DEL1,DEL2) )  42, 41, 45
+     ! IF ( PCHST(DEL1,DEL2) )  42, 41, 45
+     if ( PCHST(DEL1,DEL2) < 0 ) then
+        go to 42
+     else if ( PCHST(DEL1,DEL2) == 0) then
+        go to 41
+     else if ( PCHST(DEL1,DEL2) > 0) then
+        go to 45
+     end if
 !
 !  COUNT NUMBER OF CHANGES IN DIRECTION OF MONOTONICITY.
 !
