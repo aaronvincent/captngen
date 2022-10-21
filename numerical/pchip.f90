@@ -1790,7 +1790,8 @@ SUBROUTINE DEVERK (LOUT, KPRINT, FAIL)
   LOGICAL  FAIL
 
   integer ( kind = 4 ) I, IERR, KONTRL, N, NERR, NEXT(2)
-  real ( kind = 8 ) D(10), DUM, F(10), TEMP, X(10)
+  real ( kind = 8 ) D(10), F(10), TEMP, X(10)
+  real ( kind = 8 ), allocatable, dimension(:) :: DUM
   LOGICAL  COMP, SKIP
 
   PARAMETER (N = 10)
@@ -7424,7 +7425,8 @@ SUBROUTINE EVERCK (LOUT, KPRINT, FAIL)
   integer ( kind = 4 ) LOUT, KPRINT
   LOGICAL  FAIL
   integer ( kind = 4 ) I, IERR, KONTRL, N, NERR, NEXT(2)
-  real ( kind = 4 ) D(10), DUM, F(10), TEMP, X(10)
+  real ( kind = 4 ) D(10), F(10), TEMP, X(10)
+  real ( kind = 4 ), allocatable, dimension(:) :: DUM
   LOGICAL  COMP, SKIP
   PARAMETER (N = 10)
 
