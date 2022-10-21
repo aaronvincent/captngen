@@ -491,7 +491,7 @@ SUBROUTINE CHFEV ( X1, X2, F1, F2, D1, D2, NE, XE, FE, NEXT, IERR )
   implicit none
 
   integer ( kind = 4 )  NE, NEXT(2), IERR
-  real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(*), FE(*)
+  real ( kind = 4 ) X1, X2, F1, F2, D1, D2, XE(:), FE(:)
   integer ( kind = 4 )  I
   real ( kind = 4 ) C2, C3, DEL1, DEL2, DELTA, H, X, XMI, XMA
 !
@@ -7402,6 +7402,16 @@ SUBROUTINE EVERCK (LOUT, KPRINT, FAIL)
 !    FAIL
 !
   implicit none
+  
+  interface
+
+  subroutine CHFEV ( X1, X2, F1, F2, D1, D2, NE, XE, FE, NEXT, IERR )
+    real, dimension(..) :: XE, FE
+    integer ( kind = 4 )  NE, NEXT(2), IERR
+    real ( kind = 4 ) X1, X2, F1, F2, D1, D2!, XE(*), FE(*)
+  end subroutine
+
+  end interface
 
   integer ( kind = 4 ) LOUT, KPRINT
   LOGICAL  FAIL
