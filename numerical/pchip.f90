@@ -11372,6 +11372,16 @@ SUBROUTINE PCHQK1 ( LUN, KPRINT, IPASS )
 !
   implicit none
 
+  interface
+
+    subroutine EVCHCK (LOUT, KPRINT, NPTS, XEV, FEV, DEV, FEV2, FAIL)
+      integer ( kind = 4 ) LOUT, KPRINT, NPTS
+      real ( kind = 4 ) XEV(:), FEV(*), DEV(*), FEV2(:)
+      LOGICAL  FAIL
+    end subroutine
+
+  end interface
+
   integer ( kind = 4 ) LUN, KPRINT, IPASS
   integer ( kind = 4 ) I1, I2, I3, I4, I5, I6, I7, I8, I9, IFAIL, NPTS
   real ( kind = 4 ) WORK (4000)
