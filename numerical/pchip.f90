@@ -11396,8 +11396,8 @@ SUBROUTINE PCHQK1 ( LUN, KPRINT, IPASS )
       I1 = 1  + NPTS
       I2 = I1 + NPTS
       I3 = I2 + NPTS
-      CALL EVCHCK (LUN, KPRINT, NPTS, WORK(1), WORK(I1), WORK(I2), &
-                                                WORK(I3), FAIL)
+      CALL EVCHCK (LUN, KPRINT, NPTS, (/ WORK(1) /), WORK(I1), WORK(I2), &
+                                                (/ WORK(I3) /), FAIL)
       IF (FAIL)  IFAIL = IFAIL + 1
 !
 !  TEST PCHFD AND PCHFE.
