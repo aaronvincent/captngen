@@ -7110,7 +7110,7 @@ SUBROUTINE EVCHCK (LOUT, KPRINT, NPTS, XEV, FEV, DEV, FEV2, FAIL)
   end interface
 
   integer ( kind = 4 ) LOUT, KPRINT, NPTS
-  real ( kind = 4 ) XEV(*), FEV(*), DEV(*), FEV2(*)
+  real ( kind = 4 ) XEV(:), FEV(*), DEV(*), FEV2(:)
   LOGICAL  FAIL
   integer ( kind = 4 ) I, IERR, IINT, NEXT(2), NEXT2(2), NINT
   real ( kind = 4 ) AED, AED2, AEDMAX, AEDMIN, AEF, AEF2, AEFMAX, AEFMIN
@@ -10023,7 +10023,7 @@ SUBROUTINE PCHFE ( N, X, F, D, INCFD, SKIP, NE, XE, FE, IERR )
   end interface
 
   integer ( kind = 4 )  N, INCFD, NE, IERR
-  real ( kind = 4 ) X(*), F(INCFD,*), D(INCFD,*), XE(*), FE(*)
+  real ( kind = 4 ) X(*), F(INCFD,*), D(INCFD,*), XE(:), FE(*)
   LOGICAL  SKIP
   integer ( kind = 4 )  I, IERC, IR, J, JFIRST, NEXT(2), NJ
 !
