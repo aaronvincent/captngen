@@ -239,12 +239,14 @@ end function
 subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, nlines, lensav, ierr)
 ! Cuts out the high frequency components of y. E.g. if cutoff=0.05, the top 95% of frequency components are cut
 ! Also returns a "noise indicator" - The sum of the frequency components above the cutoff
+use fftpack, only: dffti, dfftf, dfftb
 integer, intent(in) :: nlines, lensav
 integer :: ierr, i
 double precision, intent(in) :: x(nlines), x_even(nlines), cutoff
 double precision, intent(inout) :: y(nlines)
 double precision, intent(out) :: noise_indicator
-double precision :: y_even(nlines), work(nlines), wsave(lensav), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines)
+double precision :: y_even(nlines), wsave(lensav), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines)
+! double precision :: work(nlines)
 double precision :: ispline, denominator
 
 ! Make evenly spaced y array
@@ -255,10 +257,12 @@ enddo
 
 ! Compute FFT of y
 call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
-if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+! if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+call dffti(nlines, wsave) !Initialize (required by fftpack)
 
-call dfft1f(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
-if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+! call dfft1f(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
+! if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+call dfftf(nlines, y_even, wsave) ! Take FFT
 ! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
 
 noise_indicator = 0.d0
@@ -279,14 +283,17 @@ do i=1,nlines
 enddo
 
 ! Rebuild y with high frequency components cut out
-call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
-if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+! call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
+! if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+call dfftb(nlines, y_even, wsave)
 
 ! Evaluate y on original grid (ie go convert y_even --> y)
 call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
 do i=1,nlines
 	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
 enddo
+
+ierr = 0
 
 end subroutine
 
