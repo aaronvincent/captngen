@@ -37,13 +37,13 @@ FFLAGS= -O3 -fPIC -std=legacy -fopenmp# -Wall -fbounds-check -g  #legacy is requ
 LINKER=$(FC)
 LDFLAGS=-fopenmp -L $(BINDIR)
 #If the library follows the lib[name].so naming convention, then -l[name] can be used instead of -l:[name]lib.so
-LSLIBS=-l:$(CAPTNGEN_LIBNAME)lib.so
+LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
 
-$(CAPTNGEN_LIBNAME)lib.so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS)
+lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS)
 	$(FC) -shared $^ -o $@
 
-$(TESTING_EXE): $(MAINOBJ) $(CAPTNGEN_LIBNAME)lib.so
+$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so
 	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
 
 
