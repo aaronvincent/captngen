@@ -132,18 +132,13 @@ module sharedmod
                           8., 10., 11., 12., 13., 14., 15. ,16., 17., &
                           18. , 19., 20., 21., 22., 23., 24., &
                           25., 26., 27., 28./)
-        !Writing out the electron mass fraction just for debugging
-        open(1000, file = "Jupyter_Notebooks/Electron_mass_fraction/electron_mass_fractions.dat")
-        write(1000, *) "Radius |", " Electron mass fraction| "
         do i = 1, nlines
           tab_electron_mfr(i) = 0
           do j=1, 29
             tab_electron_mfr(i) = tab_electron_mfr(i) + ProtonNumber(j)*tab_mfr(i,j)/AtomicNumber(j)
           end do
           tab_electron_mfr(i) = melectron*tab_electron_mfr(i)/mnuc
-          write(1000,*) tab_r(i), tab_electron_mfr(i)
         end do
-        close(1000)
 
 
         return
