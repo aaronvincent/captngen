@@ -1517,8 +1517,6 @@
          integrand_Rminus = foveru(u)*diff_scattering_rate_minus_q2(w, vesc_shared)
        else if (nq.eq.3) then
           integrand_Rminus = foveru(u)*diff_scattering_rate_q3(w, vesc_shared)
-      else if (nv.eq.-1) then
-          integrand_Rminus = foveru(u)*diff_scattering_rate_vminus1(w, vesc_shared)
       else
         integrand_Rminus = 0
       end if
