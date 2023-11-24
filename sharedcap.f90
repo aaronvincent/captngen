@@ -12,20 +12,23 @@
 module sharedmod
     use omp_lib
     implicit none
-    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
-    double precision, parameter :: c0=2.99792458d10, mnuc=0.938
+    double precision, parameter :: pi=4.D0*DATAN(1.D0)
+    double precision, parameter :: NAvo=6.0221409d23, GMoverR=1.908e15
+    double precision, parameter :: c0=2.99792458d10, mnuc=0.938, melectron = 0.000511
+    double precision, parameter :: melectronKg = 9.11d-31
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision, allocatable :: tab_electron_mfr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
-    double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
+    double precision :: AtomicNumber(29), ProtonNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
     integer :: nlines, rindex_shared!, ri_for_omega
-    double precision :: mdm, vesc_shared, a_shared, mu, muplus
+    double precision :: mdm, vesc_shared, a_shared, mu, muplus, muminus, vcritShared
     !$OMP threadprivate(rindex_shared, a_shared)
-    
+
     contains
 
     !   this is the function f_sun(u) in 1504.04378 eqn 2.2 divided by u
@@ -40,7 +43,25 @@ module sharedmod
         normfact = 1.
         !print*,normfact
         vdist_over_u = vdist_over_u/normfact
+        ! print*, "u: ", u
+        ! print*, "vdist_over_u: ", vdist_over_u
     end function vdist_over_u
+
+
+!This is DM dist function as defined in the electron v nucleons paper
+    function fchi(w, uChi, vcrit)
+      double precision :: w, fchi, uChi, vesc
+      double precision :: vcrit
+
+      if (w.lt.vcrit) then
+        fchi = exp(-w**2./uChi**2.)/(pi**(3./2.)*uChi**3.)&
+              /(erf(vcrit/uChi) - 2./sqrt(pi)*vcrit/uChi &
+              * exp(-vcrit**2./uChi**2.))
+      else
+        fchi = 0d0
+      end if
+
+    end function fchi
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !read in solar parameters from Aldo Serenelli-style files, with header removed
@@ -78,7 +99,7 @@ module sharedmod
         allocate(tab_g(nlines))
         allocate(tab_mfr_oper(nlines,16)) ! for the operator method
         allocate(vesc_shared_arr(nlines)) ! for OMP stuff
-
+        allocate(tab_electron_mfr(nlines))
 
         !now actually read in the file
         open(99,file=filename)
@@ -107,6 +128,22 @@ module sharedmod
                           18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
                           39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
                           54.93, 55.845, 58.933, 58.693/)
+        ProtonNumber = (/ 1., 2., 2., 6., 6., 7., 7., 8., 8., &
+                          8., 10., 11., 12., 13., 14., 15. ,16., 17., &
+                          18. , 19., 20., 21., 22., 23., 24., &
+                          25., 26., 27., 28./)
+        !Writing out the electron mass fraction just for debugging
+        open(1000, file = "Jupyter_Notebooks/Electron_mass_fraction/electron_mass_fractions.dat")
+        write(1000, *) "Radius |", " Electron mass fraction| "
+        do i = 1, nlines
+          tab_electron_mfr(i) = 0
+          do j=1, 29
+            tab_electron_mfr(i) = tab_electron_mfr(i) + ProtonNumber(j)*tab_mfr(i,j)/AtomicNumber(j)
+          end do
+          tab_electron_mfr(i) = melectron*tab_electron_mfr(i)/mnuc
+          write(1000,*) tab_r(i), tab_electron_mfr(i)
+        end do
+        close(1000)
 
 
         return
