@@ -148,7 +148,6 @@ PROGRAM GENCAP
     num_isotopes = 1
     jx = 0.5
     couplingVal = 1d-3/(246.2**2.) ![GeV]-2
-    !sigma_v_couplingCst = 0 !We will be setting the cross section (0) or the coupling constant (1)
     call captn_init_oper()
 
 !-----------------------------------------------------------------------------------------------------------------------------------
@@ -171,9 +170,6 @@ PROGRAM GENCAP
         do i = 1, 1
           ! mx = 1.d1**(dble(i-10)/5.)
           mx = 1
-          ! mx = 10d0
-          !SB: No clue why, but need to call the capture subroutine in order for things to work well
-          ! call captn_general_Rminus(mx, sigma_0, 0, 0, electron_v_nucleons, capped)
 
           if (cpl==1) then
               call populate_array(couplingVal, cpl, 0)
@@ -186,17 +182,17 @@ PROGRAM GENCAP
           endif
 
           call captn_oper(mx, jx, capped)
+          
+          maxcapture = maxcap(mx)
           nwimpsin = capped*3.d7*4.57d9
 
           call trans_oper_new(mx, jx, 1, nwimpsin, K, Tx, Etrans)
-          maxcapture = maxcap(mx)
           print*
           print*, "couplingVal: ", couplingVal, "GeV^-2 ", &
                   "DM mass: ", mx, "GeV ", &
                   "Capture rate: ", capped, "s^-1 ", &
                   "Geometric limit: ", maxcapture, "s^-1 "
           write(55,*) sigma_0, couplingVal, mx, capped, maxcapture, Tx, K, maxLum
-          ! print*, "Tx: ", Tx
         end do
         close(55)
     end do
