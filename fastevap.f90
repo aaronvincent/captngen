@@ -14,7 +14,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   double precision :: Earg(nlines), muarray(niso),nabund(niso,nlines),sigma_N(niso)
   double precision :: suparg,Knud,rchi
   double precision :: mdmg,mnucg, Tc, rhoc,mn, Tw,nin,escFrac(nlines),vescc(nlines),nxIso(nlines),mfp(nlines),scatrate(nlines)
-  double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
+  double precision, parameter :: kBeV=8.617d-5
 
   integer :: i, j, k
 
@@ -24,7 +24,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   print*, "Make sure you aren't underestimating the evaporation rate!"
 
   mdmg = mdm*1.78d-24
-  mnucg = mnuc*1.78d-24
+  mnucg = mnuc / gev_erg / c0**2
 
   Tc = tab_T(1)
   rhoc = tab_starrho(1)
@@ -100,7 +100,7 @@ subroutine Twimp(nabund,niso,Tw)
   double precision :: sv(nlines),TGeV(nlines), TcGeV,Tw, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
   double precision :: Tw_out_num(niso), Tw_out_denom(niso),nxIso(nlines)
   double precision nabund(niso,nlines)
-  double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
+  double precision, parameter :: kBeV=8.617e-5
   integer i,j
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
   TGeV = tab_T*kBeV*1.d-9

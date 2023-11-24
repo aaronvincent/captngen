@@ -22,6 +22,7 @@ subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,
 
 ! mdm is stored in capmod
 ! Tx is the output one-zone WIMP temp
+use sharedmod
 use capmod
 use akmod
 use spergelpressmod
@@ -36,7 +37,6 @@ integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, j, ri, ierr
 integer (kind=4) :: lensav
 double precision :: epso,EtransTot
-double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: sigma_SI, sigma_SD, a
@@ -134,7 +134,7 @@ do i = 1,niso
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = mdm/a/mnuc
   sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2
-  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
+  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/(mnuc/gev_erg/c0**2)
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
   call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))

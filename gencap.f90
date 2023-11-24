@@ -21,7 +21,6 @@
 
       use sharedmod
       implicit none
-      double precision, parameter :: GNewt = 6.672d-8
       double precision, parameter :: q0 = 0.04,v0 = 220.d5
 
       ! nq and nv can be -1, 0, 1, 2; this is set in the main program

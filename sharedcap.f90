@@ -12,8 +12,15 @@
 module sharedmod
     use omp_lib
     implicit none
-    double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
+    double precision, parameter :: pi=4.D0*DATAN(1.D0)
+    double precision, parameter :: GNewt = 6.672d-8 ! from gencap.f90
+    double precision, parameter :: GN = 6.674d-8 ! from transgen.f90
+    double precision, parameter :: NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938
+    double precision, parameter :: hbar=6.582d-25 !GeV*s
+    double precision, parameter :: kB=1.38064852d-16
+    double precision, parameter :: electric = 1.602176634d-19 !! Electric charge (PDG 2024 exact) [\( \text{C} \)]
+    double precision, parameter :: gev_erg = 1.d-16/electric !! GeV per erg [\( 10^{-9} \text{GeV} = e 10^7 \text{erg} \text{C}^{-1} \)]
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables

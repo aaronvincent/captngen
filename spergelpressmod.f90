@@ -10,10 +10,9 @@
 ! I apologize for the long function calls.
 
 module spergelpressmod
+use sharedmod
 use capmod
 implicit none
-
-double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24
 
 contains
 
@@ -59,6 +58,7 @@ double precision :: n_0, mxg, B, A, initial_q
 double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
 double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
 double precision :: Etrans_sp(nlines)
+double precision, parameter :: mnucg = mnuc / gev_erg / c0**2
 integer :: i, j, p
 ! T_x in K, sigma_N in cm^2,
 
