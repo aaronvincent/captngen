@@ -182,7 +182,7 @@ PROGRAM GENCAP
           endif
 
           call captn_oper(mx, jx, num_isotopes, capped)
-          
+
           maxcapture = maxcap(mx)
           nwimpsin = capped*3.d7*4.57d9
 

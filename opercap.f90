@@ -353,7 +353,6 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                                         ! this is the +w^2 contribution
                                         ! it has the same q^2 contribution, but has a v_perp^2 contribution
                                         prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + prefactor_current
-
                                     else
                                         prefactor_array(eli,q_index,1) = prefactor_array(eli,q_index,1) + prefactor_current
 
@@ -445,7 +444,6 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
     double precision, intent(in) :: mx_in, jx_in, nwimpsin
     double precision :: a
 
-    ! specific to captn_oper
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
     integer :: q_functype, q_index
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
@@ -475,7 +473,8 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
         end do
     end do
 
-    do eli=1,niso !isotopeChosen, isotopeChosen
+  !************ looping over to find the prefactor for all nq and nv powers ************
+    do eli=1,niso
         ! I'll need mu_T to include in the prefactor when there is a v^2 term
         a = AtomicNumber_oper(eli)
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
@@ -560,12 +559,12 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
     end do !eli
 
   !************ Calculating K ************
-    invMFP = 0
+    invMFP = 0 !inverse of the meanfree path
     do eli=1,niso !isotopeChosen, isotopeChosen
         a = AtomicNumber_oper(eli)
-        a_shared = a !make accessible via the module
+        a_shared = a
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-        invMFPElemental = 0.d0
+        invMFPElemental = 0.d0 !inverse mean free path for a given iso
 
         mu = mdm/(mnuc*a)
         muplus = (1.+mu)/2.
@@ -578,8 +577,8 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
                 if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
                     q_shared = q_pow - 1
                     sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                              /GeV_cmMinus1_convert**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
-                    call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, sigma_0, MeanFreePathInverseTerm)
+                              /GeV_cmMinus1_convert**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism. Not all sigmas have the same units!!!!!!!
+                    call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, sigma_0, MeanFreePathInverseTerm) !calculate the inverse mfp for a given isotope + one nq and nv pair
                     invMFPElemental = invMFPElemental + MeanFreePathInverseTerm
                 end if
             end do !q_pow
@@ -640,6 +639,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
   		error = abs(x_2-x_1)/x_2
     end do
     Tx = x_3
+    print*, "Tx: ", Tx
 
     etransCum = 0d0
     do eli=1,niso !isotopeChosen, isotopeChosen
