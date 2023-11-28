@@ -577,7 +577,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
                 if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
                     q_shared = q_pow - 1
                     sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                              /GeV_cmMinus1_convert**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism. Not all sigmas have the same units!!!!!!!
+                               *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism. Not all sigmas have the same units!!!!!!!
                     call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, sigma_0, MeanFreePathInverseTerm) !calculate the inverse mfp for a given isotope + one nq and nv pair
                     invMFPElemental = invMFPElemental + MeanFreePathInverseTerm
                 end if
@@ -960,7 +960,7 @@ subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, sigma_0, MeanFreePath
       else if ((nq.eq.0).and.(nv.eq.1)) then !v2
         MeanFreePathInverseTerm = 3*(1+mu)*sigma_0*vTArray**2*nabund
       else if ((nq.eq.1).and.(nv.eq.0)) then !q2
-        MeanFreePathInverseTerm = 6*mx*sigma_0*vTArray**2/(1+mu)*nabund
+        MeanFreePathInverseTerm = 6*mx**2*sigma_0*vTArray**2/(1+mu)*nabund
 
       else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
         MeanFreePathInverseTerm = 140*mx**4*sigma_0*vTArray**6/(1+mu)*nabund
