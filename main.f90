@@ -145,7 +145,7 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Specific set up for the Non-Relativistic Effective Operator calculation [arxiv:1501.03729]
-    num_isotopes = 1
+    num_isotopes = 16
     jx = 0.5
     couplingVal = 1d-3/(246.2**2.) ![GeV]-2
     call captn_init_oper()
@@ -154,7 +154,7 @@ PROGRAM GENCAP
 ! Use the new NREO formalism calculation
     print*, "***** Calculations for NREO *****"
     print*, " "
-    do cpl= 1, 1
+    do cpl= 1, 14
         filename = "oper_"//trim(cplConsts(cpl))//".dat"
         if (electron_v_nucleons.eq.0) then
           filename = "Electron_oper_"//trim(cplConsts(cpl))//".dat"

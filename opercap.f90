@@ -950,23 +950,68 @@ subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, sigma_0, MeanFreePath
       vTArray = sqrt(2.d0*kb*tab_T/mdm_g)/c0 ![vTArray] = natural units
 
       if ((nq.eq.0).and.(nv.eq.0)) then !constttt
-        MeanFreePathInverseTerm = 2.d0*sigma_0*nabund ! Since sigma_tot = 2*sigma_0 for v/q independent scattering
-
-      else if ((nq.eq.1).and.(nv.eq.1)) then !q2 v2
-        MeanFreePathInverseTerm = 15*mx**2*sigma_0*vTArray**4*nabund
-      else if ((nq.eq.2).and.(nv.eq.0)) then !q4
-        MeanFreePathInverseTerm = 40*mx**4*sigma_0*vTArray**4/(1+mu)**2*nabund
+        MeanFreePathInverseTerm = 2.d0 ! Since sigma_tot = 2*sigma_0 for v/q independent scattering
 
       else if ((nq.eq.0).and.(nv.eq.1)) then !v2
-        MeanFreePathInverseTerm = 3*(1+mu)*sigma_0*vTArray**2*nabund
+        MeanFreePathInverseTerm = 3.d0
       else if ((nq.eq.1).and.(nv.eq.0)) then !q2
-        MeanFreePathInverseTerm = 6*mx**2*sigma_0*vTArray**2/(1+mu)*nabund
+        MeanFreePathInverseTerm = 6.d0
+
+      else if ((nq.eq.1).and.(nv.eq.1)) then !v2 q2
+        MeanFreePathInverseTerm = 15.d0
+      else if ((nq.eq.2).and.(nv.eq.0)) then !q4
+        MeanFreePathInverseTerm = 40.d0
 
       else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
-        MeanFreePathInverseTerm = 140*mx**4*sigma_0*vTArray**6/(1+mu)*nabund
+        MeanFreePathInverseTerm = 140.d0
       else if ((nq.eq.3).and.(nv.eq.0)) then !q6
-        MeanFreePathInverseTerm = 420*mx**6*sigma_0*vTArray**6/(1+mu)**3*nabund
+        MeanFreePathInverseTerm = 420.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q6
+        MeanFreePathInverseTerm = 1890.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q8
+        MeanFreePathInverseTerm = 6048.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q8
+        MeanFreePathInverseTerm = 33264.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q10
+        MeanFreePathInverseTerm = 110880.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q10
+        MeanFreePathInverseTerm = 720720.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q12
+        MeanFreePathInverseTerm = 2471040.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q12
+        MeanFreePathInverseTerm = 18532800.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q14
+        MeanFreePathInverseTerm = 64864800.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q14
+        MeanFreePathInverseTerm = 551350800.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q16
+        MeanFreePathInverseTerm = 1960358400.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q16
+        MeanFreePathInverseTerm = 18623404800.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q18
+        MeanFreePathInverseTerm = 67044257280.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q18
+        MeanFreePathInverseTerm = 703964701440.d0
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q20
+        MeanFreePathInverseTerm = 2559871641600.d0
+
+      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q20
+        MeanFreePathInverseTerm = 29438523878400.d0
+        print*, "In here bad!!!!!! "
+      else if ((nq.eq.3).and.(nv.eq.0)) then !q22
+        MeanFreePathInverseTerm = 107941254220800.d0
+        print*, "In here bad!!!!!! "
       end if
+
+      MeanFreePathInverseTerm = MeanFreePathInverseTerm*&
+                          mx**(2*nq)*sigma_0*vTArray**(2*(nq+nv))*nabund/(1+mu)**(nq-nv)
 end subroutine
 
 subroutine populate_array(val, couple, isospin)
