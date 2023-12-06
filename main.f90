@@ -152,6 +152,9 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the new NREO formalism calculation
+!const example --> c1
+!q2 example --> c11
+!v2 example --> c8 
     print*, "***** Calculations for NREO *****"
     print*, " "
     do cpl= 1, 14
