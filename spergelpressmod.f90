@@ -229,7 +229,7 @@ function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 
 	nx = nxIso_mine(Tx, Nwimps)
 
-	if (n.ne.3) then
+	if (n.lt.3) then
 		ETrans_sp_nreo = Afactor/tab_starrho*sqrt(2./pi)*mdm_g*targetMass/(mdm_g+targetMass)**2&
 										*nx*ndensity_target*Qfactor*kb*(Tx-tab_T)&
 										*(kb*tab_T/targetMass+kb*Tx/mdm_g)**(1./2.+nq+nv)
@@ -247,6 +247,44 @@ function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 											256*targetMass**8*(tab_T - Tx)*Tx**8.))/ &
 									  ((targetMass*mdm_g)**(5/2)*(targetMass + mdm_g)**2)
 	end if
+	print*, "first expr = ", ETrans_sp_nreo(1000)
+	  if ((nq.eq.0).and.(nv.eq.0)) then
+			ETrans_sp_nreo = (8*kb**(5./2.)*nx*Sqrt(2./pi)*Qfactor*(ndensity_target)* &
+											  (Tx - (tab_T))*Sqrt((targetMass*(mdm_g)*(targetMass*Tx + &
+											      (mdm_g)*(tab_T)))/kb**2))/((targetMass + (mdm_g))**2* &
+											  (tab_starrho))
+
+		else if ((nq.eq.0).and.(nv.eq.1)) then !v2
+			ETrans_sp_nreo = (-48*kb**(5./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
+										  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(3./2.))/ &
+										 (Sqrt(targetMass*(mdm_g))*(targetMass + (mdm_g))**2* &
+										  (tab_starrho))
+		else if ((nq.eq.1).and.(nv.eq.0)) then !q2
+			ETrans_sp_nreo = (-48.*kb**(5./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
+											  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(3./2.))/ &
+											 (Sqrt(targetMass*(mdm_g))*(targetMass + (mdm_g))**2.* &
+											  (tab_starrho))
+
+		else if ((nq.eq.1).and.(nv.eq.1)) then !v2 q2
+			ETrans_sp_nreo = (-384.*kb**(7./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
+											  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(5./2.))/ &
+											 ((targetMass*(mdm_g))**(3./2.)*(targetMass + (mdm_g))**2* &
+											  (tab_starrho))
+		else if ((nq.eq.2).and.(nv.eq.0)) then !q4
+			ETrans_sp_nreo = (-384.*kb**(7./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
+										  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(5./2.))/ &
+										 ((targetMass*(mdm_g))**(3./2.)*(targetMass + (mdm_g))**2* &
+										  (tab_starrho))
+
+		else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
+			print*, "Qfactor: ", Qfactor
+			ETrans_sp_nreo = 0d0
+		else if ((nq.eq.3).and.(nv.eq.0)) then !q6
+			ETrans_sp_nreo = 0d0
+		else
+			ETrans_sp_nreo = 0d0
+		end if
+		print*, "second expr = ", ETrans_sp_nreo(1000)
 return
 end function
 

@@ -152,10 +152,12 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the new NREO formalism calculation
-
+!const example --> c1
+!q2 example --> c11
+!v2 example --> c8
     print*, "***** Calculations for NREO *****"
     print*, " "
-    do cpl= 1, 14
+    do cpl= 2, 2
         filename = "oper_"//trim(cplConsts(cpl))//".dat"
         if (electron_v_nucleons.eq.0) then
           filename = "Electron_oper_"//trim(cplConsts(cpl))//".dat"
@@ -182,8 +184,8 @@ PROGRAM GENCAP
               call populate_array(couplingVal, cpl+1, 0)
           endif
 
-          call captn_oper(mx, jx, num_isotopes, capped)
-
+          ! call captn_oper(mx, jx, num_isotopes, capped)
+          capped = 1d0
           maxcapture = maxcap(mx)
           nwimpsin = capped*3.d7*4.57d9
 
