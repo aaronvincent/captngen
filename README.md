@@ -7,6 +7,18 @@ Capt'n Oper: Solar capture using the NREO formalism as adapted from [https://arx
 
 Can be built using `make` as a library by default (or by explicitly calling `make libgencap.so`), or can be built as a standalone executable using `make gentest.x`.
 
+To enable debugging, set the shell variable `debug_mode` to `true`:
+
+```shell
+export debug_mode=true
+```
+
+To disable debugging, simply unset `debug_mode`:
+
+```shell
+unset debug_mode
+```
+
 See `main.f90` for examples of how to call the executable, `gentest.x`.
 
 If you use this code, you can cite [https://arxiv.org/abs/2105.06810]() and/or [https://arxiv.org/abs/1808.10465]() where it was first deployed.
