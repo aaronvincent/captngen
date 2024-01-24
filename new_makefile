@@ -32,10 +32,10 @@ CAPTNGEN_LIBNAME = gencap
 TESTING_EXE = gentest.x
 
 FC=gfortran
-FFLAGS= -O3 -fPIC -std=legacy -fopenmp# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
+FFLAGS= -O3 -fPIC -std=legacy -fopenmp -J $(OBJDIR)# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
 
 LINKER=$(FC)
-LDFLAGS=-fopenmp -L $(BINDIR)
+LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR)
 #If the library follows the lib[name].so naming convention, then -l[name] can be used instead of -l:[name]lib.so
 LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
@@ -87,8 +87,8 @@ $(OBJDIR)/$(QAGDIR):
 
 # clean clears all objects and modules
 clean:
-	rm -f *.mod
-	rm -f $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
+	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod $(OBJDIR)/*/*/*.mod
+	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
 
 # nuke invokes clean and also clears the testing executable and library
 nuke: clean
