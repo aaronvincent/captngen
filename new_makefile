@@ -1,4 +1,4 @@
-SRCDIR = .
+SRCDIR = src
 NUMDIR = numerical
 QAGDIR = $(NUMDIR)/dqag
 WDIR = Wfunctions
@@ -92,7 +92,7 @@ clean:
 
 # nuke invokes clean and also clears the testing executable and library
 nuke: clean
-	rm -f $(BINDIR)/*.so
-	rm -f $(BINDIR)/*.x
+	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+	rm -f $(BINDIR)/$(TESTING_EXE)
 
 .PHONY: clean nuke
