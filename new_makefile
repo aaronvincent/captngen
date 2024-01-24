@@ -47,10 +47,10 @@ LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
 LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
 
-lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS)
+lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
 	$(FC) -shared $^ -o $@
 
-$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so
+$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
 	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
 
 
@@ -75,7 +75,7 @@ $(OBJDIR)/$(QAGDIR)/%.o: $(SRCDIR)/$(QAGDIR)/%.f | $(OBJDIR)/$(QAGDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
 
 
-# Targets to inform the makefile how to create the object directories if they don't exist yet
+# Targets to inform the makefile how to create the directories if they don't exist yet
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
@@ -90,6 +90,9 @@ $(OBJDIR)/$(NUMDIR):
 
 $(OBJDIR)/$(QAGDIR):
 	mkdir -p $(OBJDIR)/$(QAGDIR)
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
 
 
 # clean clears all objects and modules
