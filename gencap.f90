@@ -2147,15 +2147,21 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! For mesa interface only: allocate arrays.
-  subroutine allocate_stellar_arrays(nlines_mesa)
+  subroutine allocate_stellar_arrays(nlines_mesa, opt_niso)
     use capmod
     integer, intent(in) :: nlines_mesa
+    integer, intent(in), optional :: opt_niso
     nlines = nlines_mesa
     allocate(tab_mencl(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
-    allocate(tab_mfr(nlines,8))       !mass fraction per isotope
-    allocate(tab_atomic(8))
+    if (present(opt_niso)) then
+      allocate(tab_mfr(nlines,opt_niso))
+      allocate(tab_atomic(opt_niso))
+    else
+      allocate(tab_mfr(nlines,8))       !mass fraction per isotope
+      allocate(tab_atomic(8))
+    end if
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
