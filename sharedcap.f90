@@ -120,9 +120,6 @@ module sharedmod
           ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
           tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
         end do
-        if ( allocated(phi) ) then
-          deallocate(phi)
-        end if
         ! tab_g(nlines) = tab_g(nlines-1)
         tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
 
@@ -206,44 +203,3 @@ end function gausstest
     vesc_halo = vesc_in*1.d5
 
   end subroutine captn_init
-
-subroutine captn_reset()
-! This subroutine will deallocated all allocated allocatable arrays used by Captn. Used in the Garstec interface as these arrays
-! potentially need to change size in each evolution step.
-  use sharedmod
-  implicit none
-
-  if (allocated(tab_r)) then
-    deallocate(tab_r)
-  end if
-  if (allocated(tab_mencl)) then
-    deallocate(tab_mencl)
-  end if
-  if (allocated(tab_starrho)) then
-    deallocate(tab_starrho)
-  end if
-  if (allocated(tab_mfr)) then
-    deallocate(tab_mfr)
-  end if
-  if (allocated(tab_vesc)) then
-    deallocate(tab_vesc)
-  end if
-  if (allocated(tab_dr)) then
-    deallocate(tab_dr)
-  end if
-  if (allocated(tab_T)) then
-    deallocate(tab_T)
-  end if
-  if (allocated(tab_g)) then
-    deallocate(tab_g)
-  end if
-  if (allocated(tab_mfr_oper)) then
-    deallocate(tab_mfr_oper)
-  end if
-  if (allocated(vesc_shared_arr)) then
-    deallocate(vesc_shared_arr)
-  end if
-  if (allocated(tab_electron_mfr)) then
-    deallocate(tab_electron_mfr)
-  end if
-end subroutine captn_reset
