@@ -231,20 +231,25 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! For mesa interface only: allocate arrays.
-  subroutine allocate_stellar_arrays(nlines_mesa)
+  subroutine allocate_stellar_arrays(nlines_mesa, opt_niso)
     use capmod
     integer, intent(in) :: nlines_mesa
+    integer, intent(in), optional :: opt_niso
     nlines = nlines_mesa
+    stellar_niso = 8
+    if (present(opt_niso)) stellar_niso = opt_niso
     allocate(tab_mencl(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
-    allocate(tab_mfr(nlines,8))       !mass fraction per isotope
-    allocate(tab_atomic(8))
+    allocate(tab_mfr(nlines,stellar_niso))!mass fraction per isotope
+    allocate(tab_atomic(stellar_niso))!atomic masses of isotopes
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
     allocate(tab_dr(nlines))          !dr (nice)
     allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
+    if (.not. allocated(tab_mfr_oper)) allocate(tab_mfr_oper(nlines,16))
+    if (.not. allocated(vesc_shared_arr)) allocate(vesc_shared_arr(nlines))
 
     RETURN
   end subroutine allocate_stellar_arrays
@@ -260,6 +265,8 @@
     deallocate(tab_T)
     deallocate(tab_dr)
     deallocate(tab_g)
+    if (allocated(tab_mfr_oper)) deallocate(tab_mfr_oper)
+    if (allocated(vesc_shared_arr)) deallocate(vesc_shared_arr)
     RETURN
   end subroutine deallocate_stellar_arrays
 
@@ -271,9 +278,9 @@
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines)
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(stellar_niso,nlines)
     double precision :: mesavesc(nlines),mesag(nlines),Tmesa(nlines)
-    double precision :: atomicmesa(8)
+    double precision :: atomicmesa(stellar_niso)
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
@@ -288,11 +295,11 @@
     tab_vesc = mesavesc
     tab_T = tmesa
     tab_g = -mesag
-    do i= 1,8
+    do i= 1,stellar_niso
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
-    AtomicNumber(1:8) = tab_atomic
+    AtomicNumber(1:stellar_niso) = tab_atomic
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
