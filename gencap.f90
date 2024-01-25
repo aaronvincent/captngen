@@ -2162,6 +2162,12 @@
     allocate(tab_dr(nlines))          !dr (nice)
     allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
     allocate(tab_electron_mfr(nlines))
+    if (.not. allocated(tab_mfr_oper)) then
+      allocate(tab_mfr_oper(nlines,16))
+    end if
+    if (.not. allocated(vesc_shared_arr)) then
+      allocate(vesc_shared_arr(nlines))
+    end if
     RETURN
   end subroutine allocate_stellar_arrays
 
@@ -2177,6 +2183,12 @@
     deallocate(tab_dr)
     deallocate(tab_g)
     deallocate(tab_electron_mfr)
+    if (allocated(tab_mfr_oper)) then
+      deallocate(tab_mfr_oper)
+    end if
+    if (allocated(vesc_shared_arr)) then
+      deallocate(vesc_shared_arr)
+    end if
     RETURN
   end subroutine deallocate_stellar_arrays
 
