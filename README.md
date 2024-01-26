@@ -7,7 +7,7 @@ Capt'n Oper: Solar capture using the NREO formalism as adapted from [https://arx
 
 ## Installation
 
-Run the `install.sh` script to install the `gencap` library and a testing executable.
+Run the `install.sh` script to install the `gencap` library and an optional testing executable.
 Use `install.sh -h` to learn more.
 Run the `cleanup.sh` script to clear all installed files and temporary `.dat` files produced by the testing executable.
 
