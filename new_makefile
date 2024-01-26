@@ -41,7 +41,8 @@ else
 endif
 
 LINKER=$(FC)
-LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR)
+# The testing executable needs the rpath set by the linker such that at runtime it can find the library inside the binary folder  
+LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
 #If the library follows the lib[name].so naming convention, then -l[name] can be used instead of -l:[name]lib.so
 LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
