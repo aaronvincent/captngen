@@ -1,74 +1,114 @@
+SRCDIR = src
+NUMDIR = numerical
+QAGDIR = $(NUMDIR)/dqag
+WDIR = Wfunctions
+RDIR = Rfunctions
+OBJDIR = obj
+BINDIR = bin
+
+# The files must be sorted in their module call order so that they compile in order
+CAPTNSRCS = $(addprefix $(SRCDIR)/, \
+				sharedcap.f90 \
+				gencap.f90 \
+				opercap.f90 \
+				alphakappamod.f90 spergelpressmod.f90 \
+				transgen.f90 fastevap.f90 \
+			)
+MAINSRC = $(SRCDIR)/main.f90
+# Grab the source files via wildcards
+WRSRCS = $(wildcard $(SRCDIR)/$(WDIR)/*.f $(SRCDIR)/$(RDIR)/*.f)
+NUMSRCS = $(wildcard $(SRCDIR)/$(NUMDIR)/*.f*)
+QAGSRCS = $(wildcard $(SRCDIR)/$(QAGDIR)/*.f)
+
+# Use a string replace to get target names and directories for each object file
+CAPTNOBJS = $(CAPTNSRCS:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
+MAINOBJ = $(MAINSRC:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
+WROBJS = $(WRSRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
+temp = $(NUMSRCS:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
+NUMOBJS = $(temp:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
+QAGOBJS = $(QAGSRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
+
+CAPTNGEN_LIBNAME = gencap
+TESTING_EXE = gentest.x
+
 FC=gfortran
-FOPT= -O3 -fPIC -std=legacy -fopenmp# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
-NUMDIR = ./numerical
-QAGDIR = ./numerical/dqag
-# TSDIR = ./numerical/TSPACK
-WDIR = ./Wfunctions
-RDIR = ./Rfunctions
+#legacy is required if you are running gcc 10 or later
+FFLAGS=-fPIC -std=legacy -fopenmp -J $(OBJDIR)
+ifeq ($(debug_mode),true)
+	FFLAGS+= -g -O0 -Wall -fbounds-check
+else
+	FFLAGS+= -O3
+endif
 
-MAIN = main.o
-MFSHR = sharedcap.o
-MFOBJ = gencap.o
-MFCAP = opercap.o
-TRGOBJ = alphakappamod.o spergelpressmod.o transgen.o fastevap.o
-NUMFOBJ =  dgamic.o d1mach.o
-NUMF90OBJ = sgolay.o spline.o pchip.o fftpack5.o
-QAG=  dsntdqagse.o dqelg.o dqk21.o dqpsrt.o dsntdqk21.o
-WFUNC = WM.o WS2.o WS1.o WP2.o WMP2.o WP1.o WD.o WS1D.o
-RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
+LINKER=$(FC)
+# The testing executable needs the rpath set by the linker such that at runtime it can find the library inside the binary folder  
+LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
+#If the library follows the lib[name].so naming convention, then -l[name] can be used instead of -l:[name]lib.so
+LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
 
-# TSOBJ = ENDSLP.o SIGS.o SNHCSH.o STORE.o YPCOEF.o YPC1.o YPC1P.o YPC2.o YPC2P.o TSPSI.o \
- INTRVL.o HVAL.o HPVAL.o
+# Phony targets to rename the functional binary_directory/file.out targets.
+lib$(CAPTNGEN_LIBNAME).so: $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+$(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 
 
-gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+# Targets to put the library and test executable in the binary folder
+$(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
+	$(FC) -shared $^ -o $@
 
-# -L tells the linker where to look for shared libraries
-# -rpath puts the location of the libraries in the executable so the load can find them at runtime
-# -Wl lets us send options to the linker (which are comma seperated)
-gentest.x: $(MAIN) gencaplib.so
-	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
-#	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
+$(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
+	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
 
 
-$(NUMFOBJ): %.o : $(NUMDIR)/%.f
-	$(FC) $(FOPT) -c  $<
+# Targets for each object file
+$(OBJDIR)/%.o: $(SRCDIR)/%.f90 | $(OBJDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
-$(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
-	$(FC) $(FOPT) -Wno-argument-mismatch -c  $<
+$(OBJDIR)/$(WDIR)/%.o: $(SRCDIR)/$(WDIR)/%.f | $(OBJDIR)/$(WDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
-$(TSOBJ): %.o : $(TSDIR)/%.f
-	$(FC) $(FOPT) -c  $<
+$(OBJDIR)/$(RDIR)/%.o: $(SRCDIR)/$(RDIR)/%.f | $(OBJDIR)/$(RDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
-$(MFSHR): %.o: %.f90
-	$(FC) $(FOPT) -c  $<
+# Both pchip.f90 and fftpack5.f90 raise a large number of 'argument-mismatch' errors
+$(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f90 | $(OBJDIR)/$(NUMDIR)
+	$(FC) $(FFLAGS) -Wno-argument-mismatch -c  $< -o $@
 
-$(MFOBJ): %.o: %.f90
-	$(FC) $(FOPT) -c  $<
+$(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f | $(OBJDIR)/$(NUMDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
-$(MFCAP): %.o: %.f90
-	$(FC) $(FOPT) -c  $<
-
-$(TRGOBJ): %.o: %.f90
-	$(FC) $(FOPT) -c $<
-
-$(MAIN): %.o: %.f90
-	$(FC) $(FOPT) -c  $<
-
-$(NUMOBJ): %.o: $(NUMDIR)/%.f
-	$(FC) $(FOPT) -c  $<
-
-$(QAG): %.o: $(QAGDIR)/%.f
-	$(FC) $(FOPT) -c  $<
-
-$(WFUNC): %.o: $(WDIR)/%.f
-	$(FC) $(FOPT) -c  $<
-
-$(RFUNC): %.o: $(RDIR)/%.f
-	$(FC) $(FOPT) -c  $<
+$(OBJDIR)/$(QAGDIR)/%.o: $(SRCDIR)/$(QAGDIR)/%.f | $(OBJDIR)/$(QAGDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
 
+# Targets to inform the makefile how to create the directories if they don't exist yet
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(OBJDIR)/$(WDIR):
+	mkdir -p $(OBJDIR)/$(WDIR)
+
+$(OBJDIR)/$(RDIR):
+	mkdir -p $(OBJDIR)/$(RDIR)
+
+$(OBJDIR)/$(NUMDIR):
+	mkdir -p $(OBJDIR)/$(NUMDIR)
+
+$(OBJDIR)/$(QAGDIR):
+	mkdir -p $(OBJDIR)/$(QAGDIR)
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
+
+# clean clears all objects and modules
 clean:
-	rm -f *.o *.mod *.so gentest.x
+	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod $(OBJDIR)/*/*/*.mod
+	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
+
+# nuke invokes clean and also clears the testing executable and library
+nuke: clean
+	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+	rm -f $(BINDIR)/$(TESTING_EXE)
+
+.PHONY: clean nuke lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE)
