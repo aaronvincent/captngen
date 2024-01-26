@@ -47,6 +47,11 @@ LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
 LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
 
+# Phony targets to rename the functional binary_directory/file.out targets.
+lib$(CAPTNGEN_LIBNAME).so: $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+$(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
+
+
 # Targets to put the library and test executable in the binary folder
 $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
 	$(FC) -shared $^ -o $@
@@ -106,4 +111,4 @@ nuke: clean
 	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
 	rm -f $(BINDIR)/$(TESTING_EXE)
 
-.PHONY: clean nuke
+.PHONY: clean nuke lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE)
