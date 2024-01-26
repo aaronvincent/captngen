@@ -18,7 +18,7 @@ while getopts hg FLAG; do
                         echo "$HELPMSG"
                         exit 0
                         ;;
-                g) export debgug_mode=true;;
+                g) export debug_mode=true;;
         esac
 done
 
