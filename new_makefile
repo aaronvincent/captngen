@@ -4,7 +4,7 @@ QAGDIR = $(NUMDIR)/dqag
 WDIR = Wfunctions
 RDIR = Rfunctions
 OBJDIR = obj
-BINDIR = .
+BINDIR = bin
 
 # The files must be sorted in their module call order so that they compile in order
 CAPTNSRCS = $(addprefix $(SRCDIR)/, \
@@ -47,10 +47,11 @@ LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
 LSLIBS=-l$(CAPTNGEN_LIBNAME)
 
 
-lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
+# Targets to put the library and test executable in the binary folder
+$(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
 	$(FC) -shared $^ -o $@
 
-$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
+$(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
 	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
 
 
