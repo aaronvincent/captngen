@@ -1,7 +1,7 @@
 FC=gfortran
 FOPT=-fPIC -std=legacy -fopenmp#legacy is required if you are running gcc 10 or later 
 ifeq ($(debug_mode),true)
-	FOPT += -Wall -fbounds-check -g
+	FOPT += -O0 -Wall -fbounds-check -g
 else
 	FOPT += -O3
 endif
