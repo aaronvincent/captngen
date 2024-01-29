@@ -2152,16 +2152,15 @@
     integer, intent(in) :: nlines_mesa
     integer, intent(in), optional :: opt_niso
     nlines = nlines_mesa
+    stellar_niso = 8
+    if (present(opt_niso)) then
+      stellar_niso = opt_niso
+    end if
     allocate(tab_mencl(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
-    if (present(opt_niso)) then
-      allocate(tab_mfr(nlines,opt_niso))
-      allocate(tab_atomic(opt_niso))
-    else
-      allocate(tab_mfr(nlines,8))       !mass fraction per isotope
-      allocate(tab_atomic(8))
-    end if
+    allocate(tab_mfr(nlines,stellar_niso))!mass fraction per isotope
+    allocate(tab_atomic(stellar_niso))!atomic masses of isotopes
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
@@ -2206,9 +2205,9 @@
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines)
+    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(stellar_niso,nlines)
     double precision :: mesavesc(nlines),mesag(nlines),Tmesa(nlines)
-    double precision :: atomicmesa(8)
+    double precision :: atomicmesa(stellar_niso)
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
@@ -2223,12 +2222,12 @@
     tab_vesc = mesavesc
     tab_T = tmesa
     tab_g = -mesag
-    do i= 1,8
+    do i= 1,stellar_niso
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_electron_mfr = tab_mfr(:,1)*melectron/mnuc
     tab_atomic = atomicmesa
-    AtomicNumber(1:8) = tab_atomic
+    AtomicNumber(1:stellar_niso) = tab_atomic
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
