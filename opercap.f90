@@ -90,23 +90,24 @@ subroutine captn_init_oper()
 
     ! tab_mfr_oper is allocated in the get_solar_params subroutine
     ! take the regular array tab_mfr and extract the isotopes used in the 1501.03729 paper (otherwise indices won't match on arrays)
+    ! The elements beyond Ne are reported as a sum of all isotopes, so get isotopic abundances from table 9 of [arxiv:1912.00844].
     do i=1,nlines
-        tab_mfr_oper(i,1) = tab_mfr(i,1)
-        tab_mfr_oper(i,2) = tab_mfr(i,3)
-        tab_mfr_oper(i,3) = tab_mfr(i,2)
-        tab_mfr_oper(i,4) = tab_mfr(i,4)
-        tab_mfr_oper(i,5) = tab_mfr(i,6)
-        tab_mfr_oper(i,6) = tab_mfr(i,8)
-        tab_mfr_oper(i,7) = tab_mfr(i,11)
-        tab_mfr_oper(i,8) = tab_mfr(i,12)
-        tab_mfr_oper(i,9) = tab_mfr(i,13)
-        tab_mfr_oper(i,10) = tab_mfr(i,14)
-        tab_mfr_oper(i,11) = tab_mfr(i,15)
-        tab_mfr_oper(i,12) = tab_mfr(i,17)
-        tab_mfr_oper(i,13) = tab_mfr(i,19)
-        tab_mfr_oper(i,14) = tab_mfr(i,21)
-        tab_mfr_oper(i,15) = tab_mfr(i,27)
-        tab_mfr_oper(i,16) = tab_mfr(i,29)
+        tab_mfr_oper(i,1) = tab_mfr(i,1)                ! H
+        tab_mfr_oper(i,2) = tab_mfr(i,3)                ! He3
+        tab_mfr_oper(i,3) = tab_mfr(i,2)                ! He4
+        tab_mfr_oper(i,4) = tab_mfr(i,4)                ! C12
+        tab_mfr_oper(i,5) = tab_mfr(i,6)                ! N14
+        tab_mfr_oper(i,6) = tab_mfr(i,8)                ! O16
+        tab_mfr_oper(i,7) = 0.931251 * tab_mfr(i,11)    ! Ne20 = 0.931251 * Ne
+        tab_mfr_oper(i,8) = tab_mfr(i,12)               ! Na23 -- Na23 is the only isotope in ratio table
+        tab_mfr_oper(i,9) = 0.78992 * tab_mfr(i,13)     ! Mg24 = 0.78992 * Mg
+        tab_mfr_oper(i,10) = tab_mfr(i,14)              ! Al27 -- Al27 is the only isotope in ratio table
+        tab_mfr_oper(i,11) = 0.9223 * tab_mfr(i,15)     ! Si28 = 0.9223 * Si
+        tab_mfr_oper(i,12) = 0.9504074 * tab_mfr(i,17)  !  S32 = 0.9504074 * S
+        tab_mfr_oper(i,13) = 4.d-5 * tab_mfr(i,19)      ! Ar40 = 0.00004 * Ar
+        tab_mfr_oper(i,14) = 0.96941 * tab_mfr(i,21)    ! Ca40 = 0.96941 * Ca
+        tab_mfr_oper(i,15) = 0.91754 * tab_mfr(i,27)    ! Fe56 = 0.91754 * Fe
+        tab_mfr_oper(i,16) = 0.680769 * tab_mfr(i,29)   ! Ni58 = 0.680769 * Ni
     end do
 
     ! this array stores each of the constants of the W polynomials from paper 1501.03729's appendix individually
