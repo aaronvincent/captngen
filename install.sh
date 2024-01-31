@@ -33,11 +33,21 @@ done
 
 # Making library
 echo "Making the library..."
-make && echo "Completed library!" || echo "Failed to make the library."
+if make; then
+    echo "Completed library!"
+else
+    echo "Failed to make the library."
+    exit 2
+fi
 echo
 
 if [[ "${do_exe}" == true ]]; then
 	# Making test executable
 	echo "Making the test executable..."
-	make gentest.x && echo "Completed executable!" || echo "Failed to make the executable."
+	if make gentest.x; then
+        echo "Completed executable!"
+    else
+        echo "Failed to make the executable."
+        exit 3
+    fi
 fi
