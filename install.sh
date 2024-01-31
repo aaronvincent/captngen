@@ -21,14 +21,14 @@ DEBUGGING MODE:
 
 unset do_exe
 while getopts hxg FLAG; do
-        case "${FLAG}" in
-                h)
-                        echo "$HELPMSG"
-                        exit 0
-                        ;;
-				x) do_exe=true;;
-                g) export debug_mode=true;;
-        esac
+    case "${FLAG}" in
+        h)
+            echo "$HELPMSG"
+            exit 0
+            ;;
+        x) do_exe=true;;
+        g) export debug_mode=true;;
+    esac
 done
 
 # Making library
