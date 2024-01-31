@@ -34,6 +34,7 @@ TESTING_EXE = gentest.x
 FC=gfortran
 #legacy is required if you are running gcc 10 or later
 FFLAGS=-fPIC -std=legacy -J $(OBJDIR)
+MISMATCH=-Wno-argument-mismatch
 ifeq ($(debug_mode),true)
 	FFLAGS+= -g -O0 -Wall -fbounds-check
 else
@@ -72,7 +73,7 @@ $(OBJDIR)/$(RDIR)/%.o: $(SRCDIR)/$(RDIR)/%.f | $(OBJDIR)/$(RDIR)
 
 # Both pchip.f90 and fftpack5.f90 raise a large number of 'argument-mismatch' errors
 $(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f90 | $(OBJDIR)/$(NUMDIR)
-	$(FC) $(FFLAGS) -Wno-argument-mismatch -c  $< -o $@
+	$(FC) $(FFLAGS) $(MISMATCH) -c $< -o $@
 
 $(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f | $(OBJDIR)/$(NUMDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
