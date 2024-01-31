@@ -53,7 +53,7 @@ $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 
 
 # Targets to put the library and test executable in the binary folder
-$(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(CAPTNOBJS) $(WROBJS) $(NUMOBJS) $(QAGOBJS) | $(BINDIR)
+$(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(BINDIR)
 	$(FC) -shared $^ -o $@
 
 $(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
