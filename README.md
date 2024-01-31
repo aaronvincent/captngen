@@ -10,3 +10,18 @@ Can be built using `make` as a library by default (or by explicitly calling `mak
 See `main.f90` for examples of how to call the executable, `gentest.x`.
 
 If you use this code, you can cite [https://arxiv.org/abs/2105.06810]() and/or [https://arxiv.org/abs/1808.10465]() where it was first deployed.
+
+## fftpack
+
+To get the [fftpack](https://github.com/fortran-lang/fftpack) submodule working from a fresh `git clone`, run the commands:
+
+```shell
+git submodule init
+git submodule update
+```
+
+Alternatively, during the initial clone, pass the `--recurse-submodules` flag to clone the submodule automatically:
+
+```shell
+git clone --recurse-submodules https://github.com/aaronvincent/captngen.git
+```
