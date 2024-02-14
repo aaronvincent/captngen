@@ -618,7 +618,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
                   if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
                       q_shared = q_pow - 1
                       sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                                /GeV_cmMinus1_convert**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
+                                *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
                       x_3 = (x_1 + x_2)/2.d0
                       nq = q_shared
                       nv = w_pow-1
@@ -657,10 +657,10 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
                 if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
                     q_shared = q_pow - 1
                     sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                              /GeV_cmMinus1_convert**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
+                              *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
                     nq = q_shared
                     nv = w_pow-1
-                    etrans = Etrans_sp_nreo(2, 1, sigma_0, mtarget_g, 1 ,Tx, nwimpsin, nabund)
+                    etrans = Etrans_sp_nreo(nq, nv, sigma_0, mtarget_g, 1 ,Tx, nwimpsin, nabund)
                     etransCum = etransCum + etrans
                 end if
             end do !q_pow

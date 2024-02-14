@@ -194,7 +194,7 @@ function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 	implicit none
 	double precision:: sigma_0, Nwimps, targetMass, Tx ! g
 	double precision:: Etrans_sp_nreo(nlines), nx(nlines), ndensity_target(nlines), Tcutoff(nlines)
-	integer:: nq, nv, electron_v_nucleons, n
+	integer:: nq, nv, electron_v_nucleons, n, i
 	double precision:: Afactor, Bfactor, Qfactor, mdm_g
 
 	mdm_g = mdm*1.782662d-24 ![g]
@@ -209,50 +209,44 @@ function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 		Bfactor = 2.
 	else if (nq.eq.3) then
 		Bfactor = 32./5.
+	else if (nq.eq.4) then
+		Bfactor = 2./3.
 	end if
-	!Determining the A_{2(nq+nv)} term
-	if (n.eq.-1) then
-		Afactor = 2.
-	else if (n.eq.0) then
-		Afactor = 8.
-	else if (n.eq.1) then
-		Afactor = 48.
-	else if (n.eq.2) then
-		Afactor = 384.
-	end if
+
 
 	if (nq.eq.0) then
 		Qfactor = 2.*sigma_0/c0**(2.*nv)
 	else if (nq.ne.0) then
-		Qfactor = Bfactor*2.2**nq*(mdm/c0)**(nq*2.)*sigma_0/(1.+mdm_g/targetMass)**(nq*2.)/c0**(2.*nv)
+		Qfactor = Bfactor*2.**nq*(mdm/c0)**(nq*2.)*sigma_0/(1.+mdm_g/targetMass)**(nq*2.)/c0**(2.*nv)
 	end if
 
 	nx = nxIso_mine(Tx, Nwimps)
 
-	if (n.lt.3) then
-		ETrans_sp_nreo = Afactor/tab_starrho*sqrt(2./pi)*mdm_g*targetMass/(mdm_g+targetMass)**2&
-										*nx*ndensity_target*Qfactor*kb*(Tx-tab_T)&
-										*(kb*tab_T/targetMass+kb*Tx/mdm_g)**(1./2.+nq+nv)
-	else if (n.eq.3) then
-		ETrans_sp_nreo = 1./tab_starrho*Qfactor &
-										*(15.*nx*ndensity_target*sqrt(2/pi)*(kb/(mdm_g*tab_T + targetMass*Tx))**(9./2.)&
-											*(256*mdm_g**8.*tab_T**8.*(tab_T - Tx) &
-										+ 2048*targetMass*mdm_g**7*tab_T**7*(tab_T - Tx)*Tx + &
-									    7168*targetMass**2*mdm_g**6*tab_T**6*(tab_T - Tx)*Tx**2 + &
-											7*targetMass**3*mdm_g**5*tab_T**5*(2048*tab_T -  &
-											2039*Tx)*Tx**3 + 17920*targetMass**4*mdm_g**4*tab_T**4*(tab_T - Tx)*Tx**4 +  &
-									    14336*targetMass**5*mdm_g**3*tab_T**3*(tab_T - Tx)*Tx**5 &
-											+ 7168*targetMass**6*mdm_g**2*tab_T**2*(tab_T -  &
-											Tx)*Tx**6 + 2048*targetMass**7*mdm_g*tab_T*(tab_T - Tx)*Tx**7 + &
-											256*targetMass**8*(tab_T - Tx)*Tx**8.))/ &
-									  ((targetMass*mdm_g)**(5/2)*(targetMass + mdm_g)**2)
-	end if
-	print*, "first expr = ", ETrans_sp_nreo(1000)
 	  if ((nq.eq.0).and.(nv.eq.0)) then
 			ETrans_sp_nreo = (8*kb**(5./2.)*nx*Sqrt(2./pi)*Qfactor*(ndensity_target)* &
 											  (Tx - (tab_T))*Sqrt((targetMass*(mdm_g)*(targetMass*Tx + &
 											      (mdm_g)*(tab_T)))/kb**2))/((targetMass + (mdm_g))**2* &
 											  (tab_starrho))
+		! print*, "****************************************"
+		! print*, "ETrans_sp_nreo(200): ", ETrans_sp_nreo(200)
+		! print*, "nx(200): ", nx(200)
+		! print*, "kb: ", kb
+		! print*, "Qfactor: ", Qfactor
+		! print*, "ndensity_target(200): ", ndensity_target(200)
+		! print*, "Tx: ", Tx
+		! print*, "tab_T(200): ", tab_T(200)
+		! print*, "targetMass: ", targetMass
+		! print*, "mdm_g: ", mdm_g
+		! print*, "tab_starrho(200): ", tab_starrho(200)
+		! print*, "q0: ", q0
+		! print*, "sigma: ", sigma_0
+
+		! open(unit=10, file='etrans_data_radial_debug.txt', status='replace', action='write')
+		! 	 write(10, *) '# ETrans_sp | nx | kb | Qfactor | ndensity_target | Tx | tab_T | targetMass | mdm_g | rho'
+		! do i=1, nlines
+		! 		write(10, *) ETrans_sp_nreo(i), nx(i), kb, Qfactor, ndensity_target(i), Tx, tab_T(i), targetMass, mdm_g, tab_starrho(i)
+		! end do
+		!  close(10)
 
 		else if ((nq.eq.0).and.(nv.eq.1)) then !v2
 			ETrans_sp_nreo = (-48*kb**(5./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
@@ -275,16 +269,132 @@ function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 										  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(5./2.))/ &
 										 ((targetMass*(mdm_g))**(3./2.)*(targetMass + (mdm_g))**2* &
 										  (tab_starrho))
-
 		else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
-			print*, "Qfactor: ", Qfactor
-			ETrans_sp_nreo = 0d0
+			 ETrans_sp_nreo = (-15.*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(kb/(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.)* &
+										   (256.*targetMass**8.*Tx**8.*(-Tx + (tab_T)) +  &
+											 2048.*targetMass**7.*Tx**7.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) + &
+										    7168.*targetMass**6.*Tx**6.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+												 14336.*targetMass**5.*Tx**5.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
+										    17920.*targetMass**4.*Tx**4.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) +  &
+												7168.*targetMass**2.*Tx**2.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+										    2048.*targetMass*Tx*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
+												256.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) + &
+										    7.*targetMass**3.*Tx**3.*(mdm_g)**5.*(tab_T)**5.*(-2039.*Tx +  &
+												2048.*(tab_T))))/(tab_starrho*(targetMass*(mdm_g))**(5./2.)*(targetMass + (mdm_g))**2.)
+
 		else if ((nq.eq.3).and.(nv.eq.0)) then !q6
-			ETrans_sp_nreo = 0d0
-		else
-			ETrans_sp_nreo = 0d0
-		end if
-		print*, "second expr = ", ETrans_sp_nreo(1000)
+				ETrans_sp_nreo = (-15.*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(kb/(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.)* &
+										   (256.*targetMass**8.*Tx**8.*(-Tx + (tab_T)) + 2048.*targetMass**7.* &
+											 Tx**7.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) + &
+										    7168.*targetMass**6.*Tx**6.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T))  &
+												+ 14336.*targetMass**5.*Tx**5.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
+										    17920.*targetMass**4.*Tx**4.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) +  &
+												7168.*targetMass**2.*Tx**2.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+										    2048.*targetMass*Tx*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
+												256.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) + &
+										    7.*targetMass**3.*Tx**3.*(mdm_g)**5.*(tab_T)**5.*(-2039.*Tx +  &
+												2048.*(tab_T))))/((targetMass*(mdm_g))**(5./2.)*(targetMass + (mdm_g))**2.*(tab_starrho))
+
+		else if ((nq.eq.3).and.(nv.eq.1)) then !v2 q6
+	 			ETrans_sp_nreo = (-45*kb**(11./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
+												(1024.*targetMass**9.*Tx**9.*(-Tx + (tab_T)) + &
+										    9216.*targetMass**8.*Tx**8.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +  &
+												36864.*targetMass**7.*Tx**7.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+										    86016.*targetMass**6.*Tx**6.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
+												129024.*targetMass**5.*Tx**5.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
+										    128772.*targetMass**4.*Tx**4.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
+												36864.*targetMass**2.*Tx**2.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) + &
+										    9216.*targetMass*Tx*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
+												1024.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
+										    21.*targetMass**3.*Tx**3.*(mdm_g)**6.*(tab_T)**6.*(-4043.*Tx +  &
+												4096.*(tab_T))))/((targetMass*(mdm_g))**(7./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)*  &
+										   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
+
+		else if ((nq.eq.4).and.(nv.eq.0)) then !q8
+				ETrans_sp_nreo = (-45*kb**(11/2)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(1024*targetMass**9* &
+												Tx**9*(-Tx + (tab_T)) + &
+										    9216*targetMass**8*Tx**8*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +  &
+												36864*targetMass**7*Tx**7*(mdm_g)**2*(tab_T)**2*(-Tx + (tab_T)) + &
+										    86016*targetMass**6*Tx**6*(mdm_g)**3*(tab_T)**3*(-Tx + (tab_T)) +  &
+												129024*targetMass**5*Tx**5*(mdm_g)**4*(tab_T)**4*(-Tx + (tab_T)) + &
+										    128772*targetMass**4*Tx**4*(mdm_g)**5*(tab_T)**5*(-Tx + (tab_T)) +  &
+												36864*targetMass**2*Tx**2*(mdm_g)**7*(tab_T)**7*(-Tx + (tab_T)) + &
+										    9216*targetMass*Tx*(mdm_g)**8*(tab_T)**8*(-Tx + (tab_T)) +  &
+												1024*(mdm_g)**9*(tab_T)**9*(-Tx + (tab_T)) + &
+										    21*targetMass**3*Tx**3*(mdm_g)**6*(tab_T)**6*(-4043*Tx +  &
+												4096*(tab_T))))/((targetMass*(mdm_g))**(7/2)*(targetMass +  &
+												(mdm_g))**2*(tab_starrho)* &
+										   (targetMass*Tx + (mdm_g)*(tab_T))**(9/2))
+
+		 else if ((nq.eq.4).and.(nv.eq.1)) then !v2 q8
+ 				 ETrans_sp_nreo = (-315.*kb**(13./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
+				 									(2048.*targetMass**10.*Tx**10.*(-Tx + (tab_T)) + &
+											    20480.*targetMass**9.*Tx**9.*(mdm_g)*(tab_T)*(-Tx  &
+													+ (tab_T)) + 92160.*targetMass**8.*Tx**8.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+											    245760.*targetMass**7.*Tx**7.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
+													430080.*targetMass**6.*Tx**6.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
+											    515592.*targetMass**5.*Tx**5.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
+													427350.*targetMass**4.*Tx**4.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+											    92160.*targetMass**2.*Tx**2.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
+													20480.*targetMass*Tx*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
+											    2048.*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
+													15.*targetMass**3.*Tx**3.*(mdm_g)**7.*(tab_T)**7.*(-15983.*Tx + 16384.*(tab_T))))/ &
+											  ((targetMass + (mdm_g))**2.*(tab_starrho)*(targetMass*(mdm_g)*(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.))
+
+		 else if ((nq.eq.5).and.(nv.eq.0)) then !q10
+					ETrans_sp_nreo = (-315.*kb**(13./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)*&
+														(2048.*targetMass**10.*Tx**10.*(-Tx + (tab_T)) +&
+												    20480.*targetMass**9.*Tx**9.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +&
+														 92160.*targetMass**8.*Tx**8.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+												    245760.*targetMass**7.*Tx**7.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
+														430080.*targetMass**6.*Tx**6.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
+												    515592.*targetMass**5.*Tx**5.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
+														427350.*targetMass**4.*Tx**4.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+												    92160.*targetMass**2.*Tx**2.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
+														20480.*targetMass*Tx*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
+												    2048.*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
+														15.*targetMass**3.*Tx**3.*(mdm_g)**7.*(tab_T)**7.*(-15983.*Tx + 16384.*(tab_T))))/ &
+												  ((targetMass + (mdm_g))**2.*(tab_starrho)*(targetMass*(mdm_g)*(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.))
+			else if ((nq.eq.5).and.(nv.eq.1)) then !v2 q10
+				ETrans_sp_nreo = (-315.*kb**(15./2.)*nx*Sqrt(2/Pi)	*Qfactor*(ndensity_target)* &
+													(32768.*targetMass**11.*Tx**11.*(-Tx + (tab_T)) + &
+											    360448.*targetMass**10.*Tx**10.*(mdm_g)*(tab_T)*(-Tx +  &
+													(tab_T)) + 1802240.*targetMass**9.*Tx**9.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+											    5406720.*targetMass**8.*Tx**8.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
+													10813440.*targetMass**7.*Tx**7.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
+											    15130752.*targetMass**6.*Tx**6.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
+													15087072.*targetMass**5.*Tx**5.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+											    10673520.*targetMass**4.*Tx**4.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
+													1802240.*targetMass**2.*Tx**2.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
+											    360448.*targetMass*Tx*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
+													32768.*(mdm_g)**11.*(tab_T)**11.*(-Tx + (tab_T)) + &
+											    165.*targetMass**3.*Tx**3.*(mdm_g)**8.*(tab_T)**8.*(-31525.*Tx + &
+													32768.*(tab_T))))/((targetMass*(mdm_g))**(11./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)* &
+											   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
+			else if ((nq.eq.6).and.(nv.eq.0)) then !q12
+				ETrans_sp_nreo = (-315.*kb**(15./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)*&
+													(32768.*targetMass**11.*Tx**11.*(-Tx + (tab_T)) +&
+											    360448.*targetMass**10.*Tx**10.*(mdm_g)*(tab_T)*(-Tx + (tab_T))&
+													 + 1802240.*targetMass**9.*Tx**9.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
+											    5406720.*targetMass**8.*Tx**8.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
+													10813440.*targetMass**7.*Tx**7.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
+											    15130752.*targetMass**6.*Tx**6.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
+													15087072.*targetMass**5.*Tx**5.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
+											    10673520.*targetMass**4.*Tx**4.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
+													1802240.*targetMass**2.*Tx**2.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
+											    360448.*targetMass*Tx*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
+													32768.*(mdm_g)**11.*(tab_T)**11.*(-Tx + (tab_T)) + &
+											    165.*targetMass**3.*Tx**3.*(mdm_g)**8.*(tab_T)**8.*(-31525.*Tx +  &
+													32768.*(tab_T))))/((targetMass*(mdm_g))**(11./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)* &
+											   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
+
+			 else if ((nq.eq.6).and.(nv.eq.1)) then !v2 q12
+	 			ETrans_sp_nreo = 	1d0 !DID NOT INTEGRATE ANALYTICALLY
+
+			else if ((nq.eq.7).and.(nv.eq.0)) then !q14
+				ETrans_sp_nreo = 	1d0 !DID NOT INTEGRATE ANALYTICALLY
+			end if
+
 return
 end function
 
