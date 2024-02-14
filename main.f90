@@ -157,7 +157,7 @@ PROGRAM GENCAP
 !v2 example --> c8
     print*, "***** Calculations for NREO *****"
     print*, " "
-    do cpl= 2, 2
+    do cpl= 1, 1
         filename = "oper_"//trim(cplConsts(cpl))//".dat"
         if (electron_v_nucleons.eq.0) then
           filename = "Electron_oper_"//trim(cplConsts(cpl))//".dat"
@@ -188,7 +188,7 @@ PROGRAM GENCAP
           capped = 1d0
           maxcapture = maxcap(mx)
           nwimpsin = capped*3.d7*4.57d9
-
+          nwimpsin = 1d0
           call trans_oper_new(mx, jx, 1, nwimpsin, K, Tx, Etrans)
           print*
           print*, "couplingVal: ", couplingVal, "GeV^-2 ", &
