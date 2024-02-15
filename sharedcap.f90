@@ -24,6 +24,7 @@ module sharedmod
 
     integer :: nlines, rindex_shared!, ri_for_omega
     double precision :: mdm, vesc_shared, a_shared, mu, muplus
+    double precision :: sigSDShared, sigSIShared ! used for optical depth integral
     !$OMP threadprivate(rindex_shared, a_shared)
     
     contains
@@ -171,3 +172,38 @@ end function gausstest
     vesc_halo = vesc_in*1.d5
 
   end subroutine captn_init
+
+  function opticaldepth(r)
+  use sharedmod
+
+
+  call dsntdqagse(tauintegrand,1.d0,umin,umax, &
+          epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
+
+
+  end function opticaldepth
+  
+
+  function tauintegrand(r)
+  use sharedmod
+  double precision, intent(in) :: r
+  double precision :: sigma_N, taui
+
+    taui = 0.d0
+    do eli = 1, niso
+
+              A = AtomicNumber(eli)
+              ! a_shared = a !make accessible via the module
+    if (eli .eq. 1) then
+    sigma_N = sigSDShared + sigSIShared
+    else if (sigSIShared .ne. 0.d0) then
+    sigma_N = A**2 * (sigSIShared*a**2) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
+    end if
+    end do
+    
+    
+
+              
+
+
+  end function tauintegrand

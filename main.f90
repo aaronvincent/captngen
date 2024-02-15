@@ -37,7 +37,7 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
     num_isotopes = 29 ! Number of isotopes original capt'n will loop over in the calculation: up to 29 isotopes
-    spin_dependency = 0 ! 0=Spin Independent, 1=Spin Dependent
+    spin_dependency = 1 ! 0=Spin Independent, 1=Spin Dependent
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Initialise capture calculations
@@ -60,15 +60,15 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the original qv scaling capture calculation
-    do j = 1,7
+    do j = 1,1
         open(94,file = trim(outfile(j)))
         write(94,*) "Number of Isotopes: ", num_isotopes
         write(94,*) "Spin Dependency: ", spinString(spin_dependency+1)
         write(94,*) "Power: ", outfile(j)
         write(94,*) "Sigma_0 | ", "DM Mass | ", "Captured Dark Matter | ",   "MaxCaptures | ", "Number of WIMPs in | ", "Etranstot"
-        do i = 1,10
-            mx = 1.d1 ** (dble(i)/5.)
-            sigma_0 = 10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
+        do i = 1,50
+            mx = 10.d0**(-1.d0+ dble(i)*.1)
+            sigma_0 = 1.d-39; !10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
 
             print*
             call captn_general(mx, sigma_0, num_isotopes, nq(j), nv(j), spin_dependency, capped)
@@ -81,17 +81,17 @@ PROGRAM GENCAP
             ! call captn_specific(mx,sigma_0,sigma_0,capped_sd_spec,capped_si_spec)
             ! print*, "Capture rates (SI, SD): (", capped_si_spec, capped_sd_spec, ") s^-1"
 
-            nwimpsin = 5.d44
-            ! nwimpsin = capped*3.d7*4.57d9
-            call transgen(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
-                            noise_indicator, Etrans, Etranstot)
-            print*, "Number of WIMPs in: ", nwimpsin, &
-                    "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
+            ! nwimpsin = 5.d44
+            ! ! nwimpsin = capped*3.d7*4.57d9
+            ! call transgen(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
+            !                 noise_indicator, Etrans, Etranstot)
+            ! print*, "Number of WIMPs in: ", nwimpsin, &
+            !         "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
 
             ! call fastevap(sigma_0, 1.d0, 28, EvapRate)
             ! print*, "Evap rate: ", EvapRate, "s^-1"
 
-            write(94,*) sigma_0, mx, capped, maxcapture, nwimpsin, Etranstot
+            write(94,*) sigma_0, mx, capped, maxcapture
         end do
         close(94)
     end do
@@ -105,34 +105,34 @@ PROGRAM GENCAP
     call captn_init_oper()
 
 !-----------------------------------------------------------------------------------------------------------------------------------
-! Use the new NREO formalism calculation
-    do cpl=1, 14
-        filename = "oper_"//trim(cplConsts(cpl))//".dat"
-        open(55,file=filename)
-        write(55,*) "Coupling Val | ", "DM_Mass | ", "  Captures | ", "  MaxCaptures"
+! ! Use the new NREO formalism calculation
+!     do cpl=1, 14
+!         filename = "oper_"//trim(cplConsts(cpl))//".dat"
+!         open(55,file=filename)
+!         write(55,*) "Coupling Val | ", "DM_Mass | ", "  Captures | ", "  MaxCaptures"
 
-        if (cpl==1) then
-            call populate_array(couplingVal, cpl, 0)
-        else if (cpl==2) then
-            call populate_array(0.d0, cpl-1, 0)
-            call populate_array(couplingVal, cpl+1, 0)
-        else
-            call populate_array(0.d0, cpl, 0)
-            call populate_array(couplingVal, cpl+1, 0)
-        endif
+!         if (cpl==1) then
+!             call populate_array(couplingVal, cpl, 0)
+!         else if (cpl==2) then
+!             call populate_array(0.d0, cpl-1, 0)
+!             call populate_array(couplingVal, cpl+1, 0)
+!         else
+!             call populate_array(0.d0, cpl, 0)
+!             call populate_array(couplingVal, cpl+1, 0)
+!         endif
 
-        print*, "Running coupling constant: ", cplConsts(cpl)
-        do i = 1,10
-            mx = 1.d1 ** (dble(i)/5.)
-            call captn_oper(mx, jx, num_isotopes, capped)
-            maxcapture = maxcap(mx)
-            print*, "Coupling Value: ", couplingVal, "GeV^-4 ", &
-                    "DM mass: ", mx, "GeV ", &
-                    "Capture rate: ", capped, "s^-1 ", &
-                    "Geometric limit: ", maxcapture, "s^-1 "
-            write(55,*) couplingVal, mx, capped, maxcapture
-        end do
-        close(55)
-    end do
+!         print*, "Running coupling constant: ", cplConsts(cpl)
+!         do i = 1,10
+!             mx = 1.d1 ** (dble(i)/5.)
+!             call captn_oper(mx, jx, num_isotopes, capped)
+!             maxcapture = maxcap(mx)
+!             print*, "Coupling Value: ", couplingVal, "GeV^-4 ", &
+!                     "DM mass: ", mx, "GeV ", &
+!                     "Capture rate: ", capped, "s^-1 ", &
+!                     "Geometric limit: ", maxcapture, "s^-1 "
+!             write(55,*) couplingVal, mx, capped, maxcapture
+!         end do
+!         close(55)
+!     end do
 
 END PROGRAM GENCAP
