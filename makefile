@@ -33,12 +33,12 @@ TESTING_EXE = gentest.x
 
 FC=gfortran
 #legacy is required if you are running gcc 10 or later
-FFLAGS=-fPIC -std=legacy -J $(OBJDIR)
+FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
 MISMATCH=-Wno-argument-mismatch
 ifeq ($(debug_mode),true)
 	FFLAGS+= -g -O0 -Wall -fbounds-check
 else
-	FFLAGS+= -O3 -fopenmp
+	FFLAGS+= -O3
 endif
 
 LINKER=$(FC)
