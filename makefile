@@ -50,7 +50,7 @@ endif
 # -L tells where the linker to look at compile time
 # -Wl sends a comma separated list of arguments to the linker
 # -rpath tells the exe where to look at runtime (hence the use of the full path)
-LDFLAGS=-L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
+LDFLAGS=-L $(BINDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
 LDLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
