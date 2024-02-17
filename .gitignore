@@ -7,5 +7,11 @@
 # ignore .x files
 *.x
 
+# ignore .so files
+*.so
+
+# ignore .dat files in root directory
+/*.dat
+
 # ignore any VScode settings
 .vscode/*
