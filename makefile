@@ -1,3 +1,4 @@
+# -------------------------------- Directories ---------------------------------
 SRCDIR = src
 NUMDIR = numerical
 QAGDIR = $(NUMDIR)/dqag
@@ -6,7 +7,9 @@ RDIR = Rfunctions
 OBJDIR = obj
 BINDIR = bin
 
-# The files must be sorted in their module call order so that they compile in order
+
+# ----------------------- Source Files and their Targets -----------------------
+# The files must be sorted in their module call order so they compile in order
 CAPTNSRCS = $(addprefix $(SRCDIR)/, \
 				sharedcap.f90 \
 				gencap.f90 \
@@ -15,12 +18,12 @@ CAPTNSRCS = $(addprefix $(SRCDIR)/, \
 				transgen.f90 fastevap.f90 \
 			)
 MAINSRC = $(SRCDIR)/main.f90
-# Grab the source files via wildcards
+# Grab the f and f90 source files via wildcards
 WRSRCS = $(wildcard $(SRCDIR)/$(WDIR)/*.f $(SRCDIR)/$(RDIR)/*.f)
 NUMSRCS = $(wildcard $(SRCDIR)/$(NUMDIR)/*.f*)
 QAGSRCS = $(wildcard $(SRCDIR)/$(QAGDIR)/*.f)
 
-# Use a string replace to get target names and directories for each object file
+# Use a string replace to get target directory/filename.o for each source file
 CAPTNOBJS = $(CAPTNSRCS:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 MAINOBJ = $(MAINSRC:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 WROBJS = $(WRSRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
@@ -28,13 +31,16 @@ temp = $(NUMSRCS:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 NUMOBJS = $(temp:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 QAGOBJS = $(QAGSRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 
+# Name of the library and testing executable
 CAPTNGEN_LIBNAME = gencap
 TESTING_EXE = gentest.x
 
+
+# ----------------------------- Compiler and Flags -----------------------------
 FC=gfortran
 #legacy is required if you are running gcc 10 or later
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
-MISMATCH=-Wno-argument-mismatch
+MISMATCH=-Wno-argument-mismatch # add mismatch flag to some compilations
 ifeq ($(debug_mode),true)
 	FFLAGS+= -g -O0 -Wall -fbounds-check
 else
@@ -42,18 +48,20 @@ else
 endif
 
 LINKER=$(FC)
-# The testing executable needs the rpath set by the linker such that at runtime it can find the library inside the binary folder  
+# -L tells where the linker to look at compile time
+# -Wl sends a comma separated list of arguments to the linker
+# -rpath tells the exe where to look at runtime (hence the use of the full path)
 LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
-#If the library follows the lib[name].so naming convention, then -l[name] can be used instead of -l:[name]lib.so
-LSLIBS=-l$(CAPTNGEN_LIBNAME)
+LSLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
-# Phony targets to rename the functional binary_directory/file.out targets.
+# ------------------------------- Phony Targets --------------------------------
 lib$(CAPTNGEN_LIBNAME).so: $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
 $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 
 
-# Targets to put the library and test executable in the binary folder
+# -------------------------------- Main Targets --------------------------------
+# Targets with recipes to put the library and executable in the correct folders
 $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(BINDIR)
 	$(FC) -shared $^ -o $@
 
@@ -61,7 +69,8 @@ $(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
 	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
 
 
-# Targets for each object file
+# ------------------------------- Object Targets -------------------------------
+# Targets with recipes for each object file in directory structure
 $(OBJDIR)/%.o: $(SRCDIR)/%.f90 | $(OBJDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
 
@@ -82,7 +91,8 @@ $(OBJDIR)/$(QAGDIR)/%.o: $(SRCDIR)/$(QAGDIR)/%.f | $(OBJDIR)/$(QAGDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
 
 
-# Targets to inform the makefile how to create the directories if they don't exist yet
+# ----------------------------- Directory Targets ------------------------------
+# Targets with recipes to create the output directories if they don't exist yet
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
