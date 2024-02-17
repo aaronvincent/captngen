@@ -4,8 +4,9 @@
 cd "$(realpath "$(dirname -- "${BASH_SOURCE[0]}")")"
 
 HELPMSG="Usage: $(basename "$0") [-h] [-x] [-g]
-Builds the gencap library in the ./bin/ directory. Optionally toggle building
-of the testing executable, and building in debug mode for development.
+Builds the gencap library in the ./lib/ directory. Optionally toggle building
+of the testing executable in the ./bin/ directory, and building in debug mode
+for development.
 
 Launch Options:
 HELP:

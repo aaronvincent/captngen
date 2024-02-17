@@ -6,6 +6,7 @@ WDIR = Wfunctions
 RDIR = Rfunctions
 OBJDIR = obj
 BINDIR = bin
+LIBDIR = lib
 
 
 # ----------------------- Source Files and their Targets -----------------------
@@ -50,26 +51,26 @@ endif
 # -L tells where the linker to look at compile time
 # -Wl sends a comma separated list of arguments to the linker
 # -rpath tells the exe where to look at runtime (hence the use of the full path)
-LDFLAGS=-L $(BINDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
+LDFLAGS=-L $(LIBDIR) -Wl,-rpath,"$(realpath $(LIBDIR))"
 LDLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
 # ------------------------------- Phony Targets --------------------------------
 .PHONY: lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE) clean nuke
 
-lib$(CAPTNGEN_LIBNAME).so: $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+lib$(CAPTNGEN_LIBNAME).so: $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so
 $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 clean: # clears all objects and modules
 	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod $(OBJDIR)/*/*/*.mod
 	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
 nuke: clean # and also clears the testing executable and library
-	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+	rm -f $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so
 	rm -f $(BINDIR)/$(TESTING_EXE)
 
 
 # -------------------------------- Main Targets --------------------------------
 # Targets with recipes to put the library and executable in the correct folders
-$(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(BINDIR)
+$(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(LIBDIR)
 	$(FC) $(FFLAGS) -shared $^ -o $@
 
 $(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
@@ -118,3 +119,5 @@ $(OBJDIR)/$(QAGDIR):
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
+$(LIBDIR):
+	mkdir -p $(LIBDIR)
