@@ -41,13 +41,13 @@ TESTING_EXE = gentest.x
 FC=gfortran
 #legacy is required if you are running gcc 10 or later
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
-MISMATCH=-Wno-argument-mismatch # add mismatch flag to some compilations
 ifeq ($(debug_mode),true) # Enable most warnings and extra debugging help
 	FFLAGS+= -g -O0 -Wall -Wextra -Wconversion
 	FFLAGS+= -fbacktrace -fbounds-check -ffpe-trap=zero,overflow,underflow
 else
 	FFLAGS+= -O3
 endif
+MISMATCH=-Wno-argument-mismatch # add mismatch flag to some compilations
 
 # -L tells where the linker to look at compile time
 # -Wl sends a comma separated list of arguments to the linker
