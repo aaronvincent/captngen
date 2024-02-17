@@ -47,12 +47,11 @@ else
 	FFLAGS+= -O3
 endif
 
-LINKER=$(FC)
 # -L tells where the linker to look at compile time
 # -Wl sends a comma separated list of arguments to the linker
 # -rpath tells the exe where to look at runtime (hence the use of the full path)
-LDFLAGS=-fopenmp -L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
-LSLIBS=-l $(CAPTNGEN_LIBNAME)
+LDFLAGS=-L $(BINDIR) -I $(OBJDIR) -Wl,-rpath,"$(realpath $(BINDIR))"
+LDLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
 # ------------------------------- Phony Targets --------------------------------
@@ -63,10 +62,10 @@ $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 # -------------------------------- Main Targets --------------------------------
 # Targets with recipes to put the library and executable in the correct folders
 $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(BINDIR)
-	$(FC) -shared $^ -o $@
+	$(FC) $(FFLAGS) -shared $^ -o $@
 
 $(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
-	${LINKER} $(LDFLAGS) $< $(LSLIBS) -o $@
+	$(FC) $(FFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 
 # ------------------------------- Object Targets -------------------------------
