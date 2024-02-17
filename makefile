@@ -55,8 +55,16 @@ LDLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
 # ------------------------------- Phony Targets --------------------------------
+.PHONY: lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE) clean nuke
+
 lib$(CAPTNGEN_LIBNAME).so: $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
 $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
+clean: # clears all objects and modules
+	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod $(OBJDIR)/*/*/*.mod
+	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
+nuke: clean # and also clears the testing executable and library
+	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
+	rm -f $(BINDIR)/$(TESTING_EXE)
 
 
 # -------------------------------- Main Targets --------------------------------
@@ -110,15 +118,3 @@ $(OBJDIR)/$(QAGDIR):
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
-
-# clean clears all objects and modules
-clean:
-	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod $(OBJDIR)/*/*/*.mod
-	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o $(OBJDIR)/*/*/*.o
-
-# nuke invokes clean and also clears the testing executable and library
-nuke: clean
-	rm -f $(BINDIR)/lib$(CAPTNGEN_LIBNAME).so
-	rm -f $(BINDIR)/$(TESTING_EXE)
-
-.PHONY: clean nuke lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE)
