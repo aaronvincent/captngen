@@ -1,6 +1,6 @@
 !   Capt'n Shared
-!   Designed as a module to house shared vaiables and functions
-!   between both the General and Operator varients
+!   Designed as a module to house shared variables and functions
+!   between both the General and Operator variants
 !   Most of this was already written by Aaron Vincent in the older gencap.f90 file
 !   Neal Avis Kozar 2020
 !   all units of distance: cm

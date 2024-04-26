@@ -9,5 +9,5 @@ make nuke
 echo
 
 # Removing data files created by the test executable
-echo "Deleting temperary *.dat files from $(pwd)..."
+echo "Deleting temporary *.dat files from $(pwd)..."
 rm -f *.dat

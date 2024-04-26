@@ -36,7 +36,7 @@ mxg = mdm*1.782662d-24  ! g
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
-!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
+!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calculation that doesn't work above 8GeV
 nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
 
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
@@ -72,7 +72,7 @@ initial_q = q0*5.344d-14 !cgs conversion for q0
 ! n_nuc in cm^-3
 do i=1,niso
 	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/AtomicNumber(i)/mnucg ! tab_starrho in gcm^-3
-enddo
+end do
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
@@ -105,7 +105,7 @@ if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
 		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0)
-	enddo
+	end do
 	Etrans_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
@@ -113,7 +113,7 @@ else if (nv .ne. 0) then
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
 		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nv)
-	enddo
+	end do
 	Etrans_sp = species_indep*species_dep
 else if (nq .ne. 0) then
 	! Separate calc into species dependent and independent factors
@@ -122,7 +122,7 @@ else if (nq .ne. 0) then
 	do i=1,niso
 	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
 		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*AtomicNumber(i)))**(2.d0*nq)
-	enddo
+	end do
 	Etrans_sp = species_indep*species_dep
 end if
 
@@ -133,7 +133,7 @@ end if
 !	"nlines=", nlines, "niso=", niso
 !do i=1,nlines
 !	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i)
-!enddo
+!end do
 !close(55)
 
 return
@@ -190,7 +190,7 @@ do while (error > reltolerance)
 	error = abs(x_3-x_2)/x_2
 	x_1 = x_2
 	x_2 = x_3
-enddo
+end do
 
 newtons_meth = x_3 ! The solution to the nonlinear equation
 
@@ -229,7 +229,7 @@ do while (error > reltolerance)
 	endif
 	error = abs(x_2-x_1)/x_2
 	i = i + 1
-enddo
+end do
 
 binary_search = x_3
 
@@ -251,7 +251,7 @@ double precision :: ispline, denominator
 call spline(x, y, bcoeff, ccoeff, dcoeff, nlines)
 do i=1,nlines
 	y_even(i) = ispline(x_even(i), x, y, bcoeff, ccoeff, dcoeff, nlines)
-enddo
+end do
 
 ! Compute FFT of y
 call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
@@ -265,10 +265,10 @@ noise_indicator = 0.d0
 ! Take the ratio of high frequency components to low frequency components as a measure of how noisy the data is
 do i=int(cutoff*nlines),nlines
 	noise_indicator = noise_indicator + abs(y_even(i))
-enddo
+end do
 do i=1,int(cutoff*nlines)
 	denominator = denominator + abs(y_even(i))
-enddo
+end do
 noise_indicator = noise_indicator/denominator
 
 ! Cut out top 100*(1-cutoff)% of Fourier components
@@ -276,7 +276,7 @@ do i=1,nlines
 	if (i > int(cutoff*nlines)) then
 		y_even(i) = 0.d0
 	endif
-enddo
+end do
 
 ! Rebuild y with high frequency components cut out
 call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
@@ -286,7 +286,7 @@ if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", i
 call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
 do i=1,nlines
 	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
-enddo
+end do
 
 end subroutine
 
@@ -302,9 +302,9 @@ do i=5,nlines-4
     rolling_avg(i) = 0.d0
     do j=-4,4
         rolling_avg(i) = rolling_avg(i) + y(i+j)
-    enddo
+    end do
     rolling_avg(i) = rolling_avg(i)/9.d0
-enddo
+end do
 ! do boundary values manually
 rolling_avg(1) = (y(1)+y(2)+y(3))/3.d0
 rolling_avg(2) = (y(1)+y(2)+y(3)+y(4))/4.d0
