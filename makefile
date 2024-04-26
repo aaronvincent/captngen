@@ -42,7 +42,7 @@ FC=gfortran
 #legacy is required if you are running gcc 10 or later
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
 ifeq ($(debug_mode),true) # Enable most warnings and extra debugging help
-	FFLAGS+= -g -O0 -Wall -Wextra -Wconversion
+	FFLAGS+= -g -Og -Wall -Wextra -Wconversion
 	FFLAGS+= -fbacktrace -fbounds-check -ffpe-trap=zero,overflow,underflow
 else
 	FFLAGS+= -O3
