@@ -659,7 +659,6 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
   		error = abs(x_2-x_1)/x_2
     end do
     Tx = x_3
-    print*, "Tx: ", Tx
 
     etransCum = 0d0
     do eli=1,niso !isotopeChosen, isotopeChosen
