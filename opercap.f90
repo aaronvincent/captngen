@@ -63,6 +63,110 @@ module opermod
                 - dgamic(1.+dble(mq),B*mu/muplus**2))
         end if
     end function GFFI_A_oper
+
+    function xsec_nreo_prefactors(n_iso, j_chi)
+        !! Returns an array of size `n_iso,11,2` containing the numerical prefactors for each isotope's differential cross section
+        !! term \(\frac{\mathrm{d} \sigma}{\mathrm{d} E_R} = q^{2n} v^{2m}\), where \(n = [0,10]\) and \(m = [0,1]\). \(q\) is the
+        !! momentum transferred in the interaction, and \(v\) is the relative velocity between the dark matter and target nucleus.
+        integer, intent(in):: n_iso
+            !! The total number of isotopes, maximum of 16.
+        double precision, intent(in):: j_chi
+            !! The spin of the dark matter.
+        double precision :: xsec_nreo_prefactors(n_iso,11,2)
+            !! The returned array of prefactors.
+
+        integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
+        integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
+        double precision :: prefactor_func, r_const, prefactor ! intermediate variables
+        double precision :: rd, rm, rmp2, rp1, rp2, rs1, rs1d, rs2 ! DM response R functions stored in their own source files
+
+        xsec_nreo_prefactors = 0.d0
+
+        do eli = 1, n_iso
+            ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
+            mu = (mnuc*AtomicNumber_oper(eli) * mdm)/(mnuc*AtomicNumber_oper(eli) + mdm)
+    
+            ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
+            do func_type = 1, 8
+    
+                ! contribution to q^2 count from sum over function types
+                if ( func_type .lt. 4 ) then
+                    q_func = 0
+                    prefactor_func = 1.
+                else
+                    q_func = 1
+                    prefactor_func = 1./mnuc**2
+                end if
+    
+                ! the first index on each response function
+                do tau = 1, 2
+    
+                    ! the second index on each response function
+                    do tau_p = 1, 2
+    
+                        ! the possible y-terms for each nuclear response W function fit in order: y^0, y^1, y^2, y^3, y^4, y^5, y^6
+                        do term_w = 1, 7
+    
+                            ! skip if the result gets multiplied by zero in the WFunction
+                            if ( W_array(func_type,eli,tau,tau_p,term_w) .ne. 0.d0 ) then
+    
+                                ! the possible terms for each DM response R function in order: c, v2, q2, v2q2, q4, v2q4
+                                do term_r = 1, 6
+    
+                                    ! pick appropriate constant from a given DM response R function with indices (tau,tau_p,term_r)
+                                    ! note for possible future change: currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
+                                    select case (func_type)
+                                    case (1)
+                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
+                                    case (2)
+                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (3)
+                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (4)
+                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (5)
+                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (6)
+                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (7)
+                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case (8)
+                                        r_const = rs1d(tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                    case default
+                                        print*, "Um, I ran out of DM response R functions to choose from?"
+                                        stop
+                                    end select
+    
+                                    ! skip if the result gets multiplied by zero in the RFunction
+                                    if (r_const.ne.0.) then
+    
+                                        ! calculates the total number of q^2, accounting for Fortran indexing at 1
+                                        ! i.e. q^{2*(q_index-1)}
+                                        q_index = 1 + q_func + term_w - 1 + floor((term_r-1.)/2.)
+                                        prefactor = prefactor_func * r_const &
+                                            * W_array(func_type,eli,tau,tau_p,term_w) * yConverse_array(eli)**(term_w-1)
+    
+                                        ! check if term_r is even (in my index convention this corresponds to it having a v_perp^2
+                                        ! in the DM response R function), decomposed into v_perp^2 = w^2 - q^2/(2mu)^2
+                                        if ( mod(term_r,2).eq.0 ) then
+                                            ! this is the -q^2/(2mu)^2 contribution (one extra q^2 compared to current q_index)
+                                            xsec_nreo_prefactors(eli,q_index+1,1) = xsec_nreo_prefactors(eli,q_index+1,1) &
+                                                + prefactor * (-c0**2/(4.*mu**2)) ! The DM response R functions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the - q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
+                                            ! this is the +w^2 contribution (same q^2, but has a w^2 contribution)
+                                            xsec_nreo_prefactors(eli,q_index,2) = xsec_nreo_prefactors(eli,q_index,2) + prefactor
+                                        else
+                                            xsec_nreo_prefactors(eli,q_index,1) = xsec_nreo_prefactors(eli,q_index,1) + prefactor
+                                        end if
+                                    end if
+                                end do !term_r
+                            end if
+                        end do !term_w
+                    end do !tau_p
+                end do !tau
+            end do !func_type
+            ! xsec_nreo_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * xsec_nreo_prefactors(eli,:,:)
+        end do !eli
+    end function xsec_nreo_prefactors
 end module opermod
 
 subroutine captn_init_oper()
@@ -171,7 +275,7 @@ end function integrand_oper
 subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     use opermod
     implicit none
-    interface
+    interface !Required unless these functions are moved to a different module file that gets compiled first
         function integrand_oper(arg1, func1)
             double precision :: arg1, integrand_oper
             interface
@@ -191,10 +295,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     ! double precision, allocatable :: u_int_res(:)
     
     ! specific to captn_oper
-    integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
-    integer :: q_functype, q_index
-    double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
-    double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
+    integer :: q_pow, w_pow ! loop indicies
+    double precision :: J, j_chi, factor_final
     double precision :: prefactor_array(niso,11,2)
     
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
@@ -212,103 +314,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end if
     ! allocate(u_int_res(nlines))
 
-    do eli = 1, niso
-        do q_pow = 1, 11
-            do w_pow = 1, 2
-                prefactor_array(eli,q_pow,w_pow) = 0.d0
-            end do
-        end do
-    end do
-
-    ! First I set the entries in prefactor_array(niso,11,2)
-    ! These are the constants that mulitply the corresonding integral evaluation
-    do eli=1,niso !isotopeChosen, isotopeChosen
-        ! I'll need mu_T to include in the prefactor when there is a v^2 term
-        a = AtomicNumber_oper(eli)
-        mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-
-        ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
-        do funcType = 1,8
-
-            ! contribution to q^2 count from sum over function types
-            q_functype = 0
-            prefactor_functype = 1.
-            if ( functype.gt.3 ) then
-                q_functype = 1
-                prefactor_functype = 1./mnuc**2
-            end if
-
-            ! the first index on each response function
-            do tau=1,2
-
-                ! the second index on each response function
-                do taup=1,2
-
-                    ! the possible y-terms for each W function in order: y^0, y^1, y^2, y^3, y^4, y^5, y^6
-                    do term_W = 1,7
-                        
-                        WFuncConst = W_array(funcType,eli,tau,taup,term_W)
-
-                        ! skip if the result gets multiplied by zero in the WFunction
-                        if (WFuncConst.ne.0.) then
-
-                            ! the possible terms for each R function in order: c, v2, q2, v2q2, q4, v2q4
-                            do term_R = 1,6
-
-                                ! pick out the appropriate term's constant from a given R function of tau, taup, and term_R
-                                ! currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
-                                select case (funcType)
-                                case (1)
-                                    RFuncConst = RM(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array) !!!!!!!!!!!!!!! in the R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
-                                case (2)
-                                    RFuncConst = RS2(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (3)
-                                    RFuncConst = RS1(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (4)
-                                    RFuncConst = RP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (5)
-                                    RFuncConst = RMP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (6)
-                                    RFuncConst = RP1(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (7)
-                                    RFuncConst = RD(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (8)
-                                    RFuncConst = RS1D(tau,taup,term_R-1,j_chi,coupling_Array)
-                                case default
-                                    RFuncConst = 0.
-                                    print*, "Um, I ran out of R functions to choose from?"
-                                end select
-
-                                ! skip if the result gets multiplied by zero in the RFunction
-                                if (RFuncConst.ne.0.) then
-
-                                    ! calculates the total number of q^2
-                                    q_index = 1 + q_functype + term_W - 1 + floor((term_R-1.)/2.)
-                                    prefactor_current = prefactor_functype*RFuncConst*WFuncConst*yConverse_array(eli)**(term_W-1)
-
-                                    ! check if term_R is even (in my index convention this corresponds to it having a v^2 in the term)
-                                    ! v^2 = w^2 - q^2/(2mu_T)^2
-                                    if ( mod(term_R,2).eq.0 ) then
-                                        ! this is the -q^2/(2mu_T)^2 contribution
-                                        ! it has one extra q^2 contribution compared to the current W & R function contributions
-                                        prefactor_array(eli,q_index+1,1) = prefactor_array(eli,q_index+1,1) - prefactor_current * &
-                                            (c0**2/(4.*mu_T**2)) ! The Rfunctions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the- q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
-                                        ! this is the +w^2 contribution
-                                        ! it has the same q^2 contribution, but has a v_perp^2 contribution
-                                        prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + prefactor_current
-                                        
-                                    else
-                                        prefactor_array(eli,q_index,1) = prefactor_array(eli,q_index,1) + prefactor_current
-
-                                    end if
-                                end if
-                            end do !term_R
-                        end if
-                    end do !term_W
-                end do !taup
-            end do !tau
-        end do !functype
-    end do !eli
+    ! Get the prefactors for the q and v terms
+    prefactor_array = xsec_nreo_prefactors(niso, j_chi)
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
