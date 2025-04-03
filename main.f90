@@ -123,7 +123,7 @@ PROGRAM GENCAP
 !             ! nwimpsin = 1d0
 !             ! nwimpsin = 1.19d42 !nx/nb=1d-15
 !             ! nwimpsin = 1d0
-!             !SB: adding this method to implement a generalized way of getting the SP energy transfer from 2111.0695
+!             !SB: adding this method to implement a generalized way of getting the SP energy transfer from arxiv:2111.06895
 !             !SB: only works for hydrogen or electrons (->num_isotopes=1)
 !             call transgen_SP(sigma_0, electron_v_nucleons , nwimpsin, nq(j), nv(j), j, Tx, &
 !                             noise_indicator, Etrans, Etranstot, K, maxLum)

@@ -138,7 +138,7 @@ return
 end function
 
 
-!SB: This is used to define Etrans as done in 2.10 (2111.0695)
+!SB: This is used to define Etrans as done in 2.10 (arxiv:2111.06895)
 !SB: and will be editted to include for general interactions for NREO
 function Etrans_sp_mine(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nwimps,ndensity_target)
 	implicit none
@@ -188,7 +188,7 @@ function Etrans_sp_mine(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 return
 end function
 
-!SB: This is used to define Etrans as done in 2.10 (2111.0695)
+!SB: This is used to define Etrans as done in 2.10 (arxiv:2111.06895)
 !SB: and will be editted to include for general interactions for NREO
 function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nwimps, ndensity_target)
 	implicit none
