@@ -599,7 +599,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
                     q_shared = q_pow - 1
                     sigma_0 = prefactor_array(eli,q_pow,w_pow)&
                                *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism. Not all sigmas have the same units!!!!!!!
-                    call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, sigma_0, MeanFreePathInverseTerm) !calculate the inverse mfp for a given isotope + one nq and nv pair
+                    call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, eli, sigma_0, MeanFreePathInverseTerm) !calculate the inverse mfp for a given isotope + one nq and nv pair
                     invMFPElemental = invMFPElemental + MeanFreePathInverseTerm
                 end if
             end do !q_pow
@@ -667,6 +667,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
         a_shared = a !make accessible via the module
         mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
         mtarget_g = a*mnuc*1.782662d-24
+        nabund = tab_mfr(:,eli)*tab_starrho/mtarget_g
 
         mu = mdm/(mnuc*a)
         muplus = (1.+mu)/2.
@@ -691,24 +692,24 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
 end subroutine trans_oper_new
 
 !SB: This calculate the inverse mean free path
-subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, sigma_0, MeanFreePathInverseTerm)
+subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, isotope, sigma_0, MeanFreePathInverseTerm)
     use opermod
     ! use akmod
     use spergelpressmod
     implicit none
-    integer :: i, w_pow, q_pow
+    integer :: i, w_pow, q_pow, isotope
     double precision :: mx,sigma_0, mdm_g
     double precision :: MeanFreePathInverseTerm(nlines), nabund(nlines), vTArray(nlines)
     double precision :: mtarget, targetmass_g, mreduced
     double precision:: GN = 6.674d-8
 
-      mtarget = mnuc
+      mtarget = mnuc * AtomicNumber_oper(isotope)
 
       mreduced = mtarget*mx/(mtarget+mx) ![GeV]
       targetmass_g = mtarget*1.782662d-24  ![g]
       mdm_g = mx*1.782662d-24 ![g]
 
-      nabund = tab_mfr(:,1)*tab_starrho/targetmass_g
+      nabund = tab_mfr_oper(:,isotope)*tab_starrho/targetmass_g
 
       nq = q_pow
       nv = w_pow
