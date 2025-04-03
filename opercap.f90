@@ -651,9 +651,9 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
       end do !eli
       if (f3 == 0.d0) then
   			exit
-  		else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
+  		else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign, the T_x upper guess is too high so decrease it
   			x_1 = x_3
-  		else if (f2*f3 .gt. 0) then
+  		else if (f2*f3 .gt. 0) then ! T_x lower guess is too low, raise it
   			x_2 = x_3
   		endif
   		error = abs(x_2-x_1)/x_2
