@@ -475,6 +475,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
     double precision :: K, rchi, Tx, guess_1, guess_2, reltolerance, x_1, x_2, x_3, error, f1, f2, f3
     double precision :: sigma_0, mdm_g, mtarget_g
     double precision :: GeV_cmMinus1_convert = 2.d-14, GN = 6.674d-8
+    double precision :: K_0
 
     mdm = mx_in
     mdm_g =mdm*1.782662d-24 ![g]
@@ -685,7 +686,8 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
             end do !q_pow
         end do !w_pow
     end do !eli
-    etransCum = 0.5/(1.d0+(0.4d0/K)**2)*etransCum
+    K_0 = 0.4d0 ! NOTE THIS IS ONLY FOR CONSTANT XSEC, NEEDS OTHER VALUES FROM TAB.2 OF 2111.06895
+    etransCum = 0.5/(1.d0+(K_0/K)**2)*etransCum
 end subroutine trans_oper_new
 
 !SB: This calculate the inverse mean free path
