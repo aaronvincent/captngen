@@ -16,6 +16,10 @@ module sharedmod
     double precision, parameter :: NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938, melectron = 0.000511
     double precision, parameter :: melectronKg = 9.11d-31
+    double precision, parameter :: GeV_per_erg = 624.1509074
+    !! GeV per erg conversion factor: \( \frac{10^{-9}\,\text{GeV}}{1.602176634\times10^{-12}\,\text{erg}} \)
+    double precision, parameter :: kBoltz = 1.380649d-16
+    !! Boltzmann constant in \( \text{erg} \text{K}^{-1} \)
     !these are now set in captn_init
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables

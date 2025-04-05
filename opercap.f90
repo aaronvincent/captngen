@@ -195,6 +195,43 @@ module opermod
             ! total_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * total_prefactors(eli,:,:)
         end do !eli
     end subroutine RW_prefactors
+
+    subroutine mfp_nreo(prefactor_array, path_length)
+        !! Calculates the mean free path in \(\text{cm}\) in the non-relativistic effective operator (NREO) convention following
+        !! [arxiv:1501.03729](https://arxiv.org/abs/1501.03729):
+        !! \[ \ell_\chi (r) = \frac{1}{\sum_i n_i(r) {\langle\sigma_i(w) \rangle}_\text{NREO}} \quad , \]
+        !! where \(i\) is the ith isotope, \(n_i\) is the number density of the relevant nucleus, \(\langle\sigma_i(w) \rangle\) is
+        !! the thermally averaged cross section, and \(w\) is the relative velocity between the nucleon and the dark matter.
+        implicit none
+        double precision, intent(in) :: prefactor_array(:,:,:)
+        !! the prefactors of the NREO differential cross section, where a prefactor \(P_{i,n_q,n_w}\) is defined by:
+        !! \[ \sum_{\tau,\tau^\prime,k} R^{\tau\tau^\prime}_k\left({v_T^\perp}^2,\frac{q^2}{m_N^2}\right) W^{\tau\tau^\prime}_k\left(y\right) = \sum_{i,n_q,n_w} P_{i,n_q,n_w} q^{2n_q} w^{2n_w} \]
+        double precision, intent(out) :: path_length(:)
+        !! the mean free path \(\ell_\chi (r)\) of all isotopes combined for each radial shell in the star [cm]
+
+        integer :: iso, nq, nw
+        double precision :: m_target, isotopic_term
+        double precision :: inverse_path_length(size(path_length)), thermal_target(size(path_length))
+        double precision :: qw_terms(size(path_length)), this_term(size(path_length)), density_target(size(path_length))
+    
+        inverse_path_length = 0.d0
+        do iso = 1, size(prefactor_array,dim=1)
+            m_target = mnuc*AtomicNumber_oper(iso)
+            thermal_target = 2*kBoltz*tab_T / (m_target * GeV_per_erg*c0**2)
+            isotopic_term = -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper(iso)+1)) ! FIGURE OUT THE NEGATIVE SIGN
+            qw_terms = 0.d0
+            do nq = 0, size(prefactor_array,dim=2)-1
+                do nw = 0, size(prefactor_array,dim=3)-1
+                    this_term = (prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
+                        (mdm/m_target+1)**(nw-nq) * (thermal_target)**(nq+nw))/((nq+1) * (c0*mdm)**(2*nq))
+                    qw_terms = qw_terms + this_term ! Note: the qw terms appear constant in radius b/c nq and nw powers greater than 0 are many orders of magnitude smaller than the zeroth nq and nw term
+                end do !nw
+            end do !nq
+            density_target = tab_mfr_oper(:,iso) * tab_starrho / (m_target * GeV_per_erg*c0**2)
+            inverse_path_length = inverse_path_length + (density_target * isotopic_term*qw_terms)
+        end do !iso
+        path_length = 1/inverse_path_length
+    end subroutine mfp_nreo
 end module opermod
 
 subroutine captn_init_oper()
@@ -455,13 +492,14 @@ subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
 end subroutine captn_oper
 
 !SB: Only works for Hydrogen + const for now (21-11-2023)
-subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isotopeChosen)
+subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!, isotopeChosen)
     use opermod
     use spergelpressmod
     implicit none
     integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in, nwimpsin
+    double precision, intent(out) :: Knudsen
     double precision :: a
 
     integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
@@ -472,7 +510,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
 
     double precision :: invMFPElemental(nlines), invMFP(nlines), MFP(nlines), MeanFreePathInverseTerm(nlines) !Elemental inverse of the MFP, inverse MFP, MFP
     double precision :: nabund(nlines), etrans(nlines), etransCum(nlines)
-    double precision :: K, rchi, Tx, guess_1, guess_2, reltolerance, x_1, x_2, x_3, error, f1, f2, f3
+    double precision :: radius_dm, Tx, guess_1, guess_2, reltolerance, x_1, x_2, x_3, error, f1, f2, f3
     double precision :: sigma_0, mdm_g, mtarget_g
     double precision :: GeV_cmMinus1_convert = 2.d-14, GN = 6.674d-8
     double precision :: K_0
@@ -579,36 +617,10 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
         end do !functype
     end do !eli
 
-  !************ Calculating K ************
-    invMFP = 0 !inverse of the meanfree path
-    do eli=1,niso !isotopeChosen, isotopeChosen
-        a = AtomicNumber_oper(eli)
-        a_shared = a
-        mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-        invMFPElemental = 0.d0 !inverse mean free path for a given iso
-
-        mu = mdm/(mnuc*a)
-        muplus = (1.+mu)/2.
-        muminus = (mu-1.d0)/2.
-
-        J = AtomicSpin_oper(eli)
-
-        do w_pow=1,2
-            do q_pow=1,11
-                if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
-                    q_shared = q_pow - 1
-                    sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                               *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism. Not all sigmas have the same units!!!!!!!
-                    call MeanFreePathInverse_calculate(mdm, w_pow-1, q_pow-1, eli, sigma_0, MeanFreePathInverseTerm) !calculate the inverse mfp for a given isotope + one nq and nv pair
-                    invMFPElemental = invMFPElemental + MeanFreePathInverseTerm
-                end if
-            end do !q_pow
-        end do !w_pow
-        invMFP = invMFP + invMFPElemental
-    end do !eli
-    MFP = 1./invMFP
-    rchi = sqrt(3*kb*tab_T(1)/(2*pi*GN*tab_starrho(1)*mdm_g))
-    K = MFP(1)/rchi
+    !************ Calculating Knudsen ************
+    call mfp_nreo(prefactor_array, MFP)
+    radius_dm = sqrt((3 * kBoltz * tab_T(1))/(2 * pi * GNewt * tab_starrho(1) * mdm * GeV_per_erg*c0**2)) ! Why is this ~ 10^-15 cm?
+    Knudsen = MFP(1)/radius_dm
 
     !************ Calculating Tx ************
     guess_1 = maxval(tab_T)*15d0 ! One-zone WIMP temp guesses in K.
@@ -688,7 +700,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, K, Tx, etransCum)!, isot
         end do !w_pow
     end do !eli
     K_0 = 0.4d0 ! NOTE THIS IS ONLY FOR CONSTANT XSEC, NEEDS OTHER VALUES FROM TAB.2 OF 2111.06895
-    etransCum = 0.5/(1.d0+(K_0/K)**2)*etransCum
+    etransCum = 0.5/(1.d0+(K_0/Knudsen)**2)*etransCum
 end subroutine trans_oper_new
 
 !SB: This calculate the inverse mean free path
