@@ -176,6 +176,49 @@ module opermod
             ! total_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * total_prefactors(eli,:,:)
         end do !eli
     end subroutine RW_prefactors
+
+    subroutine mfp_nreo(prefactor_array, path_length)
+        !! Calculates the mean free path in \(\text{cm}\) in the non-relativistic effective operator (NREO) convention following
+        !! [arxiv:1501.03729](https://arxiv.org/abs/1501.03729):
+        !! \[ \ell_\chi (r) = \frac{1}{\sum_i n_i(r) {\langle\sigma_i(w) \rangle}_\text{NREO}} \quad , \]
+        !! where \(i\) is the ith isotope, \(n_i\) is the number density of the relevant nucleus, \(\langle\sigma_i(w) \rangle\) is
+        !! the thermally averaged cross section, and \(w\) is the relative velocity between the nucleon and the dark matter.
+        use phys, only: mnuc, kB, gev_erg, c0, hbar, pi
+        implicit none
+        double precision, intent(in) :: prefactor_array(:,:,:) !! Prefactors of the NREO differential cross section, where \(P_{i,n_q,n_w}\) are defined in [subroutine:RW_prefactors] [\( \text{GeV}^{-4-2n_q} (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \)] 
+        double precision, intent(out) :: path_length(:) !! Mean free path \(\ell_\chi (r)\) of all isotopes combined \(\text{cm}\)
+        integer :: iso, nq, nw
+        double precision :: m_target(size(prefactor_array,dim=1)), isotopic_term(size(prefactor_array,dim=1))
+        double precision :: inverse_path_length(size(path_length)), thermal_target(size(path_length))
+        double precision :: qw_terms(size(path_length)), this_term(size(path_length)), density_target(size(path_length))
+
+        m_target = mnuc*AtomicNumber_oper
+        isotopic_term = abs( -2*(2*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) )
+        !* @warning
+        ! I have a leading negative sign on my calculation of the thermally averaged cross section \( {\langle \sigma_i(w)
+        ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. For now, we are assuming that the total cross
+        ! section must be strictly positive, but is there a more convincing argument? @endwarning
+        !!
+        inverse_path_length = 0.d0
+        do iso = 1, size(prefactor_array,dim=1)
+            thermal_target = 2*kB*tab_T / m_target(iso) * gev_erg*c0**2
+            qw_terms = 0.d0
+            !* @todo
+            ! The sum over \(n_q\) and \(n_w\) converges pretty quickly, so can probably determine a way to truncate to lower powers
+            ! and skip parts of the loop. @endtodo
+            !!
+            do nq = 0, size(prefactor_array,dim=2)-1
+                do nw = 0, size(prefactor_array,dim=3)-1
+                    this_term = prefactor_array(iso,nq+1,nw+1) * 2**(2*nq)/(nq+1) * gamma((2*nq+2*nw+3)/2.d0) * &
+                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw) * (mdm/c0)**(2*nq)
+                    qw_terms = qw_terms + this_term
+                end do !nw
+            end do !nq
+            density_target = tab_mfr_oper(:,iso) * tab_starrho / m_target(iso) * gev_erg*c0**2
+            inverse_path_length = inverse_path_length + (density_target * isotopic_term(iso)*qw_terms)
+        end do !iso
+        path_length = 1/inverse_path_length
+    end subroutine mfp_nreo
 end module opermod
 
 subroutine captn_init_oper()
