@@ -207,28 +207,28 @@ module opermod
         !! the prefactors of the NREO differential cross section, where a prefactor \(P_{i,n_q,n_w}\) is defined by:
         !! \[ \sum_{\tau,\tau^\prime,k} R^{\tau\tau^\prime}_k\left({v_T^\perp}^2,\frac{q^2}{m_N^2}\right) W^{\tau\tau^\prime}_k\left(y\right) = \sum_{i,n_q,n_w} P_{i,n_q,n_w} q^{2n_q} w^{2n_w} \]
         double precision, intent(out) :: path_length(:)
-        !! the mean free path \(\ell_\chi (r)\) of all isotopes combined for each radial shell in the star [cm]
+        !! the mean free path \(\ell_\chi (r)\) of all isotopes combined for each radial shell in the star \(\text{cm}\)
 
         integer :: iso, nq, nw
-        double precision :: m_target, isotopic_term
+        double precision :: m_target(size(prefactor_array,dim=1)), isotopic_term(size(prefactor_array,dim=1))
         double precision :: inverse_path_length(size(path_length)), thermal_target(size(path_length))
         double precision :: qw_terms(size(path_length)), this_term(size(path_length)), density_target(size(path_length))
-    
+
+        m_target = mnuc*AtomicNumber_oper
+        isotopic_term = -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) ! FIGURE OUT THE NEGATIVE SIGN
         inverse_path_length = 0.d0
         do iso = 1, size(prefactor_array,dim=1)
-            m_target = mnuc*AtomicNumber_oper(iso)
-            thermal_target = 2*kBoltz*tab_T / (m_target * GeV_per_erg*c0**2)
-            isotopic_term = -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper(iso)+1)) ! FIGURE OUT THE NEGATIVE SIGN
+            thermal_target = 2*kBoltz*tab_T / m_target(iso) * GeV_per_erg*c0**2
             qw_terms = 0.d0
-            do nq = 0, size(prefactor_array,dim=2)-1
+            do nq = 0, size(prefactor_array,dim=2)-1 ! NOTE: the sum here seems quickly converge with powers of nq and nw, can probably truncate early given specific error tolerance?
                 do nw = 0, size(prefactor_array,dim=3)-1
                     this_term = (prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
-                        (mdm/m_target+1)**(nw-nq) * (thermal_target)**(nq+nw))/((nq+1) * (c0*mdm)**(2*nq))
-                    qw_terms = qw_terms + this_term ! Note: the qw terms appear constant in radius b/c nq and nw powers greater than 0 are many orders of magnitude smaller than the zeroth nq and nw term
+                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw))/((nq+1) * (c0*mdm)**(2*nq))
+                    qw_terms = qw_terms + this_term
                 end do !nw
             end do !nq
-            density_target = tab_mfr_oper(:,iso) * tab_starrho / (m_target * GeV_per_erg*c0**2)
-            inverse_path_length = inverse_path_length + (density_target * isotopic_term*qw_terms)
+            density_target = tab_mfr_oper(:,iso) * tab_starrho / m_target(iso) * GeV_per_erg*c0**2
+            inverse_path_length = inverse_path_length + (density_target * isotopic_term(iso)*qw_terms)
         end do !iso
         path_length = 1/inverse_path_length
     end subroutine mfp_nreo
@@ -619,7 +619,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
 
     !************ Calculating Knudsen ************
     call mfp_nreo(prefactor_array, MFP)
-    radius_dm = sqrt((3 * kBoltz * tab_T(1))/(2 * pi * GNewt * tab_starrho(1) * mdm * GeV_per_erg*c0**2)) ! Why is this ~ 10^-15 cm?
+    radius_dm = sqrt((3 * kBoltz * tab_T(1))/(2 * pi * GNewt * tab_starrho(1) * mdm) * GeV_per_erg*c0**2)
     Knudsen = MFP(1)/radius_dm
 
     !************ Calculating Tx ************
