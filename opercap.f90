@@ -64,25 +64,37 @@ module opermod
         end if
     end function GFFI_A_oper
 
-    function xsec_nreo_prefactors(n_iso, j_chi)
-        !! Returns an array of size `n_iso,11,2` containing the numerical prefactors for each isotope's differential cross section
-        !! term \(\frac{\mathrm{d} \sigma}{\mathrm{d} E_R} = q^{2n} v^{2m}\), where \(n = [0,10]\) and \(m = [0,1]\). \(q\) is the
-        !! momentum transferred in the interaction, and \(v\) is the relative velocity between the dark matter and target nucleus.
-        integer, intent(in):: n_iso
-            !! The total number of isotopes, maximum of 16.
+    subroutine RW_prefactors(j_chi, total_prefactors)
+        !! Populates the `total_prefactors` array with the numerical prefactors \(P_{i,n_q,n_w}\) for each isotope's differential
+        !! cross section term corresponding to the R and W response functions as defined by:
+        !! \[ \frac{\mathrm{d} \sigma}{\mathrm{d} E_R} = \frac{m_T}{2\pi w^2} \frac{4\pi}{2J+1} \sum_{\tau,\tau^\prime,k}
+        !! R^{\tau\tau^\prime}_k\left({v_T^\perp}^2,\frac{q^2}{m_N^2}\right) W^{\tau\tau^\prime}_k\left(y\right) \\
+        !! = \frac{2m_T}{w^2(2J+1)} \sum_{i,n_q,n_w} P_{i,n_q,n_w} q^{2n_q} w^{2n_w} \]
+        !! following Eq. ([3.26](https://arxiv.org/pdf/1501.03729#equation.3.26)) and
+        !! Eq. ([3.23](https://arxiv.org/pdf/1501.03729#equation.3.23)) from [[arxiv:1501.03729](https://arxiv.org/abs/1501.03729)].
+        !! The bounds on the terms' powers are \(n_q = [0,8]\) and \(n_w = [0,1]\), with the largest terms
+        !! (\(q^{16}w^0, q^{14}w^2\)) arising from \(\frac{q^2}{m_N^2}{v_T^\perp}^2c^{\tau}_{5}c^{\tau^\prime}_{5}\) in
+        !! [\(R^{\tau\tau^\prime}_M\)](https://arxiv.org/pdf/1501.03729#equation.A.1) multiplied with
+        !! \(W^{\tau\tau^\prime}_M\propto y^6\) (which can occur in isotopes
+        !! [\(^{40}\text{Ar}\)](https://arxiv.org/pdf/1501.03729#equation.C.13),
+        !! [\(^{40}\text{Ca}\)](https://arxiv.org/pdf/1501.03729#equation.C.14),
+        !! [\(^{56}\text{Fe}\)](https://arxiv.org/pdf/1501.03729#equation.C.15), and
+        !! [\(^{58}\text{Ni}\)](https://arxiv.org/pdf/1501.03729#equation.C.16)). Here \(q\) is the momentum transferred in the
+        !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
+        !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
         double precision, intent(in):: j_chi
             !! The spin of the dark matter.
-        double precision :: xsec_nreo_prefactors(n_iso,11,2)
-            !! The returned array of prefactors.
+        double precision, intent(out) :: total_prefactors(:,:,:)
+            !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran
+            !! arrays start with 1). This typically means `16,9,2`.
 
         integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
         integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
         double precision :: rd, rm, rmp2, rp1, rp2, rs1, rs1d, rs2 ! DM response R functions stored in their own source files
 
-        xsec_nreo_prefactors = 0.d0
-
-        do eli = 1, n_iso
+        total_prefactors = 0.d0
+        do eli = 1, size(total_prefactors,dim=1)
             ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
             mu = (mnuc*AtomicNumber_oper(eli) * mdm)/(mnuc*AtomicNumber_oper(eli) + mdm)
     
@@ -150,12 +162,12 @@ module opermod
                                         ! in the DM response R function), decomposed into v_perp^2 = w^2 - q^2/(2mu)^2
                                         if ( mod(term_r,2).eq.0 ) then
                                             ! this is the -q^2/(2mu)^2 contribution (one extra q^2 compared to current q_index)
-                                            xsec_nreo_prefactors(eli,q_index+1,1) = xsec_nreo_prefactors(eli,q_index+1,1) &
+                                            total_prefactors(eli,q_index+1,1) = total_prefactors(eli,q_index+1,1) &
                                                 + prefactor * (-c0**2/(4.*mu**2)) ! The DM response R functions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the - q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
                                             ! this is the +w^2 contribution (same q^2, but has a w^2 contribution)
-                                            xsec_nreo_prefactors(eli,q_index,2) = xsec_nreo_prefactors(eli,q_index,2) + prefactor
+                                            total_prefactors(eli,q_index,2) = total_prefactors(eli,q_index,2) + prefactor
                                         else
-                                            xsec_nreo_prefactors(eli,q_index,1) = xsec_nreo_prefactors(eli,q_index,1) + prefactor
+                                            total_prefactors(eli,q_index,1) = total_prefactors(eli,q_index,1) + prefactor
                                         end if
                                     end if
                                 end do !term_r
@@ -164,9 +176,9 @@ module opermod
                     end do !tau_p
                 end do !tau
             end do !func_type
-            ! xsec_nreo_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * xsec_nreo_prefactors(eli,:,:)
+            ! total_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * total_prefactors(eli,:,:)
         end do !eli
-    end function xsec_nreo_prefactors
+    end subroutine RW_prefactors
 end module opermod
 
 subroutine captn_init_oper()
@@ -272,7 +284,7 @@ end function integrand_oper
 
 
 ! call captn_oper to run capt'n with the effective operator method
-subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
+subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
     use opermod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
@@ -285,7 +297,6 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
             end interface
         end function integrand_oper
     end interface
-    integer, intent(in):: niso!, isotopeChosen
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
     double precision :: capped !this is the output
@@ -297,7 +308,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     ! specific to captn_oper
     integer :: q_pow, w_pow ! loop indicies
     double precision :: J, j_chi, factor_final
-    double precision :: prefactor_array(niso,11,2)
+    double precision :: prefactor_array(size(tab_mfr_oper,dim=2),9,2)
     
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
     
@@ -315,7 +326,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     ! allocate(u_int_res(nlines))
 
     ! Get the prefactors for the q and v terms
-    prefactor_array = xsec_nreo_prefactors(niso, j_chi)
+    call RW_prefactors(j_chi, prefactor_array)
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
@@ -323,7 +334,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
+    !$OMP shared(nlines,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
     !$OMP   umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
@@ -332,7 +343,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
         rindex_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
-        do eli=1,niso !isotopeChosen, isotopeChosen
+        do eli=1,size(prefactor_array,dim=1)
             ! u_int_res(ri) = 0.d0
             elementalResult = 0.d0
             a = AtomicNumber_oper(eli)
@@ -347,14 +358,14 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
             ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
             umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
 
-            do w_pow=1,2
+            do w_pow=1,size(prefactor_array,dim=3)
                 ! toggles whether we integrate with the w^2 term on
                 w_shared = .false.
                 if(w_pow.eq.2) then
                     w_shared = .true.
                 end if
 
-                do q_pow=1,11
+                do q_pow=1,size(prefactor_array,dim=2)
                     if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
                         integrateResult = 0.d0
                         q_shared = q_pow - 1
