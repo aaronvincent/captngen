@@ -216,11 +216,19 @@ module opermod
 
         m_target = mnuc*AtomicNumber_oper
         isotopic_term = -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) ! FIGURE OUT THE NEGATIVE SIGN
+        !* @warning
+        ! I have a leading negative sign on my calculation of the thermally averaged cross section \( {\langle \sigma_i(w)
+        ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. NEEDS TO BE SORTED OUT! @endwarning
+        !!
         inverse_path_length = 0.d0
         do iso = 1, size(prefactor_array,dim=1)
             thermal_target = 2*kBoltz*tab_T / m_target(iso) * GeV_per_erg*c0**2
             qw_terms = 0.d0
-            do nq = 0, size(prefactor_array,dim=2)-1 ! NOTE: the sum here seems quickly converge with powers of nq and nw, can probably truncate early given specific error tolerance?
+            !* @todo
+            ! The sum over \(n_q\) and \(n_w\) converges pretty quickly, so can probably determine a way to truncate to lower powers
+            ! and skip parts of the loop. @endtodo
+            !!
+            do nq = 0, size(prefactor_array,dim=2)-1
                 do nw = 0, size(prefactor_array,dim=3)-1
                     this_term = (prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
                         (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw))/((nq+1) * (c0*mdm)**(2*nq))
