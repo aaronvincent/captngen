@@ -1,5 +1,5 @@
 FC=gfortran
-FOPT= -fPIC -std=legacy#legacy is required if you are running gcc 10 or later 
+FOPT=-fPIC -std=legacy#legacy is required if you are running gcc 10 or later 
 ifneq ($(strip $(debug)),)
 	FOPT += -O0 -Wall -fbounds-check -g
 else
