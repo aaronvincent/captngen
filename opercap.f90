@@ -19,10 +19,9 @@ module opermod
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
     double precision :: yConverse_array(16)
-    double precision :: coupling_to_sigma(14) !SB: Used to link the coupling constant to a cross section for energy transport calculations
 
     integer :: q_shared
-    logical :: w_shared, w_flag !SB: I am using this to determine if the coupling has a dependence on v2. This will be used when converting cross sections to couplings
+    logical :: w_shared
     !$OMP threadprivate(q_shared, w_shared)
 
     contains
@@ -43,20 +42,6 @@ module opermod
         GFFI_H_oper = G
     end function GFFI_H_oper
 
-    function GFFI_H_oper_electron(w,vesc,mq)
-        double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper_electron,G
-        integer mq
-        p = mdm*w
-        mu = mdm/melectron
-        muplus = (1.+mu)/2.
-        u = sqrt(w**2-vesc**2)
-        if (mq .ne. -1) then
-            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*1./(1.+mq)*((mu/muplus**2)**(mq+1)-(u**2/w**2)**(mq+1))
-        else
-            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*log(mu/muplus**2*w**2/(u)**2)
-        endif
-        GFFI_H_oper_electron = G
-    end function GFFI_H_oper_electron
 
     function GFFI_A_oper(w,vesc,A,mq)
         double precision :: p, mu,w,vesc,u,muplus,mN,A,Ei,B
@@ -339,49 +324,6 @@ function integrand_oper(u, foveru)
     end if
 end function integrand_oper
 
-function integrand_oper_electron(u, foveru)
-    use opermod
-    use capmod
-    implicit none
-    interface
-        function foveru(arg1)
-            double precision :: arg1, foveru
-        end function foveru
-    end interface
-    double precision :: u, integrand_oper_electron
-    double precision :: w, x
-    w = sqrt(u**2+vesc_shared**2)
-    if((nq.eq.0).and.(nv.eq.0)) then
-      integrand_oper_electron = foveru(u)*diff_scattering_rate_cst(w, vesc_shared)
-    end if
-end function integrand_oper_electron
-
-function integrand_oper_Rminus(u, foveru)
-    !use opermod
-    use capmod
-    implicit none
-    ! interface
-    !     function foveru(arg1)
-    !         double precision :: arg1, foveru
-    !     end function foveru
-    ! end interface
-
-    double precision :: u, integrand_oper_Rminus, foveru
-    double precision :: w, x
-
-    external foveru
-
-    w = sqrt(u**2+vesc_shared**2)
-    if((nq.eq.0).and.(nv.eq.0)) then
-      integrand_oper_Rminus = foveru(u)*diff_scattering_rate_cst(w, vesc_shared)
-    else if (nv.eq.1) then
-       integrand_oper_Rminus = foveru(u)*diff_scattering_rate_v1(w, vesc_shared)
-    else if (nq.eq.1) then
-      integrand_oper_Rminus = foveru(u)*diff_scattering_rate_q1(w, vesc_shared)
-    else if (nq.eq.2) then
-      integrand_oper_Rminus = foveru(u)*diff_scattering_rate_minus_q2(w, vesc_shared)
-    end if
-end function integrand_oper_Rminus
 
 ! call captn_oper to run capt'n with the effective operator method
 subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
@@ -593,97 +535,6 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     energy_transported = 0.5/(1.d0+(k_0/knudsen)**2)*energy_transported
 end subroutine energy_transport_nreo
 
-
-!SB: This calculate the inverse mean free path
-subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, isotope, sigma_0, MeanFreePathInverseTerm)
-    use opermod
-    ! use akmod
-    use spergelpressmod
-    implicit none
-    integer :: i, w_pow, q_pow, isotope
-    double precision :: mx,sigma_0, mdm_g
-    double precision :: MeanFreePathInverseTerm(nlines), nabund(nlines), vTArray(nlines)
-    double precision :: mtarget, targetmass_g, mreduced
-    double precision:: GN = 6.674d-8
-
-      mtarget = mnuc * AtomicNumber_oper(isotope)
-
-      mreduced = mtarget*mx/(mtarget+mx) ![GeV]
-      targetmass_g = mtarget*1.782662d-24  ![g]
-      mdm_g = mx*1.782662d-24 ![g]
-
-      nabund = tab_mfr_oper(:,isotope)*tab_starrho/targetmass_g
-
-      nq = q_pow
-      nv = w_pow
-
-      ! !******************Begin Inverse Mean Free Path Calc***************
-      vTArray = sqrt(2.d0*kBoltz*tab_T/mdm_g)/c0 ![vTArray] = natural units
-
-      if ((nq.eq.0).and.(nv.eq.0)) then !constttt
-        MeanFreePathInverseTerm = 2.d0 ! Since sigma_tot = 2*sigma_0 for v/q independent scattering
-
-      else if ((nq.eq.0).and.(nv.eq.1)) then !v2
-        MeanFreePathInverseTerm = 3.d0
-      else if ((nq.eq.1).and.(nv.eq.0)) then !q2
-        MeanFreePathInverseTerm = 6.d0
-
-      else if ((nq.eq.1).and.(nv.eq.1)) then !v2 q2
-        MeanFreePathInverseTerm = 15.d0
-      else if ((nq.eq.2).and.(nv.eq.0)) then !q4
-        MeanFreePathInverseTerm = 40.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
-        MeanFreePathInverseTerm = 140.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q6
-        MeanFreePathInverseTerm = 420.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q6
-        MeanFreePathInverseTerm = 1890.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q8
-        MeanFreePathInverseTerm = 6048.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q8
-        MeanFreePathInverseTerm = 33264.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q10
-        MeanFreePathInverseTerm = 110880.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q10
-        MeanFreePathInverseTerm = 720720.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q12
-        MeanFreePathInverseTerm = 2471040.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q12
-        MeanFreePathInverseTerm = 18532800.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q14
-        MeanFreePathInverseTerm = 64864800.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q14
-        MeanFreePathInverseTerm = 551350800.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q16
-        MeanFreePathInverseTerm = 1960358400.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q16
-        MeanFreePathInverseTerm = 18623404800.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q18
-        MeanFreePathInverseTerm = 67044257280.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q18
-        MeanFreePathInverseTerm = 703964701440.d0
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q20
-        MeanFreePathInverseTerm = 2559871641600.d0
-
-      else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q20
-        MeanFreePathInverseTerm = 29438523878400.d0
-        print*, "In here bad!!!!!! "
-      else if ((nq.eq.3).and.(nv.eq.0)) then !q22
-        MeanFreePathInverseTerm = 107941254220800.d0
-        print*, "In here bad!!!!!! "
-      end if
-
-      MeanFreePathInverseTerm = MeanFreePathInverseTerm*&
-                          mx**(2*nq)*sigma_0*vTArray**(2*(nq+nv))*nabund/(1+mu)**(nq-nv)
-end subroutine
 
 subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
