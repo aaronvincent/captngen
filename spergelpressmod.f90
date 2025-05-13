@@ -14,8 +14,6 @@ use sharedmod
 use capmod
 implicit none
 
-double precision, parameter :: mnucg=1.6726219e-24
-
 contains
 
 
@@ -65,7 +63,7 @@ phi = -tab_vesc**2/2.d0 ! phi in erg/g
 mxg = mdm*1.782662d-24 ! WIMP mass in g
 ! n_nuc in cm**-3
 do i=1,niso
-	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/AtomicNumber(i)/mnucg ! tab_starrho in gcm**-3
+	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/AtomicNumber(i)/(mnuc/(GeV_per_erg*c0**2)) ! tab_starrho in gcm**-3
 enddo
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm**2v. Only works for q/v independent cross-sections
 
@@ -78,8 +76,8 @@ species_indep = 8.0d0*sqrt(2.d0/pi)*kBoltz**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_star
 ! Now sum over species to get the species dependent factor
 species_dep=0.d0
 do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		sqrt(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*(mnuc/(GeV_per_erg*c0**2))*AtomicNumber(i) &
+		/ ((mxg+(mnuc/(GeV_per_erg*c0**2))*AtomicNumber(i))**2)*sqrt(tab_T/((mnuc/(GeV_per_erg*c0**2))*AtomicNumber(i)) + T_x/mxg)
 enddo
 
 Etrans_sp = species_indep*species_dep ! erg/g/s

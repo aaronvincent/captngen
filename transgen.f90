@@ -36,7 +36,7 @@ integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, j, ri, ierr
 integer (kind=4) :: lensav
 double precision :: epso,EtransTot
-double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5, kB=1.38064852d-16
+double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5, kB=1.38064852d-16, mnucg=1.6726219e-24
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
 double precision :: capped, maxcap !this is the output
 double precision :: sigma_SI, sigma_SD, a
