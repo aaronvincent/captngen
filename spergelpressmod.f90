@@ -186,7 +186,7 @@ end subroutine transport_sp_generic
 
 
 subroutine transport_sp_qv(q_pow, v_pow, sigma_0, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
-	!! \( \epsilon \) of a given target isotope as defined in Eq. 2.10 of
+	!! \( \epsilon_\text{SP} \) of a given target isotope as defined in Eq. 2.10 of
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using a momentum-velocity scaled differential cross
 	!! section defined as
 	!! \( \frac{\mathrm{d} \sigma}{\mathrm{d} \cos\theta} = \sigma_0 {\frac{q}{q_0}}^{2n_q} {\frac{v}{v_0}}^{2n_v} \).
@@ -215,17 +215,16 @@ end subroutine transport_sp_qv
 
 
 subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
-	!! \( \epsilon \) of a given target isotope as defined in Eq. 2.10 of
+	!! \( \epsilon_\text{SP} \) of a given target isotope as defined in Eq. 2.10 of
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using an NREO differential cross section defined as
 	!! \begin{align}
 	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} \cos\theta} &= \frac{\mathrm{d} E_R}{\mathrm{d} \cos\theta} \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} \, , \\
 	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} &= \frac{- P_{T,n_q,n_w} \hbar^2 c^{2(1-n_q)}}{(2J + 1)(1 + n_q)} {\left( \frac{2m_\chi}{1 + \mu} \right)}^{2(1+n_q)} w^{2(n_q+n_w)} \, .
 	!! \end{align}
-	!! The units of the prefactor are: \([P_{T,n_q,n_w}] = \text{GeV}^{-4} \cdot \text{GeV}^{-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \).
 	implicit none
 	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
 	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
-	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( 2J+1 \) [\( \text{cm}^2 \cdot 1 \)]
+	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( (2J+1) \) [\( \text{GeV}^{-4-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \)]
 	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
 	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
 	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]

@@ -183,12 +183,8 @@ module opermod
         !! where \(i\) is the ith isotope, \(n_i\) is the number density of the relevant nucleus, \(\langle\sigma_i(w) \rangle\) is
         !! the thermally averaged cross section, and \(w\) is the relative velocity between the nucleon and the dark matter.
         implicit none
-        double precision, intent(in) :: prefactor_array(:,:,:)
-        !! the prefactors of the NREO differential cross section, where a prefactor \(P_{i,n_q,n_w}\) is defined by:
-        !! \[ \sum_{\tau,\tau^\prime,k} R^{\tau\tau^\prime}_k\left({v_T^\perp}^2,\frac{q^2}{m_N^2}\right) W^{\tau\tau^\prime}_k\left(y\right) = \sum_{i,n_q,n_w} P_{i,n_q,n_w} q^{2n_q} w^{2n_w} \]
-        double precision, intent(out) :: path_length(:)
-        !! the mean free path \(\ell_\chi (r)\) of all isotopes combined for each radial shell in the star \(\text{cm}\)
-
+        double precision, intent(in) :: prefactor_array(:,:,:) !! Prefactors of the NREO differential cross section, where \(P_{i,n_q,n_w}\) are defined in [subroutine:RW_prefactors] [\( \text{GeV}^{-4-2n_q} (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \)] 
+        double precision, intent(out) :: path_length(:) !! Mean free path \(\ell_\chi (r)\) of all isotopes combined \(\text{cm}\)
         integer :: iso, nq, nw
         double precision :: m_target(size(prefactor_array,dim=1)), isotopic_term(size(prefactor_array,dim=1))
         double precision :: inverse_path_length(size(path_length)), thermal_target(size(path_length))
