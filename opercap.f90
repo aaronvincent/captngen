@@ -445,6 +445,105 @@ subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
     end if
 end subroutine captn_oper
 
+!SB: Only works for Hydrogen + const for now (21-11-2023)
+subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energy_transported)
+    use phys, only : kB, pi, GN, gev_erg, c0, mnuc
+    use spergelpressmod, only : luminosity_sp_nreo, transport_sp_nreo
+    use opermod
+    implicit none
+    double precision, intent(in) :: mx_in !! Mass of the dark matter [\( \text{GeV} \)]
+    double precision, intent(in) :: jx_in !! Spin of the dark matter [\( \text{1} \)]
+    double precision, intent(in) :: nwimpsin !! Total number of dark matter particles [\( \text{1} \)]
+    double precision, intent(out) :: knudsen !! The calculated Knudsen Number [\( \text{1} \)]
+    double precision, intent(out) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+    double precision, intent(out) :: energy_transported(nlines) !! energy transport by dark matter [\( \text{erg} \text{s}^{-1} \text{g}^{-1} \)]
+    integer :: eli, q_pow, w_pow ! loop indicies
+    double precision :: prefactor, prefactor_array(size(tab_mfr_oper,dim=2), 9, 2)
+    double precision :: mfp(nlines) !! mean free path
+    double precision :: nabund(nlines), etrans(nlines)
+    double precision :: radius_dm, tolerance, temp_high, temp_low, error, lumin_high, lumin_low, lumin_dm
+    double precision :: m_target(size(AtomicNumber_oper))
+    double precision :: k_0
+
+    mdm = mx_in
+    m_target = AtomicNumber_oper * mnuc
+
+    if (.not. allocated(tab_r)) then
+        print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
+        return
+    end if
+
+    ! ************ looping over to find the prefactor for all nq and nw powers ************
+    call RW_prefactors(jx_in, prefactor_array)
+
+    ! ************ Calculating Knudsen Number ************
+    call mfp_nreo(prefactor_array, mfp)
+    radius_dm = sqrt((3 * kB * tab_T(1))/(2 * pi * GN * tab_starrho(1) * mdm) * gev_erg*c0**2)
+    knudsen = mfp(1)/radius_dm
+
+    ! ************ Finding Dark Matter Temperature ************    
+    ! starting binary search method
+    tolerance = 1.0d-8
+    temp_high = maxval(tab_T) ! Temperature of the core
+  	temp_low = minval(tab_T) ! Temperature of the surface
+
+    error = tolerance + 1.d0
+    do while (error > tolerance)
+        lumin_high = 0d0
+        lumin_low = 0d0
+        lumin_dm = 0d0
+        temp_dm = (temp_high + temp_low)/2.d0
+        do eli = 1, size(prefactor_array, dim=1)
+            mu = mdm/m_target(eli)
+            nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
+            do w_pow = 0, size(prefactor_array, dim=3) - 1
+                do q_pow = 0, size(prefactor_array, dim=2) - 1
+                    prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
+                    if ( prefactor .ne. 0.d0 ) then
+                        lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target(eli), &
+                            nabund)
+                  		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target(eli), &
+                            nabund)
+                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target(eli), nabund)
+                    end if
+                end do !q_pow
+            end do !w_pow
+        end do !eli
+        if (lumin_dm == 0.d0) then
+            exit
+        else if (lumin_high*lumin_dm .gt. 0) then ! if lumin_high and lumin_dm have the same sign, the T_x upper guess is too high so decrease it
+            temp_high = temp_dm
+        else if (lumin_low*lumin_dm .gt. 0) then ! T_x lower guess is too low, raise it
+            temp_low = temp_dm
+        endif
+        error = abs(temp_high-temp_low)/temp_low
+    end do
+
+    ! ************ Calculating Energy Transport ************
+    energy_transported = 0d0
+    do eli = 1, size(prefactor_array, dim=1)
+        mu = mdm/m_target(eli)
+        nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
+        do w_pow = 0, size(prefactor_array, dim=3) - 1
+            do q_pow = 0, size(prefactor_array, dim=2) - 1
+                prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
+                if ( prefactor.ne. 0.d0 ) then
+                    call transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target(eli), nabund, etrans)
+                    energy_transported = energy_transported + etrans
+                end if
+            end do !q_pow
+        end do !w_pow
+    end do !eli
+    k_0 = 0.4d0
+    !* @todo
+    ! `k_0 = 0.4` IS ONLY FOR CONSTANT XSEC! Needs other values from Tab. 2 of
+    ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
+    ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] in future. These scaling factors mut be computed for each
+    ! interaction type, so for now \( K_0 = 0.4 \) is acceptable. @endtodo
+    !!
+    energy_transported = 0.5d0/(1.d0+(k_0/knudsen)**2)*energy_transported
+end subroutine energy_transport_nreo
+
 subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this

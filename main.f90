@@ -17,7 +17,7 @@ PROGRAM GENCAP
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Variables used for the energy transport calculation
     integer :: transport_formalism, nlines
-    double precision :: Tx, nwimpsin, noise_indicator, EtransTot
+    double precision :: Tx, nwimpsin, noise_indicator, EtransTot, K
     ! double precision :: evapRate ! Used in fastevap()
     double precision, allocatable :: Etrans(:)
 !-----------------------------------------------------------------------------------------------------------------------------------
@@ -126,11 +126,14 @@ PROGRAM GENCAP
             mx = 1.d1 ** (dble(i)/5.)
             call captn_oper(mx, jx, capped)
             maxcapture = maxcap(mx)
-            print*, "Coupling Value: ", couplingVal, "GeV^-4 ", &
+            nwimpsin = capped*3.d7*4.57d9
+            nwimpsin = 1d0
+            call energy_transport_nreo(mx, jx, nwimpsin, K, Tx, Etrans)
+            print*, "Coupling Value: ", couplingVal, "GeV^-2 ", &
                     "DM mass: ", mx, "GeV ", &
                     "Capture rate: ", capped, "s^-1 ", &
                     "Geometric limit: ", maxcapture, "s^-1 "
-            write(55,*) couplingVal, mx, capped, maxcapture
+            write(55,*) couplingVal, mx, capped, maxcapture, Tx, K
         end do
         close(55)
     end do

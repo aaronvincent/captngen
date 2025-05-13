@@ -28,8 +28,8 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
  INTRVL.o HVAL.o HPVAL.o
 
 
-gencaplib.so: $(CONSTS) $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(CONSTS) $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+gencaplib.so: $(CONSTS) $(MFSHR) $(MFOBJ) $(TRGOBJ) $(MFCAP) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(CONSTS) $(MFSHR) $(MFOBJ) $(TRGOBJ) $(MFCAP) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 # -L tells the linker where to look for shared libraries
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
