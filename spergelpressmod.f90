@@ -13,7 +13,7 @@ module spergelpressmod
 use capmod
 implicit none
 
-double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24
+double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24, hbar=6.582d-25
 
 contains
 
@@ -188,215 +188,98 @@ function Etrans_sp_mine(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 return
 end function
 
-!SB: This is used to define Etrans as done in 2.10 (arxiv:2111.06895)
-!SB: and will be editted to include for general interactions for NREO
-function Etrans_sp_nreo(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nwimps, ndensity_target)
+
+subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+	!! This gives the result of the Spergel & Press energy transfer with a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)], except for the interaction-dependent terms
+	!! \( (1-Q) \sigma_\text{tot} \).
 	implicit none
-	double precision:: sigma_0, Nwimps, targetMass, Tx ! g
-	double precision:: Etrans_sp_nreo(nlines), nx(nlines), ndensity_target(nlines), Tcutoff(nlines)
-	integer:: nq, nv, electron_v_nucleons, n, i
-	double precision:: Afactor, Bfactor, Qfactor, mdm_g
+	integer, intent(in) :: n !! Total number of relative velocity \( z^{2n} \) terms in the integrand [\( 1 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: epsilon_sp(:) !! [\( (\text{erg} \cdot \text{g}^{-1} \text{s}^{-1}) (\text{cm}^{-2}) {(\text{cm} \cdot \text{s}^{-1})}^{2n} \)]
+	double precision :: a_factor
 
-	mdm_g = mdm*1.782662d-24 ![g]
-	n = nq+nv
+	a_factor = 2.d0**(2+n) * gamma(real(n)+3)
+	!* @note
+	! These `a_factor`s have been calculated via Sympy and Mathematica analytic solutions to the Eq. 2.10 linked above. They are
+	! *very* slow to calculate, and I was unsucessful in convincing either CAS to produce a general expression, so I'm stuck with
+	! simply (and slowly) looping over successive powers of \( z^{2n} \). In doing this I discovered that sucessive numerical
+	! factors followed the recursive relation \( A_n=(2n+4)A_{n-1} \). The expression for the nth term \( A_n=2^{2+n}\Gamma(n+3) \)
+	! matches the values I found using Sympy and Mathematica up to and including \( A_{12} \). @endnote
+	!!
 
-	!Determining the B_{2n_q} term
-	if (nq.eq.1) then
-		Bfactor = 8./3.
-	else if (nq.eq.2) then
-		Bfactor = 4.
-	else if (nq.eq.-1) then
-		Bfactor = 2.
-	else if (nq.eq.3) then
-		Bfactor = 32./5.
-	else if (nq.eq.4) then
-		Bfactor = 2./3.
+	epsilon_sp = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * nxIso_mine(temp_dm, num_dm) &
+		* ndensity_target * (tab_t - temp_dm) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*GeV_per_erg*c0**2)**(1+2*n))
+
+end subroutine transport_sp_generic
+
+
+subroutine transport_sp_qv(q_pow, v_pow, sigma_0, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+	!! \( \epsilon \) of a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using a momentum-velocity scaled differential cross
+	!! section defined as
+	!! \( \frac{\mathrm{d} \sigma}{\mathrm{d} \cos\theta} = \sigma_0 {\frac{q}{q_0}}^{2n_q} {\frac{v}{v_0}}^{2n_v} \).
+	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: v_pow !! The number of powers of velocity \( v^{2 v_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: sigma_0 !! Reference cross section [\( \text{cm}^2 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: epsilon_sp(:) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
+	double precision :: sigma_tot
+	double precision, allocatable :: integral_result(:)
+
+	if (.not. allocated(integral_result)) then
+		allocate(integral_result(size(epsilon_sp)))
 	end if
 
+	sigma_tot = sigma_0 * 2/(q_pow+1) * (2*mdm/(c0*(1+mu)*q0))**(2*q_pow) * v0**(-2*v_pow)
+	call transport_sp_generic(q_pow+v_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 
-	if (nq.eq.0) then
-		Qfactor = 2.*sigma_0/c0**(2.*nv)
-	else if (nq.ne.0) then
-		Qfactor = Bfactor*2.**nq*(mdm/c0)**(nq*2.)*sigma_0/(1.+mdm_g/targetMass)**(nq*2.)/c0**(2.*nv)
+	epsilon_sp = ( 1 - (-q_pow/(q_pow+2))) * sigma_tot * integral_result
+
+end subroutine transport_sp_qv
+
+
+subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+	!! \( \epsilon \) of a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using an NREO differential cross section defined as
+	!! \begin{align}
+	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} \cos\theta} &= \frac{\mathrm{d} E_R}{\mathrm{d} \cos\theta} \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} \, , \\
+	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} &= \frac{- P_{T,n_q,n_w} \hbar^2 c^{2(1-n_q)}}{(2J + 1)(1 + n_q)} {\left( \frac{2m_\chi}{1 + \mu} \right)}^{2(1+n_q)} w^{2(n_q+n_w)} \, .
+	!! \end{align}
+	!! The units of the prefactor are: \([P_{T,n_q,n_w}] = \text{GeV}^{-4} \cdot \text{GeV}^{-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \).
+	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( 2J+1 \) [\( \text{cm}^2 \cdot 1 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: epsilon_sp(nlines) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
+	double precision :: sigma_tot
+	double precision, allocatable :: integral_result(:)
+
+	if (.not. allocated(integral_result)) then
+		allocate(integral_result(size(epsilon_sp)))
 	end if
 
-	nx = nxIso_mine(Tx, Nwimps)
+	sigma_tot = -prefactor * hbar**2 * c0**(2*q_pow) / (q_pow+1) * (2*mdm/(1+mu))**(2*(q_pow+1))
+	!* @warning
+	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. @endwarning
+	!!
+	call transport_sp_generic(q_pow+w_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 
-	  if ((nq.eq.0).and.(nv.eq.0)) then
-			ETrans_sp_nreo = (8*kb**(5./2.)*nx*Sqrt(2./pi)*Qfactor*(ndensity_target)* &
-											  (Tx - (tab_T))*Sqrt((targetMass*(mdm_g)*(targetMass*Tx + &
-											      (mdm_g)*(tab_T)))/kb**2))/((targetMass + (mdm_g))**2* &
-											  (tab_starrho))
-		! print*, "****************************************"
-		! print*, "ETrans_sp_nreo(200): ", ETrans_sp_nreo(200)
-		! print*, "nx(200): ", nx(200)
-		! print*, "kb: ", kb
-		! print*, "Qfactor: ", Qfactor
-		! print*, "ndensity_target(200): ", ndensity_target(200)
-		! print*, "Tx: ", Tx
-		! print*, "tab_T(200): ", tab_T(200)
-		! print*, "targetMass: ", targetMass
-		! print*, "mdm_g: ", mdm_g
-		! print*, "tab_starrho(200): ", tab_starrho(200)
-		! print*, "q0: ", q0
-		! print*, "sigma: ", sigma_0
+	epsilon_sp = ( 1 - (-q_pow/(q_pow+2))) * sigma_tot * integral_result
 
-		! open(unit=10, file='etrans_data_radial_debug.txt', status='replace', action='write')
-		! 	 write(10, *) '# ETrans_sp | nx | kb | Qfactor | ndensity_target | Tx | tab_T | targetMass | mdm_g | rho'
-		! do i=1, nlines
-		! 		write(10, *) ETrans_sp_nreo(i), nx(i), kb, Qfactor, ndensity_target(i), Tx, tab_T(i), targetMass, mdm_g, tab_starrho(i)
-		! end do
-		!  close(10)
+end subroutine transport_sp_nreo
 
-		else if ((nq.eq.0).and.(nv.eq.1)) then !v2
-			ETrans_sp_nreo = (-48*kb**(5./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
-										  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(3./2.))/ &
-										 (Sqrt(targetMass*(mdm_g))*(targetMass + (mdm_g))**2* &
-										  (tab_starrho))
-		else if ((nq.eq.1).and.(nv.eq.0)) then !q2
-			ETrans_sp_nreo = (-48.*kb**(5./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
-											  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(3./2.))/ &
-											 (Sqrt(targetMass*(mdm_g))*(targetMass + (mdm_g))**2.* &
-											  (tab_starrho))
-
-		else if ((nq.eq.1).and.(nv.eq.1)) then !v2 q2
-			ETrans_sp_nreo = (-384.*kb**(7./2.)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)* &
-											  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(5./2.))/ &
-											 ((targetMass*(mdm_g))**(3./2.)*(targetMass + (mdm_g))**2* &
-											  (tab_starrho))
-		else if ((nq.eq.2).and.(nv.eq.0)) then !q4
-			ETrans_sp_nreo = (-384.*kb**(7./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
-										  (-Tx + (tab_T))*(targetMass*Tx + (mdm_g)*(tab_T))**(5./2.))/ &
-										 ((targetMass*(mdm_g))**(3./2.)*(targetMass + (mdm_g))**2* &
-										  (tab_starrho))
-		else if ((nq.eq.2).and.(nv.eq.1)) then !v2 q4
-			 ETrans_sp_nreo = (-15.*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(kb/(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.)* &
-										   (256.*targetMass**8.*Tx**8.*(-Tx + (tab_T)) +  &
-											 2048.*targetMass**7.*Tx**7.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) + &
-										    7168.*targetMass**6.*Tx**6.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-												 14336.*targetMass**5.*Tx**5.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
-										    17920.*targetMass**4.*Tx**4.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) +  &
-												7168.*targetMass**2.*Tx**2.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-										    2048.*targetMass*Tx*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
-												256.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) + &
-										    7.*targetMass**3.*Tx**3.*(mdm_g)**5.*(tab_T)**5.*(-2039.*Tx +  &
-												2048.*(tab_T))))/(tab_starrho*(targetMass*(mdm_g))**(5./2.)*(targetMass + (mdm_g))**2.)
-
-		else if ((nq.eq.3).and.(nv.eq.0)) then !q6
-				ETrans_sp_nreo = (-15.*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(kb/(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.)* &
-										   (256.*targetMass**8.*Tx**8.*(-Tx + (tab_T)) + 2048.*targetMass**7.* &
-											 Tx**7.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) + &
-										    7168.*targetMass**6.*Tx**6.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T))  &
-												+ 14336.*targetMass**5.*Tx**5.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
-										    17920.*targetMass**4.*Tx**4.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) +  &
-												7168.*targetMass**2.*Tx**2.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-										    2048.*targetMass*Tx*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
-												256.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) + &
-										    7.*targetMass**3.*Tx**3.*(mdm_g)**5.*(tab_T)**5.*(-2039.*Tx +  &
-												2048.*(tab_T))))/((targetMass*(mdm_g))**(5./2.)*(targetMass + (mdm_g))**2.*(tab_starrho))
-
-		else if ((nq.eq.3).and.(nv.eq.1)) then !v2 q6
-	 			ETrans_sp_nreo = (-45*kb**(11./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
-												(1024.*targetMass**9.*Tx**9.*(-Tx + (tab_T)) + &
-										    9216.*targetMass**8.*Tx**8.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +  &
-												36864.*targetMass**7.*Tx**7.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-										    86016.*targetMass**6.*Tx**6.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
-												129024.*targetMass**5.*Tx**5.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
-										    128772.*targetMass**4.*Tx**4.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
-												36864.*targetMass**2.*Tx**2.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) + &
-										    9216.*targetMass*Tx*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
-												1024.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
-										    21.*targetMass**3.*Tx**3.*(mdm_g)**6.*(tab_T)**6.*(-4043.*Tx +  &
-												4096.*(tab_T))))/((targetMass*(mdm_g))**(7./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)*  &
-										   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
-
-		else if ((nq.eq.4).and.(nv.eq.0)) then !q8
-				ETrans_sp_nreo = (-45*kb**(11/2)*nx*Sqrt(2/Pi)*Qfactor*(ndensity_target)*(1024*targetMass**9* &
-												Tx**9*(-Tx + (tab_T)) + &
-										    9216*targetMass**8*Tx**8*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +  &
-												36864*targetMass**7*Tx**7*(mdm_g)**2*(tab_T)**2*(-Tx + (tab_T)) + &
-										    86016*targetMass**6*Tx**6*(mdm_g)**3*(tab_T)**3*(-Tx + (tab_T)) +  &
-												129024*targetMass**5*Tx**5*(mdm_g)**4*(tab_T)**4*(-Tx + (tab_T)) + &
-										    128772*targetMass**4*Tx**4*(mdm_g)**5*(tab_T)**5*(-Tx + (tab_T)) +  &
-												36864*targetMass**2*Tx**2*(mdm_g)**7*(tab_T)**7*(-Tx + (tab_T)) + &
-										    9216*targetMass*Tx*(mdm_g)**8*(tab_T)**8*(-Tx + (tab_T)) +  &
-												1024*(mdm_g)**9*(tab_T)**9*(-Tx + (tab_T)) + &
-										    21*targetMass**3*Tx**3*(mdm_g)**6*(tab_T)**6*(-4043*Tx +  &
-												4096*(tab_T))))/((targetMass*(mdm_g))**(7/2)*(targetMass +  &
-												(mdm_g))**2*(tab_starrho)* &
-										   (targetMass*Tx + (mdm_g)*(tab_T))**(9/2))
-
-		 else if ((nq.eq.4).and.(nv.eq.1)) then !v2 q8
- 				 ETrans_sp_nreo = (-315.*kb**(13./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)* &
-				 									(2048.*targetMass**10.*Tx**10.*(-Tx + (tab_T)) + &
-											    20480.*targetMass**9.*Tx**9.*(mdm_g)*(tab_T)*(-Tx  &
-													+ (tab_T)) + 92160.*targetMass**8.*Tx**8.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-											    245760.*targetMass**7.*Tx**7.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
-													430080.*targetMass**6.*Tx**6.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
-											    515592.*targetMass**5.*Tx**5.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
-													427350.*targetMass**4.*Tx**4.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-											    92160.*targetMass**2.*Tx**2.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
-													20480.*targetMass*Tx*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
-											    2048.*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
-													15.*targetMass**3.*Tx**3.*(mdm_g)**7.*(tab_T)**7.*(-15983.*Tx + 16384.*(tab_T))))/ &
-											  ((targetMass + (mdm_g))**2.*(tab_starrho)*(targetMass*(mdm_g)*(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.))
-
-		 else if ((nq.eq.5).and.(nv.eq.0)) then !q10
-					ETrans_sp_nreo = (-315.*kb**(13./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)*&
-														(2048.*targetMass**10.*Tx**10.*(-Tx + (tab_T)) +&
-												    20480.*targetMass**9.*Tx**9.*(mdm_g)*(tab_T)*(-Tx + (tab_T)) +&
-														 92160.*targetMass**8.*Tx**8.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-												    245760.*targetMass**7.*Tx**7.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) + &
-														430080.*targetMass**6.*Tx**6.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
-												    515592.*targetMass**5.*Tx**5.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
-														427350.*targetMass**4.*Tx**4.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-												    92160.*targetMass**2.*Tx**2.*(mdm_g)**8.*(tab_T)**8.*(-Tx + (tab_T)) +  &
-														20480.*targetMass*Tx*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
-												    2048.*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
-														15.*targetMass**3.*Tx**3.*(mdm_g)**7.*(tab_T)**7.*(-15983.*Tx + 16384.*(tab_T))))/ &
-												  ((targetMass + (mdm_g))**2.*(tab_starrho)*(targetMass*(mdm_g)*(targetMass*Tx + (mdm_g)*(tab_T)))**(9./2.))
-			else if ((nq.eq.5).and.(nv.eq.1)) then !v2 q10
-				ETrans_sp_nreo = (-315.*kb**(15./2.)*nx*Sqrt(2/Pi)	*Qfactor*(ndensity_target)* &
-													(32768.*targetMass**11.*Tx**11.*(-Tx + (tab_T)) + &
-											    360448.*targetMass**10.*Tx**10.*(mdm_g)*(tab_T)*(-Tx +  &
-													(tab_T)) + 1802240.*targetMass**9.*Tx**9.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-											    5406720.*targetMass**8.*Tx**8.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
-													10813440.*targetMass**7.*Tx**7.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
-											    15130752.*targetMass**6.*Tx**6.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
-													15087072.*targetMass**5.*Tx**5.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-											    10673520.*targetMass**4.*Tx**4.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
-													1802240.*targetMass**2.*Tx**2.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
-											    360448.*targetMass*Tx*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
-													32768.*(mdm_g)**11.*(tab_T)**11.*(-Tx + (tab_T)) + &
-											    165.*targetMass**3.*Tx**3.*(mdm_g)**8.*(tab_T)**8.*(-31525.*Tx + &
-													32768.*(tab_T))))/((targetMass*(mdm_g))**(11./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)* &
-											   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
-			else if ((nq.eq.6).and.(nv.eq.0)) then !q12
-				ETrans_sp_nreo = (-315.*kb**(15./2.)*nx*Sqrt(2./Pi)*Qfactor*(ndensity_target)*&
-													(32768.*targetMass**11.*Tx**11.*(-Tx + (tab_T)) +&
-											    360448.*targetMass**10.*Tx**10.*(mdm_g)*(tab_T)*(-Tx + (tab_T))&
-													 + 1802240.*targetMass**9.*Tx**9.*(mdm_g)**2.*(tab_T)**2.*(-Tx + (tab_T)) + &
-											    5406720.*targetMass**8.*Tx**8.*(mdm_g)**3.*(tab_T)**3.*(-Tx + (tab_T)) +  &
-													10813440.*targetMass**7.*Tx**7.*(mdm_g)**4.*(tab_T)**4.*(-Tx + (tab_T)) + &
-											    15130752.*targetMass**6.*Tx**6.*(mdm_g)**5.*(tab_T)**5.*(-Tx + (tab_T)) +  &
-													15087072.*targetMass**5.*Tx**5.*(mdm_g)**6.*(tab_T)**6.*(-Tx + (tab_T)) + &
-											    10673520.*targetMass**4.*Tx**4.*(mdm_g)**7.*(tab_T)**7.*(-Tx + (tab_T)) +  &
-													1802240.*targetMass**2.*Tx**2.*(mdm_g)**9.*(tab_T)**9.*(-Tx + (tab_T)) + &
-											    360448.*targetMass*Tx*(mdm_g)**10.*(tab_T)**10.*(-Tx + (tab_T)) +  &
-													32768.*(mdm_g)**11.*(tab_T)**11.*(-Tx + (tab_T)) + &
-											    165.*targetMass**3.*Tx**3.*(mdm_g)**8.*(tab_T)**8.*(-31525.*Tx +  &
-													32768.*(tab_T))))/((targetMass*(mdm_g))**(11./2.)*(targetMass + (mdm_g))**2.*(tab_starrho)* &
-											   (targetMass*Tx + (mdm_g)*(tab_T))**(9./2.))
-
-			 else if ((nq.eq.6).and.(nv.eq.1)) then !v2 q12
-	 			ETrans_sp_nreo = 	1d0 !DID NOT INTEGRATE ANALYTICALLY
-
-			else if ((nq.eq.7).and.(nv.eq.0)) then !q14
-				ETrans_sp_nreo = 	1d0 !DID NOT INTEGRATE ANALYTICALLY
-			end if
-
-return
-end function
 
 !SB: calculate the Tx_integral using the energy transfer from "Etrans_sp_mine" function
 function Tx_integral_mine(T_x, sigma_0, targetMass, electron_v_nucleons, Nwimps, nabund)
@@ -504,24 +387,34 @@ function binary_search_nreo(f, sigma_0, targetMass, mreduced, electron_v_nucleon
 	return
 end function
 
-!SB: calculate the Tx_integral using the energy transfer from "Etrans_sp_mine" function
-function Tx_integral_nreo(T_x, sigma_0, targetMass, electron_v_nucleons, Nwimps, nq_in, nv_in, nabund)
+
+double precision function luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target) result(luminosity)
+	!! Calculates the net luminosity \( L_{\chi,T,n_q,n_w} \) from dark matter scattering with a single target isotope in the NREO
+	!! formalism. This is done by performing the integral
+	!! \begin{align}
+	!! L_{\chi,T,n_q,n_w} &= 4\pi {\int}_{0}^{R_*} \rho(R) \epsilon_{T,n_q,n_w}(R) R^2 \mathrm{d}R \, , \\
+	!!                    &= 4\pi {R_*}^3 {\int}_{0}^{1} \rho(r) \epsilon_{T,n_q,n_w}(r) r^2 \mathrm{d}r \, .
+	!! \end{align}
+	!! Where the total luminosity can be found by summing over the targets, and powers of \( q^{2n_q} \) and \( w^{2n_w} \).
 	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( 2J+1 \) [\( \text{cm}^2 \cdot 1 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, allocatable :: transport(:)
 
-	double precision, intent(in) :: T_x, Nwimps
-	double precision, intent(in) :: sigma_0, targetMass
-	integer, INTENT(IN):: electron_v_nucleons
-	double precision :: R(nlines), integrand(nlines), nabund(nlines)
-	double precision :: Tx_integral_nreo
-	integer :: nq_in, nv_in
-	! integrand units: erg/cm/s
-	R = tab_r*Rsun
-	integrand = 4.d0*pi*R**2*tab_starrho*Etrans_sp_nreo(nq_in, nv_in, sigma_0, targetMass, electron_v_nucleons ,T_x, Nwimps, nabund)
+	if (.not. allocated(transport)) then
+		allocate(transport(size(tab_r)))
+	end if
 
-	! integral is Etrans_tot (erg/s)
-	Tx_integral_nreo = trapz(R, integrand, nlines)
-	return
-end function
+	call transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, transport)
+	luminosity = 4.d0*pi*Rsun**3 * trapz(tab_r, tab_starrho*transport*tab_r**2, size(tab_r))
+	
+end function luminosity_sp_nreo
+
 
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
 	implicit none

@@ -514,13 +514,14 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
     integer :: q_functype, q_index
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
-    double precision :: prefactor_array(niso,11,2)
+    double precision :: prefactor, prefactor_array(niso,11,2)
 
     double precision :: invMFPElemental(nlines), invMFP(nlines), MFP(nlines), MeanFreePathInverseTerm(nlines) !Elemental inverse of the MFP, inverse MFP, MFP
     double precision :: nabund(nlines), etrans(nlines), etransCum(nlines)
     double precision :: radius_dm, Tx, guess_1, guess_2, reltolerance, x_1, x_2, x_3, error, f1, f2, f3
     double precision :: sigma_0, mdm_g, mtarget_g
     double precision :: GeV_cmMinus1_convert = 2.d-14, GN = 6.674d-8
+    double precision :: m_target
     double precision :: K_0
 
     mdm = mx_in
@@ -551,31 +552,21 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
     error = reltolerance + 1.d0
 
     do while (error > reltolerance)
-      f1 = 0d0
-      f2 = 0d0
-      f3 = 0d0
-      do eli=1,niso !isotopeChosen, isotopeChosen
-          mtarget_g = a*mnuc*1.782662d-24 ![g]
-          a = AtomicNumber_oper(eli)
-          a_shared = a !make accessible via the module
-          mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-
-          mu = mdm/(mnuc*a)
-          muplus = (1.+mu)/2.
-          muminus = (mu-1.d0)/2.
-          nabund = tab_mfr(:,eli)*tab_starrho/mtarget_g
-          do w_pow=1,2
-              do q_pow=1,11
-                  if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
-                      q_shared = q_pow - 1
-                      sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                                *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
-                      x_3 = (x_1 + x_2)/2.d0
-                      nq = q_shared
-                      nv = w_pow-1
-                      f1 = f1 + Tx_integral_nreo(x_1, sigma_0, mtarget_g, 1, nwimpsin, nq, nv, nabund)
-                  		f2 = f2 + Tx_integral_nreo(x_2, sigma_0, mtarget_g, 1, nwimpsin, nq, nv, nabund)
-                  		f3 = f3 + Tx_integral_nreo(x_3, sigma_0, mtarget_g, 1, nwimpsin, nq, nv, nabund)
+        f1 = 0d0
+        f2 = 0d0
+        f3 = 0d0
+        x_3 = (x_1 + x_2)/2.d0
+        do eli = 1, size(prefactor_array, dim=1)
+            m_target = AtomicNumber_oper(eli) * mnuc
+            mu = mdm/m_target
+            nabund = tab_mfr(:,eli) * tab_starrho / (m_target/(GeV_per_erg*c0**2))
+            do w_pow = 0, size(prefactor_array, dim=3) - 1
+                do q_pow = 0, size(prefactor_array, dim=2) - 1
+                    prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
+                    if ( prefactor .ne. 0.d0 ) then
+                        f1 = f1 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_1, nwimpsin, m_target, nabund)
+                  		f2 = f2 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_2, nwimpsin, m_target, nabund)
+                  		f3 = f3 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_3, nwimpsin, m_target, nabund)
                   end if
               end do !q_pow
           end do !w_pow
@@ -591,27 +582,17 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
     end do
     Tx = x_3
 
+    !************ Calculating Energy Transport ************
     etransCum = 0d0
-    do eli=1,niso !isotopeChosen, isotopeChosen
-        a = AtomicNumber_oper(eli)
-        a_shared = a !make accessible via the module
-        mu_T = (mnuc*a*mdm)/(mnuc*a+mdm)
-        mtarget_g = a*mnuc*1.782662d-24
-        nabund = tab_mfr(:,eli)*tab_starrho/mtarget_g
-
-        mu = mdm/(mnuc*a)
-        muplus = (1.+mu)/2.
-        muminus = (mu-1.d0)/2.
-
-        do w_pow=1,2
-            do q_pow=1,11
-                if ( prefactor_array(eli,q_pow,w_pow).ne.0. ) then
-                    q_shared = q_pow - 1
-                    sigma_0 = prefactor_array(eli,q_pow,w_pow)&
-                              *(hbar*c0)**2*2*mu_T**2. !just linking sigma 0 to the coupling formalism
-                    nq = q_shared
-                    nv = w_pow-1
-                    etrans = Etrans_sp_nreo(nq, nv, sigma_0, mtarget_g, 1 ,Tx, nwimpsin, nabund)
+    do eli = 1, size(prefactor_array, dim=1)
+        m_target = AtomicNumber_oper(eli) * mnuc
+        mu = mdm/m_target
+        nabund = tab_mfr(:,eli) * tab_starrho / m_target * GeV_per_erg*c0**2
+        do w_pow = 0, size(prefactor_array, dim=3) - 1
+            do q_pow = 0, size(prefactor_array, dim=2) - 1
+                prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
+                if ( prefactor.ne. 0.d0 ) then
+                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, Tx, nwimpsin, m_target, nabund, etrans)
                     etransCum = etransCum + etrans
                 end if
             end do !q_pow
