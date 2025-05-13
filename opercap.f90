@@ -598,7 +598,12 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
             end do !q_pow
         end do !w_pow
     end do !eli
-    K_0 = 0.4d0 ! NOTE THIS IS ONLY FOR CONSTANT XSEC, NEEDS OTHER VALUES FROM TAB.2 OF 2111.06895
+    K_0 = 0.4d0
+    !* @warning
+    ! `K_0 = 0.4` IS ONLY FOR CONSTANT XSEC! Needs other values from Tab. 2 of
+    ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
+    ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] @endwarning
+    !!
     etransCum = 0.5/(1.d0+(K_0/Knudsen)**2)*etransCum
 end subroutine trans_oper_new
 
