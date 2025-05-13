@@ -6,6 +6,8 @@ Capt'n General: $q^{2n}$ and $v^{2m}$ dependent solar dark matter capture and en
 Capt'n Oper: Solar capture using the NREO formalism as adapted from [https://arxiv.org/abs/1501.03729]().
 
 Can be built using `make` as a library by default (or by explicitly calling `make libgencap.so`), or can be built as a standalone executable using `make captngen_test.x`.
+The debugging mode can be selected when building by setting the `debug` environment variable to some non-empty value: `make foo debug=bar`.
+Make sure to clear all build files when switching to and from debugging mode to ensure all object files are compiled with the same flags!
 
 See `main.f90` for examples of how to call the executable, `captngen_test.x`.
 
