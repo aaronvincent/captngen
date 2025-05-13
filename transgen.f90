@@ -238,7 +238,7 @@ reltolerance = 1.0d-6
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
-!nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
+!nxIso = iso_dm_density(Tx, Nwimps) ! Defined in spergelpressmod.f90
 
 
 

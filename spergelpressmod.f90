@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Spergel-Press WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
-!	-nx_isothermal: Calculates the WIMP density in the Spergel-Press scheme
+!	-iso_dm_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
@@ -19,28 +19,31 @@ double precision, parameter :: mnucg=1.6726219e-24
 contains
 
 
-function nx_isothermal(T_x, Nwimps)
-implicit none
-double precision, intent(in) :: T_x, Nwimps
-double precision :: nx_isothermal(nlines)
-double precision :: n_0, mxg
-double precision :: R(nlines), phi(nlines)
-! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
+function iso_dm_density(temp_dm, num_dm) result(density)
+	!! Finds the number density of dark matter as seen in Eq. 2.4 from
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.4)], ensuring the normalisation is maintained:
+	!! \begin{align}
+	!! N_\text{wimps} &= N {\int}_{0}^{R_*} n_\chi(R) 4\pi R^2 \mathrm{d}R \, , \\
+    !!                &= N 4\pi {R_*}^3 {\int}_{0}^{1} n_\chi(r) r^2 \mathrm{d}r \, .
+	!! \end{align}
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision :: normalisation
+	double precision :: density(size(tab_r))
+	double precision :: phi(size(tab_r))
 
-r = tab_r*Rsun ! cm
-phi = -tab_vesc**2/2.d0 ! erg/g
-mxg = mdm*1.782662d-24
-! open(95,"randphi.dat")
-! write(95,*) r , phi
-! close(95)
-! WIMP number density in isothermal approximation
-nx_isothermal = exp(-mxg*(phi-phi(1))/kBoltz/T_x)
-n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
-nx_isothermal = n_0*nx_isothermal
+	phi = -tab_vesc**2/2.d0
+	density = exp(-mdm/(kBoltz*temp_dm*GeV_per_erg*c0**2) * (phi-phi(1)))
 
-if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
-return
-end function
+	normalisation = num_dm/(4.d0*pi*Rsun**3 * trapz(tab_r, tab_r**2*density, nlines))
+	density = normalisation * density
+
+	if (any(isnan(density))) then
+		print *, "Error: NAN encountered in dark matter number density."
+		stop
+	end if
+	
+end function iso_dm_density
 
 
 function Etrans_sp(T_x, sigma_N, Nwimps, niso)
@@ -67,7 +70,7 @@ enddo
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm**2v. Only works for q/v independent cross-sections
 
 ! isothermal WIMP number density in cm**-3.
-n_x = nx_isothermal(T_x, Nwimps)
+n_x = iso_dm_density(T_x, Nwimps)
 
 ! Separate calc into species dependent and independent factors
 species_indep = 8.0d0*sqrt(2.d0/pi)*kBoltz**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
@@ -103,33 +106,6 @@ Etrans_sp = species_indep*species_dep ! erg/g/s
 
 return
 end function
-
-
-function iso_dm_density(temp_dm, num_dm) result(density)
-	!! Finds the number density of dark matter as seen in Eq. 2.4 from
-	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.4)], ensuring the normalisation is maintained:
-	!! \begin{align}
-	!! N_\text{wimps} &= N {\int}_{0}^{R_*} n_\chi(R) 4\pi R^2 \mathrm{d}R \, , \\
-    !!                &= N 4\pi {R_*}^3 {\int}_{0}^{1} n_\chi(r) r^2 \mathrm{d}r \, .
-	!! \end{align}
-	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
-	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
-	double precision :: normalisation
-	double precision :: density(size(tab_r))
-	double precision :: phi(size(tab_r))
-
-	phi = -tab_vesc**2/2.d0
-	density = exp(-mdm/(kBoltz*temp_dm*GeV_per_erg*c0**2) * (phi-phi(1)))
-
-	normalisation = num_dm/(4.d0*pi*Rsun**3 * trapz(tab_r, tab_r**2*density, nlines))
-	density = normalisation * density
-
-	if (any(isnan(density))) then
-		print *, "Error: NAN encountered in dark matter number density."
-		stop
-	end if
-	
-end function iso_dm_density
 
 
 !SB: This is used to define Etrans as done in 2.10 (arxiv:2111.06895)
@@ -174,7 +150,7 @@ function Etrans_sp_mine(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 		Qfactor = Bfactor*2.**nq*(mdm/q0_c0)**(nq*2.)*sigma_0/(1.+mdm_g/targetMass)**(nq*2.)/v0**(2.*nv)
 	end if
 
-	nx = nx_isothermal(Tx, Nwimps)
+	nx = iso_dm_density(Tx, Nwimps)
 	ETrans_sp_mine = Afactor/tab_starrho*sqrt(2./pi)*mdm_g*targetMass/(mdm_g+targetMass)**2&
 										*nx*ndensity_target*Qfactor*kBoltz*(Tx-tab_T)&
 										*(kBoltz*tab_T/targetMass+kBoltz*Tx/mdm_g)**(0.5d0+nq+nv)
