@@ -180,7 +180,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, i
 	!!
 
 	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
-		* ndensity_target * (tab_t - temp_dm) * kBoltz * sqrt(((tab_t/m_target + temp_dm/mdm) * kBoltz*GeV_per_erg*c0**2)**(1+2*n))
+		* ndensity_target * (temp_dm - tab_t) * kBoltz * sqrt(((tab_t/m_target + temp_dm/mdm) * kBoltz*GeV_per_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic
 
