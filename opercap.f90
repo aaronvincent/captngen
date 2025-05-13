@@ -456,10 +456,11 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     double precision :: mfp(nlines) !! mean free path
     double precision :: nabund(nlines), etrans(nlines)
     double precision :: radius_dm, tolerance, temp_high, temp_low, error, lumin_high, lumin_low, lumin_dm
-    double precision :: m_target
+    double precision :: m_target(size(AtomicNumber_oper))
     double precision :: k_0
 
     mdm = mx_in
+    m_target = AtomicNumber_oper * mnuc
 
     if (.not. allocated(tab_r)) then
         print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
@@ -487,16 +488,17 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
         lumin_dm = 0d0
         temp_dm = (temp_high + temp_low)/2.d0
         do eli = 1, size(prefactor_array, dim=1)
-            m_target = AtomicNumber_oper(eli) * mnuc
-            mu = mdm/m_target
-            nabund = tab_mfr(:,eli) * tab_starrho / (m_target/(GeV_per_erg*c0**2))
+            mu = mdm/m_target(eli)
+            nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * GeV_per_erg*c0**2
             do w_pow = 0, size(prefactor_array, dim=3) - 1
                 do q_pow = 0, size(prefactor_array, dim=2) - 1
                     prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
                     if ( prefactor .ne. 0.d0 ) then
-                        lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target, nabund)
-                  		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target, nabund)
-                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target, nabund)
+                        lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target(eli), &
+                            nabund)
+                  		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target(eli), &
+                            nabund)
+                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target(eli), nabund)
                     end if
                 end do !q_pow
             end do !w_pow
@@ -514,14 +516,13 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     ! ************ Calculating Energy Transport ************
     energy_transported = 0d0
     do eli = 1, size(prefactor_array, dim=1)
-        m_target = AtomicNumber_oper(eli) * mnuc
-        mu = mdm/m_target
-        nabund = tab_mfr(:,eli) * tab_starrho / m_target * GeV_per_erg*c0**2
+        mu = mdm/m_target(eli)
+        nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * GeV_per_erg*c0**2
         do w_pow = 0, size(prefactor_array, dim=3) - 1
             do q_pow = 0, size(prefactor_array, dim=2) - 1
                 prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
                 if ( prefactor.ne. 0.d0 ) then
-                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, temp_dm, nwimpsin, m_target, nabund, etrans)
+                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, temp_dm, nwimpsin, m_target(eli), nabund, etrans)
                     energy_transported = energy_transported + etrans
                 end if
             end do !q_pow
