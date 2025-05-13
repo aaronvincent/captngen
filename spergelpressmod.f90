@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Spergel-Press WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
-!	-nx_isothermal: Calculates the WIMP density in the Spergel-Press scheme
+!	-iso_dm_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
@@ -17,35 +17,33 @@ implicit none
 contains
 
 
-function nx_isothermal(T_x, Nwimps)
-use phys, only : kB, pi
-implicit none
-double precision, intent(in) :: T_x, Nwimps
-double precision :: nx_isothermal(nlines)
-double precision :: n_0, mxg
-double precision :: R(nlines), phi(nlines)
-integer :: i
-! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
+function iso_dm_density(temp_dm, num_dm) result(density)
+	!! Finds the number density of dark matter as seen in Eq. 2.4 from
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.4)], ensuring the normalisation is maintained:
+	!! \begin{align}
+	!! N_\text{wimps} &= N {\int}_{0}^{R_*} n_\chi(R) 4\pi R^2 \mathrm{d}R \, , \\
+    !!                &= N 4\pi {R_*}^3 {\int}_{0}^{1} n_\chi(r) r^2 \mathrm{d}r \, .
+	!! \end{align}
+	use phys, only : kB, gev_erg, c0, pi
+	implicit none
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision :: normalisation
+	double precision :: density(size(tab_r))
+	double precision :: phi(size(tab_r))
 
+	phi = -tab_vesc**2/2.d0
+	density = exp(-mdm/(kB*temp_dm*gev_erg*c0**2) * (phi-phi(1)))
 
-r = tab_r*Rsun ! cm
-phi = -tab_vesc**2/2.d0 ! erg/g
-mxg = mdm*1.782662d-24  ! g
+	normalisation = num_dm/(4.d0*pi*Rsun**3 * trapz(tab_r, tab_r**2*density, nlines))
+	density = normalisation * density
 
-
-!print*, 'nx_iso here'
-! WIMP number density in isothermal approximation
-
-!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
-nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
-
-n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
-nx_isothermal = n_0*nx_isothermal
-
-if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
-
-return
-end function
+	if (any(isnan(density))) then
+		print *, "Error: NAN encountered in dark matter number density."
+		stop
+	end if
+	
+end function iso_dm_density
 
 
 function Etrans_sp(T_x, sigma_N, Nwimps, niso)
@@ -82,7 +80,7 @@ sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works
 
 !print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
-n_x = nx_isothermal(T_x, Nwimps)
+n_x = iso_dm_density(T_x, Nwimps)
 
 p = (nv + nq)
 if ((p .eq. 0)) then
@@ -164,7 +162,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, i
 	! matches the values I found using Sympy and Mathematica up to and including \( A_{12} \). @endnote
 	!!
 
-	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * nx_isothermal(temp_dm, num_dm) &
+	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
 		* ndensity_target * (temp_dm - tab_t) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*gev_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic
