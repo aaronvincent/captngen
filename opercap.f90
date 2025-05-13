@@ -11,11 +11,11 @@ module opermod
     use sharedmod
     implicit none
     double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
-                                                        28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
+                                                        28., 32., 40., 40., 56., 58./) !! Atomic masses of the isotopes used in [[arXiv:1501.03729](https://arxiv.org/abs/1501.03729)].
     character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
-                                                                "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
+                                                                "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !! The [[arXiv:1501.03729](https://arxiv.org/abs/1501.03729)] isotopes in text form to match against the W functions.
     double precision, parameter :: AtomicSpin_oper(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
-                                                        0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
+                                                        0., 0., 0., 0., 0., 0./) !! Atomic spins of the [[arXiv:1501.03729](https://arxiv.org/abs/1501.03729)] isotopes pulled from [NIST](https://physics.nist.gov/PhysRefData/Handbook/element_name.htm).
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
     double precision :: yConverse_array(16)
@@ -27,7 +27,7 @@ module opermod
 
     contains
 
-    ! having removed the scaling momentum, are the units off here? I'm looking at the p/c0 in particular
+
     function GFFI_H_oper(w,vesc,mq)
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
         integer mq
@@ -77,6 +77,7 @@ module opermod
         end if
     end function GFFI_A_oper
 
+
     subroutine RW_prefactors(j_chi, total_prefactors)
         !! Populates the `total_prefactors` array with the numerical prefactors \(P_{i,n_q,n_w}\) for each isotope's differential
         !! cross section term corresponding to the R and W response functions as defined by:
@@ -95,12 +96,8 @@ module opermod
         !! [\(^{58}\text{Ni}\)](https://arxiv.org/pdf/1501.03729#equation.C.16)). Here \(q\) is the momentum transferred in the
         !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
         !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
-        double precision, intent(in):: j_chi
-            !! The spin of the dark matter.
-        double precision, intent(out) :: total_prefactors(:,:,:)
-            !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran
-            !! arrays start with 1). This typically means `16,9,2`.
-
+        double precision, intent(in):: j_chi !! The spin of the dark matter.
+        double precision, intent(out) :: total_prefactors(:,:,:) !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran arrays start with 1). This typically means `16,9,2`.
         integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
         integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
@@ -193,6 +190,7 @@ module opermod
         end do !eli
     end subroutine RW_prefactors
 
+
     subroutine mfp_nreo(prefactor_array, path_length)
         !! Calculates the mean free path in \(\text{cm}\) in the non-relativistic effective operator (NREO) convention following
         !! [arxiv:1501.03729](https://arxiv.org/abs/1501.03729):
@@ -238,6 +236,7 @@ module opermod
         path_length = 1/inverse_path_length
     end subroutine mfp_nreo
 end module opermod
+
 
 subroutine captn_init_oper()
     use opermod
@@ -310,6 +309,7 @@ subroutine captn_init_oper()
         yConverse_array(i) = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.))
     end do
 end subroutine captn_init_oper
+
 
 ! this is the integral over R in eqn 2.3 in 1501.03729
 ! note that Omega there is expanded and broken into terms of the form const. * q^2n * exp{E_R/E_i}
@@ -496,7 +496,8 @@ subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
     end if
 end subroutine captn_oper
 
-!SB: Only works for Hydrogen + const for now (21-11-2023)
+
+! SB: Only works for Hydrogen + const for now (21-11-2023)
 subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energy_transported)
     use opermod
     use spergelpressmod
@@ -522,16 +523,16 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
         return
     end if
 
-    !************ looping over to find the prefactor for all nq and nw powers ************
+    ! ************ looping over to find the prefactor for all nq and nw powers ************
     call RW_prefactors(jx_in, prefactor_array)
 
-    !************ Calculating Knudsen Number ************
+    ! ************ Calculating Knudsen Number ************
     call mfp_nreo(prefactor_array, mfp)
     radius_dm = sqrt((3 * kBoltz * tab_T(1))/(2 * pi * GNewt * tab_starrho(1) * mdm) * GeV_per_erg*c0**2)
     knudsen = mfp(1)/radius_dm
 
-    !************ Finding Dark Matter Temperature ************    
-    !starting binary search method
+    ! ************ Finding Dark Matter Temperature ************    
+    ! starting binary search method
     tolerance = 1.0d-8
     temp_high = maxval(tab_T) ! Temperature of the core
   	temp_low = tab_T(minloc(abs(Rsun*tab_r-radius_dm), dim=1)) ! Stelar temperature at the calculated dark matter radius
@@ -567,7 +568,7 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
         error = abs(temp_high-temp_low)/temp_low
     end do
 
-    !************ Calculating Energy Transport ************
+    ! ************ Calculating Energy Transport ************
     energy_transported = 0d0
     do eli = 1, size(prefactor_array, dim=1)
         m_target = AtomicNumber_oper(eli) * mnuc
