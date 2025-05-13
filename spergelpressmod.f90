@@ -10,10 +10,11 @@
 ! I apologize for the long function calls.
 
 module spergelpressmod
+use sharedmod
 use capmod
 implicit none
 
-double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24, hbar=6.582d-25
+double precision, parameter :: mnucg=1.6726219e-24
 
 contains
 
@@ -33,7 +34,7 @@ mxg = mdm*1.782662d-24
 ! write(95,*) r , phi
 ! close(95)
 ! WIMP number density in isothermal approximation
-nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)
+nx_isothermal = exp(-mxg*(phi-phi(1))/kBoltz/T_x)
 n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
 
@@ -69,7 +70,7 @@ sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm**2v. Only work
 n_x = nx_isothermal(T_x, Nwimps)
 
 ! Separate calc into species dependent and independent factors
-species_indep = 8.0d0*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
+species_indep = 8.0d0*sqrt(2.d0/pi)*kBoltz**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
 
 ! Now sum over species to get the species dependent factor
 species_dep=0.d0
@@ -98,7 +99,7 @@ Etrans_sp = species_indep*species_dep ! erg/g/s
 ! print*, "ndensity_target: ", n_nuc(1,253)
 ! print*, "Tx: ", T_x
 ! print*, "tab_T: ", tab_T(253)
-! print*, "kb: ", kB
+! print*, "kBoltz: ", kBoltz
 
 return
 end function
@@ -118,7 +119,7 @@ function iso_dm_density(temp_dm, num_dm) result(density)
 	double precision :: phi(size(tab_r))
 
 	phi = -tab_vesc**2/2.d0
-	density = exp(-mdm/(kB*temp_dm*GeV_per_erg*c0**2) * (phi-phi(1)))
+	density = exp(-mdm/(kBoltz*temp_dm*GeV_per_erg*c0**2) * (phi-phi(1)))
 
 	normalisation = num_dm/(4.d0*pi*Rsun**3 * trapz(tab_r, tab_r**2*density, nlines))
 	density = normalisation * density
@@ -175,8 +176,8 @@ function Etrans_sp_mine(nq, nv, sigma_0, targetMass, electron_v_nucleons ,Tx, Nw
 
 	nx = nx_isothermal(Tx, Nwimps)
 	ETrans_sp_mine = Afactor/tab_starrho*sqrt(2./pi)*mdm_g*targetMass/(mdm_g+targetMass)**2&
-										*nx*ndensity_target*Qfactor*kb*(Tx-tab_T)&
-										*(kb*tab_T/targetMass+kb*Tx/mdm_g)**(0.5d0+nq+nv)
+										*nx*ndensity_target*Qfactor*kBoltz*(Tx-tab_T)&
+										*(kBoltz*tab_T/targetMass+kBoltz*Tx/mdm_g)**(0.5d0+nq+nv)
 
 return
 end function
@@ -205,7 +206,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, e
 	!!
 
 	epsilon_sp = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
-		* ndensity_target * (tab_t - temp_dm) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*GeV_per_erg*c0**2)**(1+2*n))
+		* ndensity_target * (tab_t - temp_dm) * kBoltz * sqrt(((tab_t/m_target + temp_dm/mdm) * kBoltz*GeV_per_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic
 

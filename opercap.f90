@@ -10,9 +10,6 @@
 module opermod
     use sharedmod
     implicit none
-    double precision, parameter :: hbar=6.582d-25 !GeV*s
-    !this goes with the Serenelli table format
-
     double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
     character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
@@ -631,7 +628,7 @@ subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, isotope, sigma_0, Mea
       nv = w_pow
 
       ! !******************Begin Inverse Mean Free Path Calc***************
-      vTArray = sqrt(2.d0*kb*tab_T/mdm_g)/c0 ![vTArray] = natural units
+      vTArray = sqrt(2.d0*kBoltz*tab_T/mdm_g)/c0 ![vTArray] = natural units
 
       if ((nq.eq.0).and.(nv.eq.0)) then !constttt
         MeanFreePathInverseTerm = 2.d0 ! Since sigma_tot = 2*sigma_0 for v/q independent scattering

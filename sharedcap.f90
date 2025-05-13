@@ -15,6 +15,8 @@ module sharedmod
     double precision, parameter :: pi=4.D0*DATAN(1.D0)
     double precision, parameter :: NAvo=6.0221409d23, GMoverR=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938, melectron = 0.000511
+    double precision, parameter :: hbar=6.582119569d-25
+    !! \( \hbar \) in [\( GeV \cdot s \)]
     double precision, parameter :: melectronKg = 9.11d-31
     double precision, parameter :: GeV_per_erg = 624.1509074
     !! GeV per erg conversion factor: \( \frac{10^{-9}\,\text{GeV}}{1.602176634\times10^{-12}\,\text{erg}} \)
