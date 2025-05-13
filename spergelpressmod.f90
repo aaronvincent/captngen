@@ -229,7 +229,7 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
 	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
 	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
-	double precision, intent(out) :: epsilon_sp(nlines) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
+	double precision, intent(out) :: epsilon_sp(:) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
 	double precision :: sigma_tot
 	double precision, allocatable :: integral_result(:)
 
