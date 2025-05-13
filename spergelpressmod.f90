@@ -157,7 +157,7 @@ return
 end function
 
 
-subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 	!! This gives the result of the Spergel & Press energy transfer with a given target isotope as defined in Eq. 2.10 of
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)], except for the interaction-dependent terms
 	!! \( (1-Q) \sigma_\text{tot} \).
@@ -167,7 +167,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, e
 	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
 	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
 	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
-	double precision, intent(out) :: epsilon_sp(:) !! [\( (\text{erg} \cdot \text{g}^{-1} \text{s}^{-1}) (\text{cm}^{-2}) {(\text{cm} \cdot \text{s}^{-1})}^{2n} \)]
+	double precision, intent(out) :: integral_result(:) !! [\( (\text{erg} \cdot \text{g}^{-1} \text{s}^{-1}) (\text{cm}^{-2}) {(\text{cm} \cdot \text{s}^{-1})}^{2n} \)]
 	double precision :: a_factor
 
 	a_factor = 2.d0**(2+n) * gamma(real(n)+3)
@@ -179,7 +179,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, e
 	! matches the values I found using Sympy and Mathematica up to and including \( A_{12} \). @endnote
 	!!
 
-	epsilon_sp = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
+	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
 		* ndensity_target * (tab_t - temp_dm) * kBoltz * sqrt(((tab_t/m_target + temp_dm/mdm) * kBoltz*GeV_per_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic
