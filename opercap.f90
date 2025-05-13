@@ -191,10 +191,12 @@ module opermod
         double precision :: qw_terms(size(path_length)), this_term(size(path_length)), density_target(size(path_length))
 
         m_target = mnuc*AtomicNumber_oper
-        isotopic_term = -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) ! FIGURE OUT THE NEGATIVE SIGN
+        isotopic_term = abs( -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) )
         !* @warning
         ! I have a leading negative sign on my calculation of the thermally averaged cross section \( {\langle \sigma_i(w)
-        ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. NEEDS TO BE SORTED OUT! @endwarning
+        ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. For now, we are assuming that the total cross
+        ! section must be strictly positive, but is there a more convincing argument? @endwarning
+        !!
         !!
         inverse_path_length = 0.d0
         do iso = 1, size(prefactor_array,dim=1)

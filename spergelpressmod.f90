@@ -237,9 +237,10 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 		allocate(integral_result(size(epsilon_sp)))
 	end if
 
-	sigma_tot = -prefactor * hbar**2 * c0**(2*q_pow) / (q_pow+1) * (2*mdm/(1+mu))**(2*(q_pow+1))
+	sigma_tot = abs( -prefactor * hbar**2 * c0**(2*q_pow) / (q_pow+1) * (2*mdm/(1+mu))**(2*(q_pow+1)) )
 	!* @warning
-	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. @endwarning
+	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. For now we
+	! enforce that the total cross section is strictly positive, but is there a more convincing argument beyond that? @endwarning
 	!!
 	call transport_sp_generic(q_pow+w_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 
