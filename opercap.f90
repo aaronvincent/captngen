@@ -497,17 +497,16 @@ subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
 end subroutine captn_oper
 
 !SB: Only works for Hydrogen + const for now (21-11-2023)
-subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!, isotopeChosen)
+subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energy_transported)
     use opermod
     use spergelpressmod
     implicit none
     double precision, intent(in) :: mx_in !! Mass of the dark matter [\( \text{GeV} \)]
     double precision, intent(in) :: jx_in !! Spin of the dark matter [\( \text{1} \)]
-    double precision, intent(in) :: niso  !! Total number of isotopes [\( \text{1} \)]
     double precision, intent(in) :: nwimpsin !! Total number of dark matter particles [\( \text{1} \)]
-    double precision, intent(out) :: Knudsen !! The calculated Knudsen Number [\( \text{1} \)]
-    double precision, intent(out) :: Tx !! Isothermal temperature of the dark matter [\( \text{K} \)]
-    double precision, intent(out) :: etransCum(nlines) !! energy transport by dark matter [\( \text{erg} \text{s}^{-1} \text{g}^{-1} \)]
+    double precision, intent(out) :: knudsen !! The calculated Knudsen Number [\( \text{1} \)]
+    double precision, intent(out) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+    double precision, intent(out) :: energy_transported(nlines) !! energy transport by dark matter [\( \text{erg} \text{s}^{-1} \text{g}^{-1} \)]
     integer :: eli, q_pow, w_pow ! loop indicies
     double precision :: prefactor, prefactor_array(size(tab_mfr_oper,dim=2), 9, 2)
     double precision :: mfp(nlines) !! mean free path
@@ -542,7 +541,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
         lumin_high = 0d0
         lumin_low = 0d0
         lumin_dm = 0d0
-        Tx = (temp_high + temp_low)/2.d0
+        temp_dm = (temp_high + temp_low)/2.d0
         do eli = 1, size(prefactor_array, dim=1)
             m_target = AtomicNumber_oper(eli) * mnuc
             mu = mdm/m_target
@@ -553,7 +552,7 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
                     if ( prefactor .ne. 0.d0 ) then
                         lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target, nabund)
                   		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target, nabund)
-                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, Tx, nwimpsin, m_target, nabund)
+                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target, nabund)
                     end if
                 end do !q_pow
             end do !w_pow
@@ -561,15 +560,15 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
         if (lumin_dm == 0.d0) then
             exit
         else if (lumin_high*lumin_dm .gt. 0) then ! if lumin_high and lumin_dm have the same sign, the T_x upper guess is too high so decrease it
-            temp_high = Tx
+            temp_high = temp_dm
         else if (lumin_low*lumin_dm .gt. 0) then ! T_x lower guess is too low, raise it
-            temp_low = Tx
+            temp_low = temp_dm
         endif
         error = abs(temp_high-temp_low)/temp_low
     end do
 
     !************ Calculating Energy Transport ************
-    etransCum = 0d0
+    energy_transported = 0d0
     do eli = 1, size(prefactor_array, dim=1)
         m_target = AtomicNumber_oper(eli) * mnuc
         mu = mdm/m_target
@@ -578,8 +577,8 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
             do q_pow = 0, size(prefactor_array, dim=2) - 1
                 prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
                 if ( prefactor.ne. 0.d0 ) then
-                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, Tx, nwimpsin, m_target, nabund, etrans)
-                    etransCum = etransCum + etrans
+                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, temp_dm, nwimpsin, m_target, nabund, etrans)
+                    energy_transported = energy_transported + etrans
                 end if
             end do !q_pow
         end do !w_pow
@@ -590,8 +589,9 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
     ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
     ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] @endwarning
     !!
-    etransCum = 0.5/(1.d0+(K_0/Knudsen)**2)*etransCum
-end subroutine trans_oper_new
+    energy_transported = 0.5/(1.d0+(k_0/knudsen)**2)*energy_transported
+end subroutine energy_transport_nreo
+
 
 !SB: This calculate the inverse mean free path
 subroutine MeanFreePathInverse_calculate(mx, w_pow, q_pow, isotope, sigma_0, MeanFreePathInverseTerm)

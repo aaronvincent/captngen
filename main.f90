@@ -189,7 +189,7 @@ PROGRAM GENCAP
           maxcapture = maxcap(mx)
           nwimpsin = capped*3.d7*4.57d9
           nwimpsin = 1d0
-          call trans_oper_new(mx, jx, 1, nwimpsin, K, Tx, Etrans)
+          call energy_transport_nreo(mx, jx, nwimpsin, K, Tx, Etrans)
           print*
           print*, "couplingVal: ", couplingVal, "GeV^-2 ", &
                   "DM mass: ", mx, "GeV ", &
