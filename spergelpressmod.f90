@@ -103,39 +103,32 @@ Etrans_sp = species_indep*species_dep ! erg/g/s
 return
 end function
 
-!SB: Function to calculate the normalization constant of the SP number density function for a given Tx (eq 2.4)
-function normalizationConst_mine(Tx, Nwimps)
-	double precision, intent(in):: Tx, Nwimps
-	double precision :: normalizationConst_mine
-	double precision:: mxg
-	integer:: i
-	double precision:: phi(nlines),norm_integrand(nlines), R(nlines), phi2(nlines)
+
+function iso_dm_density(temp_dm, num_dm) result(density)
+	!! Finds the number density of dark matter as seen in Eq. 2.4 from
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.4)], ensuring the normalisation is maintained:
+	!! \begin{align}
+	!! N_\text{wimps} &= N {\int}_{0}^{R_*} n_\chi(R) 4\pi R^2 \mathrm{d}R \, , \\
+    !!                &= N 4\pi {R_*}^3 {\int}_{0}^{1} n_\chi(r) r^2 \mathrm{d}r \, .
+	!! \end{align}
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision :: normalisation
+	double precision :: density(size(tab_r))
+	double precision :: phi(size(tab_r))
+
 	phi = -tab_vesc**2/2.d0
-	!phi = phi_mine()
-	mxg = mdm*1.78d-24 !DM mass in grams
-	R = tab_r*Rsun !Radius from core in [cm]
-	norm_integrand = 4.d0*pi*R**2*exp(-mxg*(phi-phi(1))/kb/Tx)
-	normalizationConst_mine = Nwimps/trapz(R, norm_integrand, nlines)
-return
-end function
+	density = exp(-mdm/(kB*temp_dm*GeV_per_erg*c0**2) * (phi-phi(1)))
 
-!SB: Function to calculate the SP number density for a given Tx (eq 2.4)
-function nxIso_mine(Tx, Nwimps)
-	double precision::nxIso_mine(nlines)
-	double precision, intent(in):: Tx, Nwimps
-	double precision :: normConst
-	double precision:: mxg, x
-	integer:: i
-	double precision:: phi(nlines)
-	phi = -tab_vesc**2/2.d0
-	!phi = phi_mine()
-	mxg = mdm*1.78d-24
+	normalisation = num_dm/(4.d0*pi*Rsun**3 * trapz(tab_r, tab_r**2*density, nlines))
+	density = normalisation * density
 
-	normConst = normalizationConst_mine(Tx, Nwimps)
-	nxIso_mine = normConst*exp(-mxg*(phi-phi(1))/kb/Tx)
-
-return
-end function
+	if (any(isnan(density))) then
+		print *, "Error: NAN encountered in dark matter number density."
+		stop
+	end if
+	
+end function iso_dm_density
 
 
 !SB: This is used to define Etrans as done in 2.10 (arxiv:2111.06895)
@@ -211,7 +204,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, e
 	! matches the values I found using Sympy and Mathematica up to and including \( A_{12} \). @endnote
 	!!
 
-	epsilon_sp = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * nxIso_mine(temp_dm, num_dm) &
+	epsilon_sp = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
 		* ndensity_target * (tab_t - temp_dm) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*GeV_per_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic

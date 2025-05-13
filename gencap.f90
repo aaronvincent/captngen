@@ -2026,7 +2026,7 @@
   !   Tx = binary_search_mine(Tx_integral_mine, sigma_0, mtargetKg*1d3, electron_v_nucleons, nabund, 1d0, guess_1, guess_2,&
   !         reltolerance)
   !   ! Tx = 0.525*tab_T(1)
-  !   nChi = nxIso_mine(Tx, Nwimps)
+  !   nChi = iso_dm_density(Tx, Nwimps)
   !   !**********************************************************************************************************
   !   !Mean Free Path
   !   rchi = sqrt(3*kb*tab_T(1)/(2*pi*GN*tab_starrho(1)*(mdmKg*1d3)))
