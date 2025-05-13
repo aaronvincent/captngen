@@ -501,58 +501,48 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
     use opermod
     use spergelpressmod
     implicit none
-    integer, intent(in):: niso!, isotopeChosen
-    integer ri, eli, limit!, i
-    double precision, intent(in) :: mx_in, jx_in, nwimpsin
-    double precision, intent(out) :: Knudsen
-    double precision :: a
-
-    integer :: funcType, tau, taup, term_R, term_W, q_pow, w_pow ! loop indicies
-    integer :: q_functype, q_index
-    double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
-    double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
-    double precision :: prefactor, prefactor_array(niso,11,2)
-
-    double precision :: invMFPElemental(nlines), invMFP(nlines), MFP(nlines), MeanFreePathInverseTerm(nlines) !Elemental inverse of the MFP, inverse MFP, MFP
-    double precision :: nabund(nlines), etrans(nlines), etransCum(nlines)
-    double precision :: radius_dm, Tx, guess_1, guess_2, reltolerance, x_1, x_2, x_3, error, f1, f2, f3
-    double precision :: sigma_0, mdm_g, mtarget_g
-    double precision :: GeV_cmMinus1_convert = 2.d-14, GN = 6.674d-8
+    double precision, intent(in) :: mx_in !! Mass of the dark matter [\( \text{GeV} \)]
+    double precision, intent(in) :: jx_in !! Spin of the dark matter [\( \text{1} \)]
+    double precision, intent(in) :: niso  !! Total number of isotopes [\( \text{1} \)]
+    double precision, intent(in) :: nwimpsin !! Total number of dark matter particles [\( \text{1} \)]
+    double precision, intent(out) :: Knudsen !! The calculated Knudsen Number [\( \text{1} \)]
+    double precision, intent(out) :: Tx !! Isothermal temperature of the dark matter [\( \text{K} \)]
+    double precision, intent(out) :: etransCum(nlines) !! energy transport by dark matter [\( \text{erg} \text{s}^{-1} \text{g}^{-1} \)]
+    integer :: eli, q_pow, w_pow ! loop indicies
+    double precision :: prefactor, prefactor_array(size(tab_mfr_oper,dim=2), 9, 2)
+    double precision :: mfp(nlines) !! mean free path
+    double precision :: nabund(nlines), etrans(nlines)
+    double precision :: radius_dm, tolerance, temp_high, temp_low, error, lumin_high, lumin_low, lumin_dm
     double precision :: m_target
-    double precision :: K_0
+    double precision :: k_0
 
     mdm = mx_in
-    mdm_g =mdm*1.782662d-24 ![g]
-    j_chi = jx_in
 
     if (.not. allocated(tab_r)) then
         print*,"Errorface of errors: you haven't called captn_init to load the solar model!"
         return
     end if
 
-    !************ looping over to find the prefactor for all nq and nv powers ************
-    call RW_prefactors(j_chi, prefactor_array)
+    !************ looping over to find the prefactor for all nq and nw powers ************
+    call RW_prefactors(jx_in, prefactor_array)
 
-    !************ Calculating Knudsen ************
-    call mfp_nreo(prefactor_array, MFP)
+    !************ Calculating Knudsen Number ************
+    call mfp_nreo(prefactor_array, mfp)
     radius_dm = sqrt((3 * kBoltz * tab_T(1))/(2 * pi * GNewt * tab_starrho(1) * mdm) * GeV_per_erg*c0**2)
-    Knudsen = MFP(1)/radius_dm
+    knudsen = mfp(1)/radius_dm
 
-    !************ Calculating Tx ************
-    guess_1 = maxval(tab_T)*15d0 ! One-zone WIMP temp guesses in K.
-    guess_2 = maxval(tab_T)/150.d0
-    reltolerance = 1.0d-8
-
+    !************ Finding Dark Matter Temperature ************    
     !starting binary search method
-    x_1 = guess_1
-  	x_2 = guess_2
-    error = reltolerance + 1.d0
+    tolerance = 1.0d-8
+    temp_high = maxval(tab_T) ! Temperature of the core
+  	temp_low = tab_T(minloc(abs(Rsun*tab_r-radius_dm), dim=1)) ! Stelar temperature at the calculated dark matter radius
 
-    do while (error > reltolerance)
-        f1 = 0d0
-        f2 = 0d0
-        f3 = 0d0
-        x_3 = (x_1 + x_2)/2.d0
+    error = tolerance + 1.d0
+    do while (error > tolerance)
+        lumin_high = 0d0
+        lumin_low = 0d0
+        lumin_dm = 0d0
+        Tx = (temp_high + temp_low)/2.d0
         do eli = 1, size(prefactor_array, dim=1)
             m_target = AtomicNumber_oper(eli) * mnuc
             mu = mdm/m_target
@@ -561,23 +551,22 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
                 do q_pow = 0, size(prefactor_array, dim=2) - 1
                     prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
                     if ( prefactor .ne. 0.d0 ) then
-                        f1 = f1 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_1, nwimpsin, m_target, nabund)
-                  		f2 = f2 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_2, nwimpsin, m_target, nabund)
-                  		f3 = f3 + luminosity_sp_nreo(q_pow, w_pow, prefactor, x_3, nwimpsin, m_target, nabund)
-                  end if
-              end do !q_pow
-          end do !w_pow
-      end do !eli
-      if (f3 == 0.d0) then
-  			exit
-  		else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign, the T_x upper guess is too high so decrease it
-  			x_1 = x_3
-  		else if (f2*f3 .gt. 0) then ! T_x lower guess is too low, raise it
-  			x_2 = x_3
-  		endif
-  		error = abs(x_2-x_1)/x_2
+                        lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target, nabund)
+                  		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target, nabund)
+                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, Tx, nwimpsin, m_target, nabund)
+                    end if
+                end do !q_pow
+            end do !w_pow
+        end do !eli
+        if (lumin_dm == 0.d0) then
+            exit
+        else if (lumin_high*lumin_dm .gt. 0) then ! if lumin_high and lumin_dm have the same sign, the T_x upper guess is too high so decrease it
+            temp_high = Tx
+        else if (lumin_low*lumin_dm .gt. 0) then ! T_x lower guess is too low, raise it
+            temp_low = Tx
+        endif
+        error = abs(temp_high-temp_low)/temp_low
     end do
-    Tx = x_3
 
     !************ Calculating Energy Transport ************
     etransCum = 0d0
@@ -595,9 +584,9 @@ subroutine trans_oper_new(mx_in, jx_in, niso, nwimpsin, Knudsen, Tx, etransCum)!
             end do !q_pow
         end do !w_pow
     end do !eli
-    K_0 = 0.4d0
+    k_0 = 0.4d0
     !* @warning
-    ! `K_0 = 0.4` IS ONLY FOR CONSTANT XSEC! Needs other values from Tab. 2 of
+    ! `k_0 = 0.4` IS ONLY FOR CONSTANT XSEC! Needs other values from Tab. 2 of
     ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
     ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] @endwarning
     !!
