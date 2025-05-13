@@ -199,6 +199,10 @@ module opermod
         ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. For now, we are assuming that the total cross
         ! section must be strictly positive, but is there a more convincing argument? @endwarning
         !!
+        !* @todo
+        ! \( \sigma_\text{tot} \) is used a number of times in the transport calculation, is it better to make it a function to
+        ! reduce redundant code? @endtodo 
+        !!
         inverse_path_length = 0.d0
         do iso = 1, size(prefactor_array,dim=1)
             thermal_target = 2*kB*tab_T / m_target(iso) * gev_erg*c0**2
