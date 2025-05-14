@@ -257,30 +257,30 @@ end subroutine init_nreo
 ! note that Omega there is expanded and broken into terms of the form const. * q^2n * exp{E_R/E_i}
 ! I've doen this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
-function integrand_oper(u, foveru)
+function velocity_integrand_nreo(init_velocity, dist_over_vel)
     use nreo_mod
     implicit none
     interface
-        function foveru(arg1)
-            double precision :: arg1, foveru
-        end function foveru
+        function dist_over_vel(arg1)
+            double precision :: arg1, dist_over_vel
+        end function dist_over_vel
     end interface
-    double precision :: u, integrand_oper
+    double precision :: init_velocity, velocity_integrand_nreo
     double precision :: w
 
-    w = sqrt(u**2+vesc_shared_arr(rindex_shared)**2)
+    w = sqrt(init_velocity**2+vesc_shared_arr(rindex_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (a_shared .gt. 2.d0) then
-        integrand_oper = foveru(u)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
     else
-        integrand_oper = foveru(u)*GFFI_H_oper(w,vesc_shared_arr(rindex_shared),q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*GFFI_H_oper(w,vesc_shared_arr(rindex_shared),q_shared)
     end if
     if (w_shared) then
-        integrand_oper = integrand_oper * w**2
+        velocity_integrand_nreo = velocity_integrand_nreo * w**2
     end if
 
-end function integrand_oper
+end function velocity_integrand_nreo
 
 
 ! call capture_rate_nreo to run capt'n with the effective operator method
@@ -288,14 +288,14 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
     use nreo_mod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
-        function integrand_oper(arg1, func1)
-            double precision :: arg1, integrand_oper
+        function velocity_integrand_nreo(arg1, func1)
+            double precision :: arg1, velocity_integrand_nreo
             interface
                 function func1(arg2)
                     double precision :: arg2, func1
                 end function func1
             end interface
-        end function integrand_oper
+        end function velocity_integrand_nreo
     end interface
     integer ri, eli, limit!, i
     double precision, intent(in) :: mx_in, jx_in
@@ -370,7 +370,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
                         integrateResult = 0.d0
                         q_shared = q_pow - 1
                         !Call integrator
-                        call dsntdqagse(integrand_oper,vdist_over_u,umin,umax, &
+                        call dsntdqagse(velocity_integrand_nreo,vdist_over_u,umin,umax, &
                             epsabs,epsrel,limit,integrateResult,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
                         elementalResult = elementalResult + integrateResult * prefactor_array(eli,q_pow,w_pow)
