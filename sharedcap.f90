@@ -12,7 +12,7 @@
 module shared_mod
     use omp_lib
     implicit none
-    double precision, parameter :: pi=3.141592653, avogadro=6.0221409d23, GMoverR=1.908e15
+    double precision, parameter :: pi=3.141592653, avogadro=6.0221409d23, gm_over_r_sun=1.908e15
     double precision, parameter :: c0=2.99792458d10, mnuc=0.938
     !these are now set in init_sun
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
@@ -88,19 +88,19 @@ module shared_mod
         close(99)
 
         !we calculate the escape velocity here since all the ingredients are ready
-        phi(nlines) = -GMoverR
+        phi(nlines) = -gm_over_r_sun
         tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
         tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
         do i = 1,nlines-1
           j = nlines-i !trapezoid integral
-          phi(j) = phi(j+1) + GMoverR*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
+          phi(j) = phi(j+1) + gm_over_r_sun*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
           tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
           tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
           ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
-          tab_g(i) = -GMoverR*tab_mencl(i)/tab_r(i)**2/Rsun
+          tab_g(i) = -gm_over_r_sun*tab_mencl(i)/tab_r(i)**2/Rsun
         end do
         ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -GMoverR*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
+        tab_g(nlines) = -gm_over_r_sun*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
@@ -143,7 +143,7 @@ end function gausstest
 
     capture_maximum = pi/3.d0*rho0/mx*Rsun**2 &
     *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-    + (6.d0*GMoverR/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
+    + (6.d0*gm_over_r_sun/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
 
   end function capture_maximum
 
