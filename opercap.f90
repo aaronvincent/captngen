@@ -17,7 +17,7 @@ module nreo_mod
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
     character (len=4) :: isotope_strings(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
                                                                 "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
-    double precision, parameter :: AtomicSpin_oper(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
+    double precision, parameter :: atomic_spins_nreo(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: coupling_Array(14,2)
     double precision :: W_array(8,16,2,2,7)
@@ -353,7 +353,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
             muplus = (1.+mu)/2.
             muminus = (mu-1.d0)/2.
 
-            J = AtomicSpin_oper(eli)
+            J = atomic_spins_nreo(eli)
 
             ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
             umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
