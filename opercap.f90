@@ -19,7 +19,7 @@ module nreo_mod
                                                                 "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
     double precision, parameter :: atomic_spins_nreo(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
-    double precision :: coupling_Array(14,2)
+    double precision :: couplings_nreo(14,2)
     double precision :: W_array(8,16,2,2,7)
     double precision :: yConverse_array(16)
 
@@ -130,21 +130,21 @@ module nreo_mod
                                     ! note for possible future change: currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
                                     select case (func_type)
                                     case (1)
-                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
+                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
                                     case (2)
-                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (3)
-                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (4)
-                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (5)
-                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (6)
-                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (7)
-                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (8)
-                                        r_const = rs1d(tau,tau_p,term_r-1,spin_dm,coupling_Array)
+                                        r_const = rs1d(tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case default
                                         print*, "Um, I ran out of DM response R functions to choose from?"
                                         stop
@@ -242,9 +242,9 @@ subroutine init_nreo()
         end do
     end do
 
-    ! initiate the coupling_Array (full of the coupling constants) with all zeros
+    ! initiate the couplings_nreo (full of the coupling constants) with all zeros
     ! init_couplings will place the non-zero value into a chosen slot at runtime
-    coupling_Array = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
+    couplings_nreo = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
     ! yconv comes from arxiv:1501.03729 page 10, where yconv = (b/{2 hbar c})^2
@@ -429,5 +429,5 @@ subroutine init_couplings(val, couple, isospin)
 
     ! val is the value you want to populate with
     ! set the value picked in the slot chosen
-    coupling_Array(cpl,iso) = val
+    couplings_nreo(cpl,iso) = val
 end subroutine init_couplings

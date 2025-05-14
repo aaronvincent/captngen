@@ -1,7 +1,7 @@
-      function RS1D(tau, taup, term, j_chi, coupling_Array)
+      function RS1D(tau, taup, term, j_chi, couplings_nreo)
       implicit none
       double precision :: RS1D, j_chi
-      double precision :: coupling_Array(14,2)
+      double precision :: couplings_nreo(14,2)
       integer :: tau,taup
       integer :: term
       integer :: c
@@ -10,10 +10,10 @@
 c
       c = 0
 c
-      c5 = coupling_Array(4,tau)
-      c4p = coupling_Array(3,taup)
-      c8 = coupling_Array(7,tau)
-      c9p = coupling_Array(8,taup)
+      c5 = couplings_nreo(4,tau)
+      c4p = couplings_nreo(3,taup)
+      c8 = couplings_nreo(7,tau)
+      c9p = couplings_nreo(8,taup)
 c
       if (term.eq.c) then
          RS1D = (j_chi*(j_chi+1))/3. * (c5*c4p - c8*c9p)

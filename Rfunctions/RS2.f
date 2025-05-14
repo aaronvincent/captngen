@@ -1,7 +1,7 @@
-      function RS2(m_N, c0, tau, taup, term, j_chi, coupling_Array)
+      function RS2(m_N, c0, tau, taup, term, j_chi, couplings_nreo)
       implicit none
       double precision :: RS2, m_N, c0, j_chi
-      double precision :: coupling_Array(14,2)
+      double precision :: couplings_nreo(14,2)
       integer :: tau,taup
       integer :: term
       integer :: c, v2, q2, v2q2, q4
@@ -17,16 +17,16 @@ c
       v2q2 = 3
       q4 = 4
 c
-      c4 = coupling_Array(3,tau)
-      c4p = coupling_Array(3,taup)
-      c6 = coupling_Array(5,tau)
-      c6p = coupling_Array(5,taup)
-      c10 = coupling_Array(9,tau)
-      c10p = coupling_Array(9,taup)
-      c12 = coupling_Array(11,tau)
-      c12p = coupling_Array(11,taup)
-      c13 = coupling_Array(12,tau)
-      c13p = coupling_Array(12,taup)
+      c4 = couplings_nreo(3,tau)
+      c4p = couplings_nreo(3,taup)
+      c6 = couplings_nreo(5,tau)
+      c6p = couplings_nreo(5,taup)
+      c10 = couplings_nreo(9,tau)
+      c10p = couplings_nreo(9,taup)
+      c12 = couplings_nreo(11,tau)
+      c12p = couplings_nreo(11,taup)
+      c13 = couplings_nreo(12,tau)
+      c13p = couplings_nreo(12,taup)
 c
       if (term.eq.c) then
          RS2 = (j_chi*(j_chi+1))/12. * c4*c4p

@@ -1,7 +1,7 @@
-      function RD(m_N, tau, taup, term, j_chi, coupling_Array)
+      function RD(m_N, tau, taup, term, j_chi, couplings_nreo)
       implicit none
       double precision :: RD, m_N, j_chi
-      double precision :: coupling_Array(14,2)
+      double precision :: couplings_nreo(14,2)
       integer :: tau,taup
       integer :: term
       integer :: c, q2
@@ -11,10 +11,10 @@ c
       c = 0
       q2 = 2
 c
-      c5 = coupling_Array(4,tau)
-      c5p = coupling_Array(4,taup)
-      c8 = coupling_Array(7,tau)
-      c8p = coupling_Array(7,taup)
+      c5 = couplings_nreo(4,tau)
+      c5p = couplings_nreo(4,taup)
+      c8 = couplings_nreo(7,tau)
+      c8p = couplings_nreo(7,taup)
 c
       if (term.eq.c) then
          RD = (j_chi*(j_chi+1))/3. * c8*c8p
