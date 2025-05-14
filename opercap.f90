@@ -15,7 +15,7 @@ module nreo_mod
     
     double precision, parameter :: atomic_nums_nreo(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
-    character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
+    character (len=4) :: isotope_strings(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
                                                                 "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
     double precision, parameter :: AtomicSpin_oper(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
@@ -220,21 +220,21 @@ subroutine init_nreo()
                 do k=1,2
                     do l=1,7
                         if (m.eq.1) then
-                            W_array(m,i,j,k,l) = WM(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WM(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.2) then
-                            W_array(m,i,j,k,l) = WS2(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WS2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.3) then
-                            W_array(m,i,j,k,l) = WS1(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WS1(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.4) then
-                            W_array(m,i,j,k,l) = WP2(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WP2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.5) then
-                            W_array(m,i,j,k,l) = WMP2(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WMP2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.6) then
-                            W_array(m,i,j,k,l) = WP1(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WP1(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.7) then
-                            W_array(m,i,j,k,l) = WD(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WD(j-1,k-1,isotope_strings(i),terms(l))
                         else
-                            W_array(m,i,j,k,l) = WS1D(j-1,k-1,isotopes(i),terms(l))
+                            W_array(m,i,j,k,l) = WS1D(j-1,k-1,isotope_strings(i),terms(l))
                         end if
                     end do
                 end do
