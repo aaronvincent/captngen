@@ -9,7 +9,7 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 
 
-module sharedmod
+module shared_mod
     use omp_lib
     implicit none
     double precision, parameter :: pi=3.141592653, NAvo=6.0221409d23, GMoverR=1.908e15
@@ -117,13 +117,13 @@ module sharedmod
         double precision :: x,gaussinmod
         gaussinmod = 1*exp(-x**2/2.d0)!*nq
       end function gaussinmod
-end module sharedmod
+end module shared_mod
 
 !Some functions that have to be external, because of the integrator.
 
 !Just a test for the integrator. Nothing to see here
 function gausstest(x)
-    use sharedmod
+    use shared_mod
     double precision :: x,gausstest
     gausstest = gaussinmod(x)
 end function gausstest
@@ -136,7 +136,7 @@ end function gausstest
 !   this is eqn 2.15 in 1504.04378
 !This is fine as long as the escape velocity is large enough
   function capture_maximum(mx)
-    use sharedmod
+    use shared_mod
     implicit none
     double precision capture_maximum
     double precision, intent(in) :: mx
@@ -152,7 +152,7 @@ end function gausstest
 
   subroutine init_sun(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
     !input velocities in km/s, not cm/s!!!
-    use sharedmod
+    use shared_mod
     use iso_c_binding, only: c_ptr
     implicit none
     character (len=300) solarmodel

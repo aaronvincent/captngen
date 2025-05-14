@@ -19,7 +19,7 @@
 
     module capmod
 
-      use sharedmod
+      use shared_mod
       implicit none
       double precision, parameter :: GNewt = 6.672d-8
       double precision, parameter :: q0 = 0.04,v0 = 220.d5

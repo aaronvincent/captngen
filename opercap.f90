@@ -8,7 +8,7 @@
 
 
 module nreo_mod
-    use sharedmod
+    use shared_mod
     implicit none
     double precision, parameter :: hbar=6.582d-25 !GeV*s
     !this goes with the Serenelli table format
