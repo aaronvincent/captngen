@@ -284,7 +284,7 @@ end function velocity_integrand_nreo
 
 
 ! call capture_rate_nreo to run capt'n with the effective operator method
-subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
+subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     use nreo_mod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
@@ -298,8 +298,8 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
         end function velocity_integrand_nreo
     end interface
     integer ri, eli, limit!, i
-    double precision, intent(in) :: mx_in, jx_in
-    double precision :: capped !this is the output
+    double precision, intent(in) :: m_dm, spin_dm
+    double precision, intent(out) :: capture_rate !this is the output
     double precision :: capture_maximum, maxcapped, a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
     double precision :: epsabs, epsrel, abserr, neval !for integrator
     double precision :: ier,alist,blist,rlist,elist,iord,last !for integrator
@@ -307,7 +307,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
     
     ! specific to capture_rate_nreo
     integer :: q_pow, w_pow ! loop indicies
-    double precision :: J, j_chi, factor_final
+    double precision :: J, factor_final
     double precision :: prefactor_array(size(tab_mfr_oper,dim=2),9,2)
     
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
@@ -316,8 +316,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
     epsrel=1.d-6
     limit=1000
 
-    mdm = mx_in
-    j_chi = jx_in
+    mdm = m_dm
     
     if (.not. allocated(tab_r)) then 
         print*,"Errorface of errors: you haven't called init_sun to load the solar model!"
@@ -326,16 +325,16 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
     ! allocate(u_int_res(nlines))
 
     ! Get the prefactors for the q and v terms
-    call init_rw_prefactors(j_chi, prefactor_array)
+    call init_rw_prefactors(spin_dm, prefactor_array)
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
-    capped = 0.d0
+    capture_rate = 0.d0
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
-    !$OMP   umin,limit,epsabs,epsrel)
+    !$OMP shared(nlines,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
+    !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
     do ri=1,nlines
@@ -384,15 +383,15 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
         end do !eli
     end do !ri
     !$OMP critical
-    capped = capped + partialCapped
+    capture_rate = capture_rate + partialCapped
     !$OMP end critical
     !$OMP end parallel
 
-    capped = 4.d0*pi*Rsun**3*capped
+    capture_rate = 4.d0*pi*Rsun**3*capture_rate
 
-    maxcapped = capture_maximum(mx_in)
-    if (capped .gt. maxcapped) then
-      capped = maxcapped
+    maxcapped = capture_maximum(m_dm)
+    if (capture_rate .gt. maxcapped) then
+      capture_rate = maxcapped
     end if
 end subroutine capture_rate_nreo
 
