@@ -20,7 +20,7 @@ module nreo_mod
     double precision, parameter :: atomic_spins_nreo(16) = (/ 0.5, 0.5, 0., 0., 1., 0., 0., 1.5, 0., 2.5, &
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: couplings_nreo(14,2)
-    double precision :: W_array(8,16,2,2,7)
+    double precision :: nuclear_responses(8,16,2,2,7)
     double precision :: yConverse_array(16)
 
     integer :: q_shared
@@ -121,7 +121,7 @@ module nreo_mod
                         do term_w = 1, 7
     
                             ! skip if the result gets multiplied by zero in the WFunction
-                            if ( W_array(func_type,eli,tau,tau_p,term_w) .ne. 0.d0 ) then
+                            if ( nuclear_responses(func_type,eli,tau,tau_p,term_w) .ne. 0.d0 ) then
     
                                 ! the possible terms for each DM response R function in order: c, v2, q2, v2q2, q4, v2q4
                                 do term_r = 1, 6
@@ -157,7 +157,7 @@ module nreo_mod
                                         ! i.e. q^{2*(q_index-1)}
                                         q_index = 1 + q_func + term_w - 1 + floor((term_r-1.)/2.)
                                         prefactor = prefactor_func * r_const &
-                                            * W_array(func_type,eli,tau,tau_p,term_w) * yConverse_array(eli)**(term_w-1)
+                                            * nuclear_responses(func_type,eli,tau,tau_p,term_w) * yConverse_array(eli)**(term_w-1)
     
                                         ! check if term_r is even (in my index convention this corresponds to it having a v_perp^2
                                         ! in the DM response R function), decomposed into v_perp^2 = w^2 - q^2/(2mu)^2
@@ -220,21 +220,21 @@ subroutine init_nreo()
                 do k=1,2
                     do l=1,7
                         if (m.eq.1) then
-                            W_array(m,i,j,k,l) = WM(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WM(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.2) then
-                            W_array(m,i,j,k,l) = WS2(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WS2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.3) then
-                            W_array(m,i,j,k,l) = WS1(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WS1(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.4) then
-                            W_array(m,i,j,k,l) = WP2(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WP2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.5) then
-                            W_array(m,i,j,k,l) = WMP2(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WMP2(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.6) then
-                            W_array(m,i,j,k,l) = WP1(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WP1(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.7) then
-                            W_array(m,i,j,k,l) = WD(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WD(j-1,k-1,isotope_strings(i),terms(l))
                         else
-                            W_array(m,i,j,k,l) = WS1D(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = WS1D(j-1,k-1,isotope_strings(i),terms(l))
                         end if
                     end do
                 end do
@@ -247,7 +247,7 @@ subroutine init_nreo()
     couplings_nreo = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
-    ! yconv comes from arxiv:1501.03729 page 10, where yconv = (b/{2 hbar c})^2
+    ! Comes from arxiv:1501.03729 page 10, where yconv = (b/{2 hbar c})^2
     do i = 1, 16
         yConverse_array(i) = 264.114/(45.d0*atomic_nums_nreo(i)**(-1./3.)-25.d0*atomic_nums_nreo(i)**(-2./3.))
     end do
