@@ -13,7 +13,7 @@ module nreo_mod
     double precision, parameter :: hbar=6.582d-25 !GeV*s
     !this goes with the Serenelli table format
     
-    double precision, parameter :: AtomicNumber_oper(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
+    double precision, parameter :: atomic_nums_nreo(16) = (/ 1., 3., 4., 12., 14., 16., 20., 23., 24., 27., &
                                                         28., 32., 40., 40., 56., 58./) !the isotopes the catena paper uses
     character (len=4) :: isotopes(16) = [character(len=4) :: "H","He3","He4","C12","N14","O16","Ne20","Na23","Mg24", &
                                                                 "Al27", "Si28","S32","Ar40","Ca40","Fe56","Ni58"] !the isotopes in text form to match against the W functions
@@ -97,7 +97,7 @@ module nreo_mod
         all_prefactors = 0.d0
         do eli = 1, size(all_prefactors,dim=1)
             ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
-            mu = (mnuc*AtomicNumber_oper(eli) * mdm)/(mnuc*AtomicNumber_oper(eli) + mdm)
+            mu = (mnuc*atomic_nums_nreo(eli) * mdm)/(mnuc*atomic_nums_nreo(eli) + mdm)
     
             ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
             do func_type = 1, 8
@@ -249,7 +249,7 @@ subroutine init_nreo()
 
     ! yconv comes from arxiv:1501.03729 page 10, where yconv = (b/{2 hbar c})^2
     do i = 1, 16
-        yConverse_array(i) = 264.114/(45.d0*AtomicNumber_oper(i)**(-1./3.)-25.d0*AtomicNumber_oper(i)**(-2./3.))
+        yConverse_array(i) = 264.114/(45.d0*atomic_nums_nreo(i)**(-1./3.)-25.d0*atomic_nums_nreo(i)**(-2./3.))
     end do
 end subroutine init_nreo
 
@@ -346,7 +346,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
         do eli=1,size(prefactor_array,dim=1)
             ! u_int_res(ri) = 0.d0
             elementalResult = 0.d0
-            a = AtomicNumber_oper(eli)
+            a = atomic_nums_nreo(eli)
             a_shared = a !make accessible via the module
 
             mu = mdm/(mnuc*a)
