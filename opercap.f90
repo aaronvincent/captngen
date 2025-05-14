@@ -30,20 +30,21 @@ module nreo_mod
     contains
 
     ! having removed the scaling momentum, are the units off here? I'm looking at the p/c0 in particular
-    function GFFI_H_oper(w,vesc,mq)
-        double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
-        integer mq
-        p = mdm*w
+    function gffi_h_nreo(vel_dm, vel_esc, q_pow)
+        double precision :: p, mu,vel_dm,vel_esc,u,muplus,gffi_h_nreo,G
+        integer q_pow
+        p = mdm*vel_dm
         mu = mdm/mnuc
         muplus = (1.+mu)/2.
-        u = sqrt(w**2-vesc**2)
-        if (mq .ne. -1) then
-            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*1./(1.+mq)*((mu/muplus**2)**(mq+1)-(u**2/w**2)**(mq+1))
+        u = sqrt(vel_dm**2-vel_esc**2)
+        if (q_pow .ne. -1) then
+            G = (p/c0)**(2.d0*q_pow)*mdm*vel_dm**2/(2.d0*mu**q_pow)*1./(1.+q_pow) &
+                * ((mu/muplus**2)**(q_pow+1)-(u**2/vel_dm**2)**(q_pow+1))
         else
-            G = (p/c0)**(2.d0*mq)*mdm*w**2/(2.d0*mu**mq)*log(mu/muplus**2*w**2/(u)**2)
+            G = (p/c0)**(2.d0*q_pow)*mdm*vel_dm**2/(2.d0*mu**q_pow)*log(mu/muplus**2*vel_dm**2/(u)**2)
         endif
-        GFFI_H_oper = G
-    end function GFFI_H_oper
+        gffi_h_nreo = G
+    end function gffi_h_nreo
     
     function GFFI_A_oper(w,vesc,A,mq)
         double precision :: p, mu,w,vesc,u,muplus,mN,A,Ei,B
@@ -274,7 +275,7 @@ function velocity_integrand_nreo(init_velocity, dist_over_vel)
     if (a_shared .gt. 2.d0) then
         velocity_integrand_nreo = dist_over_vel(init_velocity)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
     else
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*GFFI_H_oper(w,vesc_shared_arr(rindex_shared),q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(rindex_shared),q_shared)
     end if
     if (w_shared) then
         velocity_integrand_nreo = velocity_integrand_nreo * w**2
