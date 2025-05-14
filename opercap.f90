@@ -46,24 +46,24 @@ module nreo_mod
         gffi_h_nreo = G
     end function gffi_h_nreo
     
-    function GFFI_A_oper(w,vesc,A,mq)
-        double precision :: p, mu,w,vesc,u,muplus,mN,A,Ei,B
-        double precision :: dgamic,GFFI_A_oper
-        integer :: mq
-        p = mdm*w
-        mu = mdm/mnuc/A
+    function gffi_a_nreo(vel_dm, vel_esc, atomic_num, q_pow)
+        double precision :: p, mu,vel_dm,vel_esc,u,muplus,mN,atomic_num,Ei,B
+        double precision :: dgamic,gffi_a_nreo
+        integer :: q_pow
+        p = mdm*vel_dm
+        mu = mdm/mnuc/atomic_num
         muplus = (1.+mu)/2.
-        u = sqrt(w**2-vesc**2)
-        mN = A*mnuc
-        Ei = 1./4.d0/mN/264.114*(45.d0*A**(-1./3.)-25.d0*A**(-2./3.))
-        B = .5*mdm*w**2/Ei/c0**2
-        if (mq .eq. 0) then
-            GFFI_A_oper = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
+        u = sqrt(vel_dm**2-vel_esc**2)
+        mN = atomic_num*mnuc
+        Ei = 1./4.d0/mN/264.114*(45.d0*atomic_num**(-1./3.)-25.d0*atomic_num**(-2./3.))
+        B = .5*mdm*vel_dm**2/Ei/c0**2
+        if (q_pow .eq. 0) then
+            gffi_a_nreo = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
         else
-            GFFI_A_oper = ((p)/c0)**(2*mq)*Ei*c0**2/(B*mu)**mq*(dgamic(1.+dble(mq),B*u**2/w**2) &
-                - dgamic(1.+dble(mq),B*mu/muplus**2))
+            gffi_a_nreo = ((p)/c0)**(2*q_pow)*Ei*c0**2/(B*mu)**q_pow*(dgamic(1.+dble(q_pow),B*u**2/vel_dm**2) &
+                - dgamic(1.+dble(q_pow),B*mu/muplus**2))
         end if
-    end function GFFI_A_oper
+    end function gffi_a_nreo
 
     subroutine RW_prefactors(j_chi, total_prefactors)
         !! Populates the `total_prefactors` array with the numerical prefactors \(P_{i,n_q,n_w}\) for each isotope's differential
@@ -273,7 +273,7 @@ function velocity_integrand_nreo(init_velocity, dist_over_vel)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (a_shared .gt. 2.d0) then
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*GFFI_A_oper(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
     else
         velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(rindex_shared),q_shared)
     end if
