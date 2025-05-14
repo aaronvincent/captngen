@@ -377,7 +377,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
                 end do !q_pow
             end do !w_pow
 
-            factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
+            factor_final = (2*mnuc*a)/(2*J+1) * avogadro*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
             partialCapped = partialCapped + elementalResult * factor_final
         end do !eli

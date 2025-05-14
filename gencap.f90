@@ -181,7 +181,7 @@
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          int_result = int_result * 2.d0 * sigma_N * NAvo * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
+          int_result = int_result * 2.d0 * sigma_N * avogadro * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
           capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
