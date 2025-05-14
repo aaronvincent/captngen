@@ -21,7 +21,7 @@ module nreo_mod
                                                         0., 0., 0., 0., 0., 0./) !spins pulled from https://physics.nist.gov/PhysRefData/Handbook/element_name.htm
     double precision :: couplings_nreo(14,2)
     double precision :: nuclear_responses(8,16,2,2,7)
-    double precision :: yConverse_array(16)
+    double precision :: y_over_q2s(16)
 
     integer :: q_shared
     logical :: w_shared
@@ -157,7 +157,7 @@ module nreo_mod
                                         ! i.e. q^{2*(q_index-1)}
                                         q_index = 1 + q_func + term_w - 1 + floor((term_r-1.)/2.)
                                         prefactor = prefactor_func * r_const &
-                                            * nuclear_responses(func_type,eli,tau,tau_p,term_w) * yConverse_array(eli)**(term_w-1)
+                                            * nuclear_responses(func_type,eli,tau,tau_p,term_w) * y_over_q2s(eli)**(term_w-1)
     
                                         ! check if term_r is even (in my index convention this corresponds to it having a v_perp^2
                                         ! in the DM response R function), decomposed into v_perp^2 = w^2 - q^2/(2mu)^2
@@ -249,7 +249,7 @@ subroutine init_nreo()
 
     ! Comes from arxiv:1501.03729 page 10, where yconv = (b/{2 hbar c})^2
     do i = 1, 16
-        yConverse_array(i) = 264.114/(45.d0*atomic_nums_nreo(i)**(-1./3.)-25.d0*atomic_nums_nreo(i)**(-2./3.))
+        y_over_q2s(i) = 264.114/(45.d0*atomic_nums_nreo(i)**(-1./3.)-25.d0*atomic_nums_nreo(i)**(-2./3.))
     end do
 end subroutine init_nreo
 
