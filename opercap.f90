@@ -65,8 +65,8 @@ module nreo_mod
         end if
     end function gffi_a_nreo
 
-    subroutine RW_prefactors(j_chi, total_prefactors)
-        !! Populates the `total_prefactors` array with the numerical prefactors \(P_{i,n_q,n_w}\) for each isotope's differential
+    subroutine init_rw_prefactors(spin_dm, all_prefactors)
+        !! Populates the `all_prefactors` array with the numerical prefactors \(P_{i,n_q,n_w}\) for each isotope's differential
         !! cross section term corresponding to the R and W response functions as defined by:
         !! \[ \frac{\mathrm{d} \sigma}{\mathrm{d} E_R} = \frac{m_T}{2\pi w^2} \frac{4\pi}{2J+1} \sum_{\tau,\tau^\prime,k}
         !! R^{\tau\tau^\prime}_k\left({v_T^\perp}^2,\frac{q^2}{m_N^2}\right) W^{\tau\tau^\prime}_k\left(y\right) \\
@@ -83,9 +83,9 @@ module nreo_mod
         !! [\(^{58}\text{Ni}\)](https://arxiv.org/pdf/1501.03729#equation.C.16)). Here \(q\) is the momentum transferred in the
         !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
         !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
-        double precision, intent(in):: j_chi
+        double precision, intent(in):: spin_dm
             !! The spin of the dark matter.
-        double precision, intent(out) :: total_prefactors(:,:,:)
+        double precision, intent(out) :: all_prefactors(:,:,:)
             !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran
             !! arrays start with 1). This typically means `16,9,2`.
 
@@ -94,8 +94,8 @@ module nreo_mod
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
         double precision :: rd, rm, rmp2, rp1, rp2, rs1, rs1d, rs2 ! DM response R functions stored in their own source files
 
-        total_prefactors = 0.d0
-        do eli = 1, size(total_prefactors,dim=1)
+        all_prefactors = 0.d0
+        do eli = 1, size(all_prefactors,dim=1)
             ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
             mu = (mnuc*AtomicNumber_oper(eli) * mdm)/(mnuc*AtomicNumber_oper(eli) + mdm)
     
@@ -130,21 +130,21 @@ module nreo_mod
                                     ! note for possible future change: currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
                                     select case (func_type)
                                     case (1)
-                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
+                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
                                     case (2)
-                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (3)
-                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (4)
-                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (5)
-                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (6)
-                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (7)
-                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case (8)
-                                        r_const = rs1d(tau,tau_p,term_r-1,j_chi,coupling_Array)
+                                        r_const = rs1d(tau,tau_p,term_r-1,spin_dm,coupling_Array)
                                     case default
                                         print*, "Um, I ran out of DM response R functions to choose from?"
                                         stop
@@ -163,12 +163,12 @@ module nreo_mod
                                         ! in the DM response R function), decomposed into v_perp^2 = w^2 - q^2/(2mu)^2
                                         if ( mod(term_r,2).eq.0 ) then
                                             ! this is the -q^2/(2mu)^2 contribution (one extra q^2 compared to current q_index)
-                                            total_prefactors(eli,q_index+1,1) = total_prefactors(eli,q_index+1,1) &
+                                            all_prefactors(eli,q_index+1,1) = all_prefactors(eli,q_index+1,1) &
                                                 + prefactor * (-c0**2/(4.*mu**2)) ! The DM response R functions are programmed with the 1/c0^2 in their v_perp^2 term (so I need to un-correct it for the - q^2/(2*mu_T)^2, and leave it be for the w^2/c^2)
                                             ! this is the +w^2 contribution (same q^2, but has a w^2 contribution)
-                                            total_prefactors(eli,q_index,2) = total_prefactors(eli,q_index,2) + prefactor
+                                            all_prefactors(eli,q_index,2) = all_prefactors(eli,q_index,2) + prefactor
                                         else
-                                            total_prefactors(eli,q_index,1) = total_prefactors(eli,q_index,1) + prefactor
+                                            all_prefactors(eli,q_index,1) = all_prefactors(eli,q_index,1) + prefactor
                                         end if
                                     end if
                                 end do !term_r
@@ -177,9 +177,8 @@ module nreo_mod
                     end do !tau_p
                 end do !tau
             end do !func_type
-            ! total_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * total_prefactors(eli,:,:)
         end do !eli
-    end subroutine RW_prefactors
+    end subroutine init_rw_prefactors
 end module nreo_mod
 
 subroutine init_nreo()
@@ -327,7 +326,7 @@ subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
     ! allocate(u_int_res(nlines))
 
     ! Get the prefactors for the q and v terms
-    call RW_prefactors(j_chi, prefactor_array)
+    call init_rw_prefactors(j_chi, prefactor_array)
 
     ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
