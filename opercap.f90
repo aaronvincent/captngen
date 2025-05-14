@@ -7,7 +7,7 @@
 !   Sticking with notation of 1504.04378. Cite that paper. Or 1605.06502 it's even better.
 
 
-module opermod
+module nreo_mod
     use sharedmod
     implicit none
     double precision, parameter :: hbar=6.582d-25 !GeV*s
@@ -179,10 +179,10 @@ module opermod
             ! total_prefactors(eli,:,:) = 2*mnuc*AtomicNumber_oper(eli)/(2*AtomicSpin_oper(eli)+1) * total_prefactors(eli,:,:)
         end do !eli
     end subroutine RW_prefactors
-end module opermod
+end module nreo_mod
 
 subroutine init_nreo()
-    use opermod
+    use nreo_mod
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
@@ -258,7 +258,7 @@ end subroutine init_nreo
 ! I've doen this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function integrand_oper(u, foveru)
-    use opermod
+    use nreo_mod
     implicit none
     interface
         function foveru(arg1)
@@ -285,7 +285,7 @@ end function integrand_oper
 
 ! call capture_rate_nreo to run capt'n with the effective operator method
 subroutine capture_rate_nreo(mx_in, jx_in, capped)!, isotopeChosen)
-    use opermod
+    use nreo_mod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
         function integrand_oper(arg1, func1)
@@ -400,7 +400,7 @@ subroutine init_couplings(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
-    use opermod
+    use nreo_mod
     implicit none
     integer :: couple, isospin
     double precision :: val
