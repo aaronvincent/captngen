@@ -243,7 +243,7 @@ subroutine init_nreo()
     end do
 
     ! initiate the couplings_nreo (full of the coupling constants) with all zeros
-    ! init_couplings will place the non-zero value into a chosen slot at runtime
+    !! [[init_coupling]] will place the non-zero value into a chosen slot at runtime
     couplings_nreo = reshape((/0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, &
                                 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0, 0d0/), (/14, 2/))
 
@@ -395,38 +395,37 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     end if
 end subroutine capture_rate_nreo
 
-subroutine init_couplings(val, couple, isospin)
+subroutine init_coupling(value, coupling_index, isospin_index)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
-    ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
+    ! I was trying to directly edit 'coupling_index' and 'isospin_index' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
     use nreo_mod
     implicit none
-    integer :: couple, isospin
-    double precision :: val
+    integer, intent(in) :: coupling_index, isospin_index
+    double precision, intent(in) :: value
     integer :: cpl, iso
 
-    ! isospin can be 0 or 1
-    if ((-1.lt.isospin).and.(isospin.lt.2)) then
-        iso = isospin + 1 !fortran arrays start at 1
+    ! isospin_index can be 0 or 1
+    if ((-1.lt.isospin_index).and.(isospin_index.lt.2)) then
+        iso = isospin_index + 1 !fortran arrays start at 1
     else
-        stop "Error: isospin can only be 0 or 1!"
+        stop "Error: isospin_index can only be 0 or 1!"
     endif
 
 
-    ! couple can be integer from 1 to 15, BUT 2 IS NOT ALLOWED!
-    if (couple.lt.1) then
+    ! coupling_index can be integer from 1 to 15, BUT 2 IS NOT ALLOWED!
+    if (coupling_index.lt.1) then
         stop "Error: you cannot pick a coupling constant lower than one!"
-    else if (couple.eq.1) then
-        cpl = couple
-    else if (couple.eq.2) then
+    else if (coupling_index.eq.1) then
+        cpl = coupling_index
+    else if (coupling_index.eq.2) then
         stop "Error: you cannot use the second coupling constant!"
-    else if (couple.gt.2) then
-        cpl = couple - 1 !the coupling array doesn't have a slot for 2, so all constants other than one are shifted in row number
-    else if (couple.gt.15) then
+    else if (coupling_index.gt.2) then
+        cpl = coupling_index - 1 !the coupling array doesn't have a slot for 2, so all constants other than one are shifted in row number
+    else if (coupling_index.gt.15) then
         stop "Error: you cannot pick a coupling constant past 15!"
     endif
 
-    ! val is the value you want to populate with
     ! set the value picked in the slot chosen
-    couplings_nreo(cpl,iso) = val
-end subroutine init_couplings
+    couplings_nreo(cpl,iso) = value
+end subroutine init_coupling

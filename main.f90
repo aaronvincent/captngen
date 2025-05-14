@@ -112,13 +112,13 @@ PROGRAM GENCAP
         write(55,*) "Coupling Val | ", "DM_Mass | ", "  Captures | ", "  MaxCaptures"
 
         if (cpl==1) then
-            call init_couplings(couplingVal, cpl, 0)
+            call init_coupling(couplingVal, cpl, 0)
         else if (cpl==2) then
-            call init_couplings(0.d0, cpl-1, 0)
-            call init_couplings(couplingVal, cpl+1, 0)
+            call init_coupling(0.d0, cpl-1, 0)
+            call init_coupling(couplingVal, cpl+1, 0)
         else
-            call init_couplings(0.d0, cpl, 0)
-            call init_couplings(couplingVal, cpl+1, 0)
+            call init_coupling(0.d0, cpl, 0)
+            call init_coupling(couplingVal, cpl+1, 0)
         endif
 
         print*, "Running coupling constant: ", cplConsts(cpl)
