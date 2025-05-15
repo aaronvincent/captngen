@@ -268,13 +268,13 @@ function velocity_integrand_nreo(init_velocity, dist_over_vel)
     double precision :: init_velocity, velocity_integrand_nreo
     double precision :: w
 
-    w = sqrt(init_velocity**2+vesc_shared_arr(rindex_shared)**2)
+    w = sqrt(init_velocity**2+vesc_shared_arr(shell_index_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (a_shared .gt. 2.d0) then
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(rindex_shared),a_shared,q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(shell_index_shared),a_shared,q_shared)
     else
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(rindex_shared),q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(shell_index_shared),q_shared)
     end if
     if (w_shared) then
         velocity_integrand_nreo = velocity_integrand_nreo * w**2
@@ -339,7 +339,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)
-        rindex_shared = ri !make accessible via the module
+        shell_index_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
         do eli=1,size(prefactor_array,dim=1)
