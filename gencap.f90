@@ -182,7 +182,7 @@
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
-          capped = capped + star_r(ri)**2*int_result*tab_dr(ri)
+          capped = capped + star_r(ri)**2*int_result*star_dr(ri)
 
           if (isnan(capped)) then
             capped = 0.d0
@@ -241,7 +241,7 @@
     allocate(star_escape(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
-    allocate(tab_dr(nlines))          !dr (nice)
+    allocate(star_dr(nlines))          !dr (nice)
     allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
 
     RETURN
@@ -256,7 +256,7 @@
     deallocate(tab_atomic)
     deallocate(star_escape)
     deallocate(tab_T)
-    deallocate(tab_dr)
+    deallocate(star_dr)
     deallocate(tab_g)
     RETURN
   end subroutine deallocate_stellar_arrays
@@ -293,9 +293,9 @@
     atomic_nums(1:8) = tab_atomic
 
     do i = 1, nlines-1
-      tab_dr(i) = -star_r(i)+star_r(i+1) !while we're here, populate dr
+      star_dr(i) = -star_r(i)+star_r(i+1) !while we're here, populate dr
     end do
-    tab_dr(nlines) = star_r(nlines)-star_r(nlines-1)
+    star_dr(nlines) = star_r(nlines)-star_r(nlines-1)
 
     RETURN
   end subroutine get_stellar_params

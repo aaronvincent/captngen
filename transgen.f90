@@ -214,13 +214,13 @@ do i = 1,nlines
   integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 
   if (i > 1) then
-  	cumint(i) = cumint(i-1) + integrand*tab_dr(i)*radius_star
+  	cumint(i) = cumint(i-1) + integrand*star_dr(i)*radius_star
   end if
 
   nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
   nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
-  cumNx = cumNx + 4.*pi*tab_dr(i)*star_r(i)**2*nxLTE(i)*radius_star**3.
+  cumNx = cumNx + 4.*pi*star_dr(i)*star_r(i)**2*nxLTE(i)*radius_star**3.
 
 end do
 

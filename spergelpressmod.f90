@@ -6,7 +6,7 @@
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
 
-! All units are cgs except star_r and tab_dr
+! All units are cgs except star_r and star_dr
 ! I apologize for the long function calls.
 
 module spergelpressmod
