@@ -275,7 +275,7 @@
     integer i
     double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
 
-    usun = usun_in*1.d5
+    vel_sun = usun_in*1.d5
     u0 =  u0_in*1.d5
     rho0 =rho0_in
     vesc_halo = vesc_in*1.d5

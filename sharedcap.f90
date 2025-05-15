@@ -15,7 +15,7 @@ module shared_mod
     double precision, parameter :: pi=3.141592653, avogadro=6.0221409d23, gm_over_r_sun=1.908e15
     double precision, parameter :: c0=2.99792458d10, m_proton=0.938
     !these are now set in init_sun
-    double precision :: usun , u0 ,rho0, vesc_halo, Rsun
+    double precision :: vel_sun, u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
@@ -33,10 +33,10 @@ module shared_mod
     function vdist_over_u(u)
         double precision :: u, vdist_over_u, normfact
         vdist_over_u = (3./2.)**(3./2.)*4.*rho0*u/sqrt(pi)/mdm/u0**3 &
-        *exp(-3.*(usun**2+u**2)/(2.*u0**2))*sinh(3.*u*usun/u0**2)/(3.*u*usun/u0**2)
-        !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-usun)/u0) + &
-        !.5*erf(sqrt(3./2.)*(vesc_halo+usun)/u0)+ u0/(sqrt(6.*pi)*usun) &
-        !*(exp(-3.*(usun+vesc_halo)/2./u0**2)-exp(-3.*(usun-vesc_halo)/2./u0**2))
+        *exp(-3.*(vel_sun**2+u**2)/(2.*u0**2))*sinh(3.*u*vel_sun/u0**2)/(3.*u*vel_sun/u0**2)
+        !normfact = .5*erf(sqrt(3./2.)*(vesc_halo-vel_sun)/u0) + &
+        !.5*erf(sqrt(3./2.)*(vesc_halo+vel_sun)/u0)+ u0/(sqrt(6.*pi)*vel_sun) &
+        !*(exp(-3.*(vel_sun+vesc_halo)/2./u0**2)-exp(-3.*(vel_sun-vesc_halo)/2./u0**2))
         normfact = 1.
         !print*,normfact
         vdist_over_u = vdist_over_u/normfact
@@ -142,8 +142,8 @@ end function gausstest
     double precision, intent(in) :: mx
 
     capture_maximum = pi/3.d0*rho0/mx*Rsun**2 &
-    *(exp(-3./2.*usun**2/u0**2)*sqrt(6.d0/pi)*u0 &
-    + (6.d0*gm_over_r_sun/usun + (u0**2 + 3.d0*usun**2)/usun)*erf(sqrt(3./2.)*usun/u0))
+    *(exp(-3./2.*vel_sun**2/u0**2)*sqrt(6.d0/pi)*u0 &
+    + (6.d0*gm_over_r_sun/vel_sun + (u0**2 + 3.d0*vel_sun**2)/vel_sun)*erf(sqrt(3./2.)*vel_sun/u0))
 
   end function capture_maximum
 
@@ -165,7 +165,7 @@ end function gausstest
         call get_solar_params(solarmodel,nlines)
     end if
 
-    usun = usun_in*1.d5
+    vel_sun = usun_in*1.d5
     u0 =  u0_in*1.d5
     rho0 =rho0_in
     vesc_halo = vesc_in*1.d5
