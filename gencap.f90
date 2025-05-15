@@ -157,7 +157,7 @@
       !Loop over the shells of constant radius in the star
       do ri = 1, nlines
 
-        vesc = tab_vesc(ri)
+        vesc = star_escape(ri)
         vesc_shared = vesc !make accessible via the module
 
         !Loop over the different elements
@@ -238,7 +238,7 @@
     allocate(star_rho(nlines))     !rho
     allocate(star_fractions(nlines,8))       !mass fraction per isotope
     allocate(tab_atomic(8))
-    allocate(tab_vesc(nlines))        !local escape velocity
+    allocate(star_escape(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
     allocate(tab_dr(nlines))          !dr (nice)
@@ -254,7 +254,7 @@
     deallocate(star_rho)
     deallocate(star_fractions) !we could just allocate niso, but this leads to problems
     deallocate(tab_atomic)
-    deallocate(tab_vesc)
+    deallocate(star_escape)
     deallocate(tab_T)
     deallocate(tab_dr)
     deallocate(tab_g)
@@ -283,7 +283,7 @@
     radius_star = rmesa(nlines)
     star_r = rmesa/radius_star
     star_rho = rhomesa
-    tab_vesc = mesavesc
+    star_escape = mesavesc
     tab_T = tmesa
     tab_g = -mesag
     do i= 1,8

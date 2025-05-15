@@ -29,7 +29,7 @@ integer :: i
 
 
 r = star_r*radius_star ! cm
-phi = -tab_vesc**2/2.d0 ! erg/g
+phi = -star_escape**2/2.d0 ! erg/g
 mxg = m_dm*1.782662d-24  ! g
 
 
@@ -65,7 +65,7 @@ integer :: i, j, p
 
 
 R = star_r*radius_star ! R in cm
-phi = -tab_vesc**2/2.d0 ! phi in erg/g
+phi = -star_escape**2/2.d0 ! phi in erg/g
 mxg = m_dm*1.782662d-24 ! WIMP mass in g
 initial_q = q0*5.344d-14 !cgs conversion for q0
 

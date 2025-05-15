@@ -96,7 +96,7 @@ if (.not. allocated(star_r)) stop "Error: stellar parameters not allocated in tr
 
 
 !set up extra stellar arrays that we need
-phi = - tab_vesc**2/2.d0
+phi = - star_escape**2/2.d0
 dphidr = -tab_g
 
 ! smooth T derivative

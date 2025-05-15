@@ -28,7 +28,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
   Tc = tab_T(1)
   rhoc = star_rho(1)
-  vescc = tab_vesc/c0
+  vescc = star_escape/c0
 
   ! print*,"attempting to evaporate, Nwimps = ", Nwimps
 
@@ -129,7 +129,7 @@ subroutine Twimp(nabund,niso,Tw)
       elseif (nv .ne. 0) then
           sv = sv/v0**(2*nv)
       end if
-      nxIso = exp(mdmg*tab_vesc**2/2./TwK/kB)
+      nxIso = exp(mdmg*star_escape**2/2./TwK/kB)
       Tw_out_num(i) = trapz(star_r,star_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
       Tw_out_denom(i) = trapz(star_r,star_r**2*sv*nxIso*nabund(i,:),nlines);
 
@@ -144,7 +144,7 @@ subroutine Twimp(nabund,niso,Tw)
 
   ! open(55,file = "svTw.dat")
   ! do j=1,nlines
-  ! write(55,*) star_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),tab_vesc(j),TwK
+  ! write(55,*) star_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),star_escape(j),TwK
   ! end do
   ! close(55)
 

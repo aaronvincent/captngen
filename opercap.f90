@@ -334,12 +334,12 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,star_rho,tab_mfr_oper,star_r,tab_dr, &
+    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,star_escape,vesc_shared_arr,star_rho,tab_mfr_oper,star_r,tab_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
     do ri=1,nlines
-        vesc = tab_vesc(ri)
+        vesc = star_escape(ri)
         shell_index_shared = ri !make accessible via the module
         vesc_shared_arr(ri) = vesc !make accessible via the module
 
