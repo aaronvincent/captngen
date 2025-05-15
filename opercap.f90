@@ -188,25 +188,25 @@ subroutine init_nreo()
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
     real :: WM, WS2, WS1, WP2, WMP2, WP1, WD, WS1D
     
-    ! tab_mfr_oper is allocated in the get_solar_params subroutine
+    ! star_fractions_nreo is allocated in the get_solar_params subroutine
     ! take the regular array star_fractions and extract the isotopes used in the 1501.03729 paper (otherwise indices won't match on arrays)
     do i=1,nlines
-        tab_mfr_oper(i,1) = star_fractions(i,1)
-        tab_mfr_oper(i,2) = star_fractions(i,3)
-        tab_mfr_oper(i,3) = star_fractions(i,2)
-        tab_mfr_oper(i,4) = star_fractions(i,4)
-        tab_mfr_oper(i,5) = star_fractions(i,6)
-        tab_mfr_oper(i,6) = star_fractions(i,8)
-        tab_mfr_oper(i,7) = star_fractions(i,11)
-        tab_mfr_oper(i,8) = star_fractions(i,12)
-        tab_mfr_oper(i,9) = star_fractions(i,13)
-        tab_mfr_oper(i,10) = star_fractions(i,14)
-        tab_mfr_oper(i,11) = star_fractions(i,15)
-        tab_mfr_oper(i,12) = star_fractions(i,17)
-        tab_mfr_oper(i,13) = star_fractions(i,19)
-        tab_mfr_oper(i,14) = star_fractions(i,21)
-        tab_mfr_oper(i,15) = star_fractions(i,27)
-        tab_mfr_oper(i,16) = star_fractions(i,29)
+        star_fractions_nreo(i,1) = star_fractions(i,1)
+        star_fractions_nreo(i,2) = star_fractions(i,3)
+        star_fractions_nreo(i,3) = star_fractions(i,2)
+        star_fractions_nreo(i,4) = star_fractions(i,4)
+        star_fractions_nreo(i,5) = star_fractions(i,6)
+        star_fractions_nreo(i,6) = star_fractions(i,8)
+        star_fractions_nreo(i,7) = star_fractions(i,11)
+        star_fractions_nreo(i,8) = star_fractions(i,12)
+        star_fractions_nreo(i,9) = star_fractions(i,13)
+        star_fractions_nreo(i,10) = star_fractions(i,14)
+        star_fractions_nreo(i,11) = star_fractions(i,15)
+        star_fractions_nreo(i,12) = star_fractions(i,17)
+        star_fractions_nreo(i,13) = star_fractions(i,19)
+        star_fractions_nreo(i,14) = star_fractions(i,21)
+        star_fractions_nreo(i,15) = star_fractions(i,27)
+        star_fractions_nreo(i,16) = star_fractions(i,29)
     end do
     
     ! this array stores each of the constants of the W polynomials from paper 1501.03729's appendix individually
@@ -309,7 +309,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     ! specific to capture_rate_nreo
     integer :: q_pow, w_pow ! loop indicies
     double precision :: J, factor_final
-    double precision :: prefactor_array(size(tab_mfr_oper,dim=2),9,2)
+    double precision :: prefactor_array(size(star_fractions_nreo,dim=2),9,2)
     
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
     
@@ -334,7 +334,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,star_escape,vesc_shared_arr,star_rho,tab_mfr_oper,star_r,star_dr, &
+    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,star_escape,vesc_shared_arr,star_rho,star_fractions_nreo,star_r,star_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
@@ -378,7 +378,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
                 end do !q_pow
             end do !w_pow
 
-            factor_final = (2*m_proton*a)/(2*J+1) * avogadro*star_rho(ri)*tab_mfr_oper(ri,eli)/(m_proton*a) * &
+            factor_final = (2*m_proton*a)/(2*J+1) * avogadro*star_rho(ri)*star_fractions_nreo(ri,eli)/(m_proton*a) * &
                 star_r(ri)**2*star_dr(ri) * (hbar*c0)**2
             partialCapped = partialCapped + elementalResult * factor_final
         end do !eli
