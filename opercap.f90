@@ -34,7 +34,7 @@ module nreo_mod
         double precision :: p, mu,vel_dm,vel_esc,u,muplus,gffi_h_nreo,G
         integer q_pow
         p = mdm*vel_dm
-        mu = mdm/mnuc
+        mu = mdm/m_proton
         muplus = (1.+mu)/2.
         u = sqrt(vel_dm**2-vel_esc**2)
         if (q_pow .ne. -1) then
@@ -51,10 +51,10 @@ module nreo_mod
         double precision :: dgamic,gffi_a_nreo
         integer :: q_pow
         p = mdm*vel_dm
-        mu = mdm/mnuc/atomic_num
+        mu = mdm/m_proton/atomic_num
         muplus = (1.+mu)/2.
         u = sqrt(vel_dm**2-vel_esc**2)
-        mN = atomic_num*mnuc
+        mN = atomic_num*m_proton
         Ei = 1./4.d0/mN/264.114*(45.d0*atomic_num**(-1./3.)-25.d0*atomic_num**(-2./3.))
         B = .5*mdm*vel_dm**2/Ei/c0**2
         if (q_pow .eq. 0) then
@@ -97,7 +97,7 @@ module nreo_mod
         all_prefactors = 0.d0
         do eli = 1, size(all_prefactors,dim=1)
             ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
-            mu = (mnuc*atomic_nums_nreo(eli) * mdm)/(mnuc*atomic_nums_nreo(eli) + mdm)
+            mu = (m_proton*atomic_nums_nreo(eli) * mdm)/(m_proton*atomic_nums_nreo(eli) + mdm)
     
             ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
             do func_type = 1, 8
@@ -108,7 +108,7 @@ module nreo_mod
                     prefactor_func = 1.
                 else
                     q_func = 1
-                    prefactor_func = 1./mnuc**2
+                    prefactor_func = 1./m_proton**2
                 end if
     
                 ! the first index on each response function
@@ -127,22 +127,22 @@ module nreo_mod
                                 do term_r = 1, 6
     
                                     ! pick appropriate constant from a given DM response R function with indices (tau,tau_p,term_r)
-                                    ! note for possible future change: currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
+                                    ! note for possible future change: currently passes m_nuc, and c0 - these are constants that could be shared to it through the shared module?
                                     select case (func_type)
                                     case (1)
-                                        r_const =   rm(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
+                                        r_const =   rm(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
                                     case (2)
-                                        r_const =  rs2(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const =  rs2(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (3)
-                                        r_const =  rs1(mnuc,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const =  rs1(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (4)
-                                        r_const =  rp2(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const =  rp2(m_proton,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (5)
-                                        r_const = rmp2(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const = rmp2(m_proton,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (6)
-                                        r_const =  rp1(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const =  rp1(m_proton,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (7)
-                                        r_const =   rd(mnuc,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const =   rd(m_proton,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (8)
                                         r_const = rs1d(tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case default
@@ -348,7 +348,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
             a = atomic_nums_nreo(eli)
             a_shared = a !make accessible via the module
 
-            mu = mdm/(mnuc*a)
+            mu = mdm/(m_proton*a)
             muplus = (1.+mu)/2.
             muminus = (mu-1.d0)/2.
 
@@ -377,7 +377,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
                 end do !q_pow
             end do !w_pow
 
-            factor_final = (2*mnuc*a)/(2*J+1) * avogadro*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
+            factor_final = (2*m_proton*a)/(2*J+1) * avogadro*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(m_proton*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
             partialCapped = partialCapped + elementalResult * factor_final
         end do !eli

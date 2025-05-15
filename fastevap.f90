@@ -24,7 +24,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   print*, "Make sure you aren't underestimating the evaporation rate!"
 
   mdmg = mdm*1.78d-24
-  mnucg = mnuc*1.78d-24
+  mnucg = m_proton*1.78d-24
 
   Tc = tab_T(1)
   rhoc = tab_starrho(1)
@@ -34,8 +34,8 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
 
   do i = 1,niso
-  muarray(i) = mdm/AtomicNumber(i)/mnuc
-  sigma_N(i) = AtomicNumber(i)**4*(mdm+mnuc)**2/(mdm+AtomicNumber(i)*mnuc)**2 !not yet multiplied by sigma_0
+  muarray(i) = mdm/AtomicNumber(i)/m_proton
+  sigma_N(i) = AtomicNumber(i)**4*(mdm+m_proton)**2/(mdm+AtomicNumber(i)*m_proton)**2 !not yet multiplied by sigma_0
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/AtomicNumber(i)/mnucg
   end do
 
@@ -117,8 +117,8 @@ subroutine Twimp(nabund,niso,Tw)
     TwK = Tw/(kBeV*1.d-9)
 
     do i=1,Niso
-      mN = AtomicNumber(i)*mnuc
-      beta = AtomicNumber(i)*mnuc*(mdm + mnuc)/mnuc/(mdm + AtomicNumber(i)*mnuc);
+      mN = AtomicNumber(i)*m_proton
+      beta = AtomicNumber(i)*m_proton*(mdm + m_proton)/m_proton/(mdm + AtomicNumber(i)*m_proton);
 
       sigmaN = beta**2.*Atomicnumber(i)**2
 

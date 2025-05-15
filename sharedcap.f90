@@ -13,7 +13,7 @@ module shared_mod
     use omp_lib
     implicit none
     double precision, parameter :: pi=3.141592653, avogadro=6.0221409d23, gm_over_r_sun=1.908e15
-    double precision, parameter :: c0=2.99792458d10, mnuc=0.938
+    double precision, parameter :: c0=2.99792458d10, m_proton=0.938
     !these are now set in init_sun
     double precision :: usun , u0 ,rho0, vesc_halo, Rsun
     !tab: means tabulated from file; so as not to be confused with other variables

@@ -49,7 +49,7 @@
         double precision :: dgamic,GFFI_A
         p = mdm*w
         u = sqrt(w**2-vesc**2)
-        mN = A*mnuc
+        mN = A*m_proton
         Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)
         B = .5*mdm*w**2/Ei/c0**2
         if (nq .eq. 0) then
@@ -167,9 +167,9 @@
           a_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
-          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+mnuc)**2/(mx_in+a*mnuc)**2
+          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+m_proton)**2/(mx_in+a*m_proton)**2
 
-          mu = mx_in/(mnuc*a)
+          mu = mx_in/(m_proton*a)
           muplus = (1.+mu)/2.
           muminus = (mu-1.d0)/2.
 

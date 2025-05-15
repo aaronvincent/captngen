@@ -132,8 +132,8 @@ kappaofR(:) = 0.d0
 do i = 1,niso
   a = AtomicNumber(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
-  muarray(i) = mdm/a/mnuc
-  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+mnuc)**2 / (mdm+a*mnuc)**2
+  muarray(i) = mdm/a/m_proton
+  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+m_proton)**2 / (mdm+a*m_proton)**2
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
