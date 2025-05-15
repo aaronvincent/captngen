@@ -277,7 +277,7 @@
 
     vel_sun = usun_in*1.d5
     dispersion_dm =  u0_in*1.d5
-    rho0 =rho0_in
+    rho_dm =rho0_in
     vesc_halo = vesc_in*1.d5
 
     Rsun = rmesa(nlines)
