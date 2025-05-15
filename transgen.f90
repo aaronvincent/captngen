@@ -73,7 +73,7 @@ biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,
 mxg = m_dm*1.78d-24
 q0_cgs = q0*5.344d-14
 Tc = tab_T(1)
-rhoc = tab_starrho(1)
+rhoc = star_rho(1)
 nq = nq_in
 nv = nv_in
 
@@ -134,7 +134,7 @@ do i = 1,niso
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = m_dm/a/m_proton
   sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (m_dm+m_proton)**2 / (m_dm+a*m_proton)**2
-  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
+  nabund(i,:) = tab_mfr(:,i)*star_rho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
   call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
@@ -273,7 +273,7 @@ select case (transport_formalism)
 		write(4,*) Ltrans
 		close(4)
 
-		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/radius_star**2
+		Etrans = 1./(4.*pi*(tab_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		! Check Ltrans
@@ -282,7 +282,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
-!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nx(i), &
+!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
 !		end do
 !		close(55)
@@ -332,7 +332,7 @@ select case (transport_formalism)
 	! 	ENDIF
 	! 	dLdr = dLdr/radius_star
 
-	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/radius_star**2
+	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		open(55,file = "scalar_params_gr_skew.dat")
@@ -340,7 +340,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
-!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), tab_starrho(i), nx(i), &
+!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
 !		end do
 !		close(55)
@@ -359,7 +359,7 @@ select case (transport_formalism)
 		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*tab_starrho, i)
+			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*star_rho, i)
 			! write(5,*) tab_r(i), Ltrans(i)
 		enddo
 
@@ -403,7 +403,7 @@ select case (transport_formalism)
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*tab_starrho, i)
+			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*star_rho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) tab_r(i), L
@@ -417,7 +417,7 @@ select case (transport_formalism)
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2*Etrans*tab_starrho, nlines)
+EtransTot = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2*Etrans*star_rho, nlines)
 ! EtransTot = 1
 
 ! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff

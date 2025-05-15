@@ -181,7 +181,7 @@
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          int_result = int_result * 2.d0 * sigma_N * avogadro * tab_starrho(ri)*tab_mfr(ri,eli) * (mu_plus/mx_in)**2
+          int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*tab_mfr(ri,eli) * (mu_plus/mx_in)**2
           capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
@@ -235,7 +235,7 @@
     nlines = nlines_mesa
     allocate(star_enclosed(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
-    allocate(tab_starrho(nlines))     !rho
+    allocate(star_rho(nlines))     !rho
     allocate(tab_mfr(nlines,8))       !mass fraction per isotope
     allocate(tab_atomic(8))
     allocate(tab_vesc(nlines))        !local escape velocity
@@ -251,7 +251,7 @@
     use capmod
     deallocate(star_enclosed)
     deallocate(tab_r)
-    deallocate(tab_starrho)
+    deallocate(star_rho)
     deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
     deallocate(tab_atomic)
     deallocate(tab_vesc)
@@ -282,7 +282,7 @@
 
     radius_star = rmesa(nlines)
     tab_r = rmesa/radius_star
-    tab_starrho = rhomesa
+    star_rho = rhomesa
     tab_vesc = mesavesc
     tab_T = tmesa
     tab_g = -mesag

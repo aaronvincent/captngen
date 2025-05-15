@@ -334,7 +334,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
+    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,star_rho,tab_mfr_oper,tab_r,tab_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
@@ -378,7 +378,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
                 end do !q_pow
             end do !w_pow
 
-            factor_final = (2*m_proton*a)/(2*J+1) * avogadro*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(m_proton*a) * &
+            factor_final = (2*m_proton*a)/(2*J+1) * avogadro*star_rho(ri)*tab_mfr_oper(ri,eli)/(m_proton*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
             partialCapped = partialCapped + elementalResult * factor_final
         end do !eli

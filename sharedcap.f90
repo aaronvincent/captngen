@@ -17,7 +17,7 @@ module shared_mod
     !these are now set in init_sun
     double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: star_enclosed(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision, allocatable :: star_enclosed(:), star_rho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
@@ -69,7 +69,7 @@ module shared_mod
         !allocate the arrays
         allocate(star_enclosed(nlines))
         allocate(tab_r(nlines))
-        allocate(tab_starrho(nlines))
+        allocate(star_rho(nlines))
         allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
         allocate(tab_vesc(nlines))
         allocate(phi(nlines))
@@ -83,7 +83,7 @@ module shared_mod
         !now actually read in the file
         open(99,file=filename)
         do i=1,nlines
-          read(99,*) star_enclosed(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+          read(99,*) star_enclosed(i),tab_r(i), tab_T(i), star_rho(i), Pres, Lumi, tab_mfr(i,:)
         end do
         close(99)
 

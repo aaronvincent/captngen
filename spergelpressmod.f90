@@ -71,7 +71,7 @@ initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
 do i=1,niso
-	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/atomic_nums(i)/mnucg ! tab_starrho in gcm^-3
+	n_nuc(i,:) = tab_mfr(:,i)*star_rho/atomic_nums(i)/mnucg ! star_rho in gcm^-3
 enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
@@ -101,7 +101,7 @@ species_dep=0.d0
 
 if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/star_rho ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
 		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0)
@@ -109,7 +109,7 @@ if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	Etrans_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-tab_T)/tab_starrho/v0**(2.d0*nv) ! The species independent part
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-tab_T)/star_rho/v0**(2.d0*nv) ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
 		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nv)
@@ -117,7 +117,7 @@ else if (nv .ne. 0) then
 	Etrans_sp = species_indep*species_dep
 else if (nq .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-tab_T)/tab_starrho*B/(initial_q)**(2.d0*nq)* &
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-tab_T)/star_rho*B/(initial_q)**(2.d0*nq)* &
 		(2.**nq)*mxg**(2.d0*nq) ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
@@ -132,7 +132,7 @@ end if
 !write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
 !	"nlines=", nlines, "niso=", niso
 !do i=1,nlines
-!	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), tab_starrho(i), n_nuc(1,i), species_indep(i), phi(i)
+!	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
 !enddo
 !close(55)
 
@@ -154,7 +154,7 @@ double precision :: Tx_integral
 R = tab_r*radius_star
 
 !print*, 'TX here'
-integrand = 4*pi*R**2*tab_starrho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
+integrand = 4*pi*R**2*star_rho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapz(R, integrand, nlines)
