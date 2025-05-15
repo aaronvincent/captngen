@@ -18,7 +18,7 @@ module shared_mod
     double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: star_enclosed(:), star_rho(:), star_fractions(:,:), star_r(:), star_escape(:), star_dr(:)
-    double precision, allocatable :: star_fractions_nreo(:,:), star_temp(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
+    double precision, allocatable :: star_fractions_nreo(:,:), star_temp(:), star_grav(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
@@ -75,7 +75,7 @@ module shared_mod
         allocate(phi(nlines))
         allocate(star_dr(nlines))
         allocate(star_temp(nlines)) !not used in capgen; used for transgen (and anngen? )
-        allocate(tab_g(nlines))
+        allocate(star_grav(nlines))
         allocate(star_fractions_nreo(nlines,16)) ! for the operator method
         allocate(vesc_shared_arr(nlines)) ! for OMP stuff
 
@@ -97,11 +97,11 @@ module shared_mod
             * (star_enclosed(j)/star_r(j)**2+star_enclosed(j+1)/star_r(j+1)**2)
           star_escape(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
           star_dr(j) = -star_r(j)+star_r(j+1) !while we're here, populate dr
-          ! tab_g(j) = -(-phi(j)+phi(j+1))/star_dr(j)
-          tab_g(i) = -gm_over_r_sun*star_enclosed(i)/star_r(i)**2/radius_star
+          ! star_grav(j) = -(-phi(j)+phi(j+1))/star_dr(j)
+          star_grav(i) = -gm_over_r_sun*star_enclosed(i)/star_r(i)**2/radius_star
         end do
-        ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -gm_over_r_sun*star_enclosed(nlines)/star_r(nlines)**2/radius_star
+        ! star_grav(nlines) = star_grav(nlines-1)
+        star_grav(nlines) = -gm_over_r_sun*star_enclosed(nlines)/star_r(nlines)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         atomic_nums  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &

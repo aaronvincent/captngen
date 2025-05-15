@@ -97,7 +97,7 @@ if (.not. allocated(star_r)) stop "Error: stellar parameters not allocated in tr
 
 !set up extra stellar arrays that we need
 phi = - star_escape**2/2.d0
-dphidr = -tab_g
+dphidr = -star_grav
 
 ! smooth T derivative
 ! some gymnastics are necessary, because the temperature is not smooth at all
@@ -369,7 +369,7 @@ select case (transport_formalism)
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), star_temp(i), tab_g(i), dTdr(i), nabund(1,i)
+!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), star_temp(i), star_grav(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press

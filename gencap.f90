@@ -242,7 +242,7 @@
     allocate(star_temp(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
     allocate(star_dr(nlines))          !dr (nice)
-    allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
+    allocate(star_grav(nlines))           !local gravitational acceleration, needed for transport
 
     RETURN
   end subroutine allocate_stellar_arrays
@@ -257,7 +257,7 @@
     deallocate(star_escape)
     deallocate(star_temp)
     deallocate(star_dr)
-    deallocate(tab_g)
+    deallocate(star_grav)
     RETURN
   end subroutine deallocate_stellar_arrays
 
@@ -285,7 +285,7 @@
     star_rho = rhomesa
     star_escape = mesavesc
     star_temp = tmesa
-    tab_g = -mesag
+    star_grav = -mesag
     do i= 1,8
       star_fractions(:,i) = mfrmesa(i,:)
     end do
