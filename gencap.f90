@@ -97,8 +97,8 @@
       w = sqrt(u**2+vesc_shared**2)
 
       !Switch depending on whether we are capturing on Hydrogen or not
-      if (a_shared .gt. 2.d0) then
-        integrand = foveru(u)*GFFI_A(w,vesc_shared,a_shared)
+      if (atomic_shared .gt. 2.d0) then
+        integrand = foveru(u)*GFFI_A(w,vesc_shared,atomic_shared)
       else
         integrand = foveru(u)*GFFI_H(w,vesc_shared)
       end if
@@ -164,7 +164,7 @@
         do eli = 1, niso
 
           a = atomic_nums(eli)
-          a_shared = a !make accessible via the module
+          atomic_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
           sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+m_proton)**2/(mx_in+a*m_proton)**2

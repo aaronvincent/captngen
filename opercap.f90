@@ -271,8 +271,9 @@ function velocity_integrand_nreo(init_velocity, dist_over_vel)
     w = sqrt(init_velocity**2+vesc_shared_arr(shell_index_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
-    if (a_shared .gt. 2.d0) then
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(shell_index_shared),a_shared,q_shared)
+    if (atomic_shared .gt. 2.d0) then
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(shell_index_shared),atomic_shared, &
+            q_shared)
     else
         velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(shell_index_shared),q_shared)
     end if
@@ -346,7 +347,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
             ! u_int_res(ri) = 0.d0
             elementalResult = 0.d0
             a = atomic_nums_nreo(eli)
-            a_shared = a !make accessible via the module
+            atomic_shared = a !make accessible via the module
 
             mu = mdm/(m_proton*a)
             muplus = (1.+mu)/2.
