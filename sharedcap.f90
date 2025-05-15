@@ -23,7 +23,7 @@ module shared_mod
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
     integer :: nlines, shell_index_shared!, ri_for_omega
-    double precision :: mdm, vesc_shared, atomic_shared, mu, muplus
+    double precision :: mdm, vesc_shared, atomic_shared, mu, mu_plus
     !$OMP threadprivate(shell_index_shared, atomic_shared)
     
     contains

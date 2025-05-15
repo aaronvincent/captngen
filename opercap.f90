@@ -332,7 +332,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     umin = 0.d0
     capture_rate = 0.d0
     !$OMP parallel default(none) &
-    !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
+    !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
     !$OMP shared(nlines,mdm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
@@ -350,7 +350,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
             atomic_shared = a !make accessible via the module
 
             mu = mdm/(m_proton*a)
-            muplus = (1.+mu)/2.
+            mu_plus = (1.+mu)/2.
             muminus = (mu-1.d0)/2.
 
             J = atomic_spins_nreo(eli)

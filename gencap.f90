@@ -36,9 +36,9 @@
       u = sqrt(w**2-vesc**2)
       if (nq .ne. -1) then
         G = (p/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
-        *((mu/muplus**2)**(dble(nq)+1.)-(u**2/w**2)**(dble(nq)+1.))
+        *((mu/mu_plus**2)**(dble(nq)+1.)-(u**2/w**2)**(dble(nq)+1.))
       else
-        G = ((p)/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*log(mu/muplus**2*w**2/(u)**2)
+        G = ((p)/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*log(mu/mu_plus**2*w**2/(u)**2)
       endif
       GFFI_H = G
       end function GFFI_H
@@ -53,10 +53,10 @@
         Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)
         B = .5*mdm*w**2/Ei/c0**2
         if (nq .eq. 0) then
-          GFFI_A = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
+          GFFI_A = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/mu_plus**2))
         else
           GFFI_A = ((p)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/w**2) &
-                  - dgamic(1.+dble(nq),B*mu/muplus**2))
+                  - dgamic(1.+dble(nq),B*mu/mu_plus**2))
         end if
       end function GFFI_A
 
@@ -170,7 +170,7 @@
           sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+m_proton)**2/(mx_in+a*m_proton)**2
 
           mu = mx_in/(m_proton*a)
-          muplus = (1.+mu)/2.
+          mu_plus = (1.+mu)/2.
           muminus = (mu-1.d0)/2.
 
           ! Bottom part of the integral is always zero -- happy little slow DM particles can always be captured.
@@ -181,7 +181,7 @@
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          int_result = int_result * 2.d0 * sigma_N * avogadro * tab_starrho(ri)*tab_mfr(ri,eli) * (muplus/mx_in)**2
+          int_result = int_result * 2.d0 * sigma_N * avogadro * tab_starrho(ri)*tab_mfr(ri,eli) * (mu_plus/mx_in)**2
           capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
