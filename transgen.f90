@@ -134,7 +134,7 @@ do i = 1,niso
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = m_dm/a/m_proton
   sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (m_dm+m_proton)**2 / (m_dm+a*m_proton)**2
-  nabund(i,:) = tab_mfr(:,i)*star_rho(:)/a/mnucg
+  nabund(i,:) = star_fractions(:,i)*star_rho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))
   call interp1(muVect,kappaVect,nlinesinaktable,muarray(i),kappa(i))
@@ -283,7 +283,7 @@ select case (transport_formalism)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
 !			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
-!			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
+!			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
 !		end do
 !		close(55)
 
@@ -341,7 +341,7 @@ select case (transport_formalism)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
 !			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
-!			dphidr(i), Ltrans(i), dLdr(i), tab_mfr(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
+!			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
 !		end do
 !		close(55)
 

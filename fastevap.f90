@@ -36,7 +36,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   do i = 1,niso
   muarray(i) = m_dm/atomic_nums(i)/m_proton
   sigma_N(i) = atomic_nums(i)**4*(m_dm+m_proton)**2/(m_dm+atomic_nums(i)*m_proton)**2 !not yet multiplied by sigma_0
-  nabund(i,:) = tab_mfr(:,i)*star_rho(:)/atomic_nums(i)/mnucg
+  nabund(i,:) = star_fractions(:,i)*star_rho(:)/atomic_nums(i)/mnucg
   end do
 
   call Twimp(nabund,niso,Tw)

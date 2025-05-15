@@ -71,7 +71,7 @@ initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
 do i=1,niso
-	n_nuc(i,:) = tab_mfr(:,i)*star_rho/atomic_nums(i)/mnucg ! star_rho in gcm^-3
+	n_nuc(i,:) = star_fractions(:,i)*star_rho/atomic_nums(i)/mnucg ! star_rho in gcm^-3
 enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections

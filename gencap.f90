@@ -181,7 +181,7 @@
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*tab_mfr(ri,eli) * (mu_plus/mx_in)**2
+          int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
           capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
@@ -236,7 +236,7 @@
     allocate(star_enclosed(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(star_rho(nlines))     !rho
-    allocate(tab_mfr(nlines,8))       !mass fraction per isotope
+    allocate(star_fractions(nlines,8))       !mass fraction per isotope
     allocate(tab_atomic(8))
     allocate(tab_vesc(nlines))        !local escape velocity
     allocate(tab_T(nlines))           !temperature
@@ -252,7 +252,7 @@
     deallocate(star_enclosed)
     deallocate(tab_r)
     deallocate(star_rho)
-    deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
+    deallocate(star_fractions) !we could just allocate niso, but this leads to problems
     deallocate(tab_atomic)
     deallocate(tab_vesc)
     deallocate(tab_T)
@@ -287,7 +287,7 @@
     tab_T = tmesa
     tab_g = -mesag
     do i= 1,8
-      tab_mfr(:,i) = mfrmesa(i,:)
+      star_fractions(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
     atomic_nums(1:8) = tab_atomic
