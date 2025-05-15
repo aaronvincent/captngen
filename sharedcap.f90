@@ -17,7 +17,7 @@ module shared_mod
     !these are now set in init_sun
     double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision, allocatable :: star_enclosed(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
@@ -67,7 +67,7 @@ module shared_mod
         nlines = nlines -1
 
         !allocate the arrays
-        allocate(tab_mencl(nlines))
+        allocate(star_enclosed(nlines))
         allocate(tab_r(nlines))
         allocate(tab_starrho(nlines))
         allocate(tab_mfr(nlines,29)) !we could just allocate niso, but this leads to problems
@@ -83,7 +83,7 @@ module shared_mod
         !now actually read in the file
         open(99,file=filename)
         do i=1,nlines
-          read(99,*) tab_mencl(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
+          read(99,*) star_enclosed(i),tab_r(i), tab_T(i), tab_starrho(i), Pres, Lumi, tab_mfr(i,:)
         end do
         close(99)
 
@@ -93,14 +93,14 @@ module shared_mod
         tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
         do i = 1,nlines-1
           j = nlines-i !trapezoid integral
-          phi(j) = phi(j+1) + gm_over_r_sun*(tab_r(j)-tab_r(j+1))/2.*(tab_mencl(j)/tab_r(j)**2+tab_mencl(j+1)/tab_r(j+1)**2)
+          phi(j) = phi(j+1) + gm_over_r_sun*(tab_r(j)-tab_r(j+1))/2.*(star_enclosed(j)/tab_r(j)**2+star_enclosed(j+1)/tab_r(j+1)**2)
           tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
           tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
           ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
-          tab_g(i) = -gm_over_r_sun*tab_mencl(i)/tab_r(i)**2/radius_star
+          tab_g(i) = -gm_over_r_sun*star_enclosed(i)/tab_r(i)**2/radius_star
         end do
         ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -gm_over_r_sun*tab_mencl(nlines)/tab_r(nlines)**2/radius_star
+        tab_g(nlines) = -gm_over_r_sun*star_enclosed(nlines)/tab_r(nlines)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         atomic_nums  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &

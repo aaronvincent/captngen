@@ -233,7 +233,7 @@
     use capmod
     integer, intent(in) :: nlines_mesa
     nlines = nlines_mesa
-    allocate(tab_mencl(nlines))       !M(<r)
+    allocate(star_enclosed(nlines))       !M(<r)
     allocate(tab_r(nlines))           !r
     allocate(tab_starrho(nlines))     !rho
     allocate(tab_mfr(nlines,8))       !mass fraction per isotope
@@ -249,7 +249,7 @@
 
   subroutine deallocate_stellar_arrays()
     use capmod
-    deallocate(tab_mencl)
+    deallocate(star_enclosed)
     deallocate(tab_r)
     deallocate(tab_starrho)
     deallocate(tab_mfr) !we could just allocate niso, but this leads to problems
