@@ -33,15 +33,15 @@ module nreo_mod
     function gffi_h_nreo(vel_dm, vel_esc, q_pow)
         double precision :: p, mu,vel_dm,vel_esc,u,muplus,gffi_h_nreo,G
         integer q_pow
-        p = mdm*vel_dm
-        mu = mdm/m_proton
+        p = m_dm*vel_dm
+        mu = m_dm/m_proton
         muplus = (1.+mu)/2.
         u = sqrt(vel_dm**2-vel_esc**2)
         if (q_pow .ne. -1) then
-            G = (p/c0)**(2.d0*q_pow)*mdm*vel_dm**2/(2.d0*mu**q_pow)*1./(1.+q_pow) &
+            G = (p/c0)**(2.d0*q_pow)*m_dm*vel_dm**2/(2.d0*mu**q_pow)*1./(1.+q_pow) &
                 * ((mu/muplus**2)**(q_pow+1)-(u**2/vel_dm**2)**(q_pow+1))
         else
-            G = (p/c0)**(2.d0*q_pow)*mdm*vel_dm**2/(2.d0*mu**q_pow)*log(mu/muplus**2*vel_dm**2/(u)**2)
+            G = (p/c0)**(2.d0*q_pow)*m_dm*vel_dm**2/(2.d0*mu**q_pow)*log(mu/muplus**2*vel_dm**2/(u)**2)
         endif
         gffi_h_nreo = G
     end function gffi_h_nreo
@@ -50,15 +50,15 @@ module nreo_mod
         double precision :: p, mu,vel_dm,vel_esc,u,muplus,mN,atomic_num,Ei,B
         double precision :: dgamic,gffi_a_nreo
         integer :: q_pow
-        p = mdm*vel_dm
-        mu = mdm/m_proton/atomic_num
+        p = m_dm*vel_dm
+        mu = m_dm/m_proton/atomic_num
         muplus = (1.+mu)/2.
         u = sqrt(vel_dm**2-vel_esc**2)
         mN = atomic_num*m_proton
         Ei = 1./4.d0/mN/264.114*(45.d0*atomic_num**(-1./3.)-25.d0*atomic_num**(-2./3.))
-        B = .5*mdm*vel_dm**2/Ei/c0**2
+        B = .5*m_dm*vel_dm**2/Ei/c0**2
         if (q_pow .eq. 0) then
-            gffi_a_nreo = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
+            gffi_a_nreo = Ei*c0**2*(exp(-m_dm*u**2/2/Ei/c0**2)-exp(-B*mu/muplus**2))
         else
             gffi_a_nreo = ((p)/c0)**(2*q_pow)*Ei*c0**2/(B*mu)**q_pow*(dgamic(1.+dble(q_pow),B*u**2/vel_dm**2) &
                 - dgamic(1.+dble(q_pow),B*mu/muplus**2))
@@ -97,7 +97,7 @@ module nreo_mod
         all_prefactors = 0.d0
         do eli = 1, size(all_prefactors,dim=1)
             ! I'll need the reduced mass mu to include in the prefactor when there is a v^2 term
-            mu = (m_proton*atomic_nums_nreo(eli) * mdm)/(m_proton*atomic_nums_nreo(eli) + mdm)
+            mu = (m_proton*atomic_nums_nreo(eli) * m_dm)/(m_proton*atomic_nums_nreo(eli) + m_dm)
     
             ! the current response function type in order: M, S2, S1, P2, MP2, P1, D, S1D
             do func_type = 1, 8
@@ -285,7 +285,7 @@ end function velocity_integrand_nreo
 
 
 ! call capture_rate_nreo to run capt'n with the effective operator method
-subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
+subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     use nreo_mod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
@@ -299,7 +299,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
         end function velocity_integrand_nreo
     end interface
     integer ri, eli, limit!, i
-    double precision, intent(in) :: m_dm, spin_dm
+    double precision, intent(in) :: mass_dm, spin_dm
     double precision, intent(out) :: capture_rate !this is the output
     double precision :: capture_maximum, maxcapped, a, muminus, umax, umin, vesc, partialCapped, elementalResult, integrateResult
     double precision :: epsabs, epsrel, abserr, neval !for integrator
@@ -317,7 +317,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     epsrel=1.d-6
     limit=1000
 
-    mdm = m_dm
+    m_dm = mass_dm
     
     if (.not. allocated(tab_r)) then 
         print*,"Errorface of errors: you haven't called init_sun to load the solar model!"
@@ -334,7 +334,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,mdm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
+    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
@@ -349,7 +349,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
             a = atomic_nums_nreo(eli)
             atomic_shared = a !make accessible via the module
 
-            mu = mdm/(m_proton*a)
+            mu = m_dm/(m_proton*a)
             mu_plus = (1.+mu)/2.
             muminus = (mu-1.d0)/2.
 
@@ -390,7 +390,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
 
     capture_rate = 4.d0*pi*radius_star**3*capture_rate
 
-    maxcapped = capture_maximum(m_dm)
+    maxcapped = capture_maximum(mass_dm)
     if (capture_rate .gt. maxcapped) then
       capture_rate = maxcapped
     end if

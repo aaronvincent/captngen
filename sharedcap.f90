@@ -23,7 +23,7 @@ module shared_mod
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
     integer :: nlines, shell_index_shared!, ri_for_omega
-    double precision :: mdm, vesc_shared, atomic_shared, mu, mu_plus
+    double precision :: m_dm, vesc_shared, atomic_shared, mu, mu_plus
     !$OMP threadprivate(shell_index_shared, atomic_shared)
     
     contains
@@ -32,7 +32,7 @@ module shared_mod
     !velocity distribution,
     function vdist_over_u(u)
         double precision :: u, vdist_over_u, normfact
-        vdist_over_u = (3./2.)**(3./2.)*4.*rho_dm*u/sqrt(pi)/mdm/dispersion_dm**3 &
+        vdist_over_u = (3./2.)**(3./2.)*4.*rho_dm*u/sqrt(pi)/m_dm/dispersion_dm**3 &
         *exp(-3.*(vel_sun**2+u**2)/(2.*dispersion_dm**2))*sinh(3.*u*vel_sun/dispersion_dm**2)/(3.*u*vel_sun/dispersion_dm**2)
         !normfact = .5*erf(sqrt(3./2.)*(escape_halo-vel_sun)/dispersion_dm) + &
         !.5*erf(sqrt(3./2.)*(escape_halo+vel_sun)/dispersion_dm)+ dispersion_dm/(sqrt(6.*pi)*vel_sun) &

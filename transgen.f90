@@ -70,7 +70,7 @@ biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,
 
 
 
-mxg = mdm*1.78d-24
+mxg = m_dm*1.78d-24
 q0_cgs = q0*5.344d-14
 Tc = tab_T(1)
 rhoc = tab_starrho(1)
@@ -132,8 +132,8 @@ kappaofR(:) = 0.d0
 do i = 1,niso
   a = atomic_nums(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
-  muarray(i) = mdm/a/m_proton
-  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+m_proton)**2 / (mdm+a*m_proton)**2
+  muarray(i) = m_dm/a/m_proton
+  sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (m_dm+m_proton)**2 / (m_dm+a*m_proton)**2
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interp1(muVect,alphaVect,nlinesinaktable,muarray(i),alpha(i))

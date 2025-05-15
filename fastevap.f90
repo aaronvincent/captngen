@@ -23,7 +23,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   print*, "HEY! This is the fast evaporation routine - it DOES NOT WORK in the LTE limit"
   print*, "Make sure you aren't underestimating the evaporation rate!"
 
-  mdmg = mdm*1.78d-24
+  mdmg = m_dm*1.78d-24
   mnucg = m_proton*1.78d-24
 
   Tc = tab_T(1)
@@ -34,8 +34,8 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
 
   do i = 1,niso
-  muarray(i) = mdm/atomic_nums(i)/m_proton
-  sigma_N(i) = atomic_nums(i)**4*(mdm+m_proton)**2/(mdm+atomic_nums(i)*m_proton)**2 !not yet multiplied by sigma_0
+  muarray(i) = m_dm/atomic_nums(i)/m_proton
+  sigma_N(i) = atomic_nums(i)**4*(m_dm+m_proton)**2/(m_dm+atomic_nums(i)*m_proton)**2 !not yet multiplied by sigma_0
   nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/atomic_nums(i)/mnucg
   end do
 
@@ -44,13 +44,13 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
   ! nxIso(i) = Nwimps*exp(-radius_star**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
-  nxIso = exp(mdm*vescc**2/2./Tw);
+  nxIso = exp(m_dm*vescc**2/2./Tw);
   nin = 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines) !%niso norm
   nxIso = nxIso/nin
 
   ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines)
   !Fraction of the kinetic distribution above the local escape velocity
-  escFrac = sqrt(2.d0/pi)*vescc*sqrt(mdm/Tw)*exp(-mdm*vescc**2/Tw/2.d0) - derf(sqrt(mdm/Tw/2.d0)*vescc) + 1.d0;
+  escFrac = sqrt(2.d0/pi)*vescc*sqrt(m_dm/Tw)*exp(-m_dm*vescc**2/Tw/2.d0) - derf(sqrt(m_dm/Tw/2.d0)*vescc) + 1.d0;
   ! print*,"EscFrac = ", escFrac,
 
 
@@ -62,7 +62,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
     do i = 1,nlines
       mfp(i) = 1./sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0
     end do
-    scatrate = 1./mfp*sqrt(3.*Tw/mdm)
+    scatrate = 1./mfp*sqrt(3.*Tw/m_dm)
   ! else if ((nq .eq. )) !q, v dependence goes here
   end if
 
@@ -105,7 +105,7 @@ subroutine Twimp(nabund,niso,Tw)
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
   TGeV = tab_T*kBeV*1.d-9
   TcGeV = TGeV(1)
-  mdmg = mdm*1.78266e-24
+  mdmg = m_dm*1.78266e-24
   ! print*,"TcGeV ", TcGeV
   Tw = TcGeV
   Tw_out = 0.d0;
@@ -118,14 +118,14 @@ subroutine Twimp(nabund,niso,Tw)
 
     do i=1,Niso
       mN = atomic_nums(i)*m_proton
-      beta = atomic_nums(i)*m_proton*(mdm + m_proton)/m_proton/(mdm + atomic_nums(i)*m_proton);
+      beta = atomic_nums(i)*m_proton*(m_dm + m_proton)/m_proton/(m_dm + atomic_nums(i)*m_proton);
 
       sigmaN = beta**2.*atomic_nums(i)**2
 
-      call sigmav(2*nv,2*nq,Tw/mdm,TGeV/mn,nlines,sv)
+      call sigmav(2*nv,2*nq,Tw/m_dm,TGeV/mn,nlines,sv)
       ! print*,sv
       if (nq .ne. 0) then
-          sv = sv*(2.*mdm**2)**(nq)/(1.+mdm/mN)**(2.*nq)/q0**(2*nq)
+          sv = sv*(2.*m_dm**2)**(nq)/(1.+m_dm/mN)**(2.*nq)/q0**(2*nq)
       elseif (nv .ne. 0) then
           sv = sv/v0**(2*nv)
       end if

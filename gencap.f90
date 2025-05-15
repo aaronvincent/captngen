@@ -32,13 +32,13 @@
       !generalized form factor: hydrogen
       function GFFI_H(w,vesc)
       double precision :: p, w,vesc,u,GFFI_H,G
-      p = mdm*w
+      p = m_dm*w
       u = sqrt(w**2-vesc**2)
       if (nq .ne. -1) then
-        G = (p/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
+        G = (p/q0/c0)**(2.d0*dble(nq))*m_dm*w**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
         *((mu/mu_plus**2)**(dble(nq)+1.)-(u**2/w**2)**(dble(nq)+1.))
       else
-        G = ((p)/q0/c0)**(2.d0*dble(nq))*mdm*w**2/(2.d0*mu**dble(nq))*log(mu/mu_plus**2*w**2/(u)**2)
+        G = ((p)/q0/c0)**(2.d0*dble(nq))*m_dm*w**2/(2.d0*mu**dble(nq))*log(mu/mu_plus**2*w**2/(u)**2)
       endif
       GFFI_H = G
       end function GFFI_H
@@ -47,13 +47,13 @@
       function GFFI_A(w,vesc,A)
         double precision :: p, w,vesc,u,mN,A,Ei,B
         double precision :: dgamic,GFFI_A
-        p = mdm*w
+        p = m_dm*w
         u = sqrt(w**2-vesc**2)
         mN = A*m_proton
         Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)
-        B = .5*mdm*w**2/Ei/c0**2
+        B = .5*m_dm*w**2/Ei/c0**2
         if (nq .eq. 0) then
-          GFFI_A = Ei*c0**2*(exp(-mdm*u**2/2/Ei/c0**2)-exp(-B*mu/mu_plus**2))
+          GFFI_A = Ei*c0**2*(exp(-m_dm*u**2/2/Ei/c0**2)-exp(-B*mu/mu_plus**2))
         else
           GFFI_A = ((p)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/w**2) &
                   - dgamic(1.+dble(nq),B*mu/mu_plus**2))
@@ -132,7 +132,7 @@
       epsrel=1.d-8
       limit=1000
 
-      mdm = mx_in
+      m_dm = mx_in
       nq = nq_in
       nv = nv_in
 

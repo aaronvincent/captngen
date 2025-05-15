@@ -30,7 +30,7 @@ integer :: i
 
 r = tab_r*radius_star ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
-mxg = mdm*1.782662d-24  ! g
+mxg = m_dm*1.782662d-24  ! g
 
 
 !print*, 'nx_iso here'
@@ -66,7 +66,7 @@ integer :: i, j, p
 
 R = tab_r*radius_star ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
-mxg = mdm*1.782662d-24 ! WIMP mass in g
+mxg = m_dm*1.782662d-24 ! WIMP mass in g
 initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
