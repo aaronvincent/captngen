@@ -176,7 +176,7 @@
           ! Bottom part of the integral is always zero -- happy little slow DM particles can always be captured.
           umin = 0.d0
           ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
-          umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
+          umax = min(vesc * sqrt(mu)/abs(muminus), escape_halo)
 
           !Call integrator
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
@@ -278,7 +278,7 @@
     vel_sun = usun_in*1.d5
     dispersion_dm =  u0_in*1.d5
     rho_dm =rho0_in
-    vesc_halo = vesc_in*1.d5
+    escape_halo = vesc_in*1.d5
 
     Rsun = rmesa(nlines)
     tab_r = rmesa/Rsun

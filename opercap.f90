@@ -333,7 +333,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
+    !$OMP shared(nlines,mdm,escape_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
@@ -355,7 +355,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
             J = atomic_spins_nreo(eli)
 
             ! Chop the top of the integral off at the smaller of the halo escape velocity or the minimum velocity required for capture.
-            umax = min(vesc * sqrt(mu)/abs(muminus), vesc_halo)
+            umax = min(vesc * sqrt(mu)/abs(muminus), escape_halo)
 
             do w_pow=1,size(prefactor_array,dim=3)
                 ! toggles whether we integrate with the w^2 term on
