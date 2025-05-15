@@ -43,12 +43,12 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   Tw = Tw*Tc*kBeV*1.d-9
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
-  ! nxIso(i) = Nwimps*exp(-radius_star**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
+  ! nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
   nxIso = exp(m_dm*vescc**2/2./Tw);
-  nin = 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines) !%niso norm
+  nin = 4.d0*pi*trapz(star_r,star_r**2.*nxIso,nlines) !%niso norm
   nxIso = nxIso/nin
 
-  ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines)
+  ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapz(star_r,star_r**2.*nxIso,nlines)
   !Fraction of the kinetic distribution above the local escape velocity
   escFrac = sqrt(2.d0/pi)*vescc*sqrt(m_dm/Tw)*exp(-m_dm*vescc**2/Tw/2.d0) - derf(sqrt(m_dm/Tw/2.d0)*vescc) + 1.d0;
   ! print*,"EscFrac = ", escFrac,
@@ -73,17 +73,17 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
     print*, "WARNING, K = ", knud, " is < 0.1. Approximate evaporation scheme is likely very wrong."
   end if
 
-  suparg = trapz(tab_r,radius_star/mfp,nlines)
+  suparg = trapz(star_r,radius_star/mfp,nlines)
   Earg = escFrac*scatrate*exp(-suparg)*c0
 
   ! open(55,file = "sv.dat")
   ! do j=1,nlines
-  ! write(55,*) tab_r(j), Earg(j),suparg,nxIso(j),escFrac(j),scatrate(j),exp(-suparg)
+  ! write(55,*) star_r(j), Earg(j),suparg,nxIso(j),escFrac(j),scatrate(j),exp(-suparg)
   ! end do
   ! close(55)
 
 
-  EvapRate = Nwimps*4.*pi*trapz(tab_r,tab_r**2*nxIso*Earg,nlines)
+  EvapRate = Nwimps*4.*pi*trapz(star_r,star_r**2*nxIso*Earg,nlines)
 
   if (isnan(EvapRate)) then
     stop "NaN evap rate, check it"
@@ -130,8 +130,8 @@ subroutine Twimp(nabund,niso,Tw)
           sv = sv/v0**(2*nv)
       end if
       nxIso = exp(mdmg*tab_vesc**2/2./TwK/kB)
-      Tw_out_num(i) = trapz(tab_r,tab_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
-      Tw_out_denom(i) = trapz(tab_r,tab_r**2*sv*nxIso*nabund(i,:),nlines);
+      Tw_out_num(i) = trapz(star_r,star_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
+      Tw_out_denom(i) = trapz(star_r,star_r**2*sv*nxIso*nabund(i,:),nlines);
 
 
 
@@ -144,7 +144,7 @@ subroutine Twimp(nabund,niso,Tw)
 
   ! open(55,file = "svTw.dat")
   ! do j=1,nlines
-  ! write(55,*) tab_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),tab_vesc(j),TwK
+  ! write(55,*) star_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),tab_vesc(j),TwK
   ! end do
   ! close(55)
 

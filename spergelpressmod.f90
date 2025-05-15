@@ -6,7 +6,7 @@
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
 
-! All units are cgs except tab_r and tab_dr
+! All units are cgs except star_r and tab_dr
 ! I apologize for the long function calls.
 
 module spergelpressmod
@@ -28,7 +28,7 @@ integer :: i
 ! Calculates the isothermal wimp number density using eq. (2.25) in https://arxiv.org/pdf/0809.1871.pdf
 
 
-r = tab_r*radius_star ! cm
+r = star_r*radius_star ! cm
 phi = -tab_vesc**2/2.d0 ! erg/g
 mxg = m_dm*1.782662d-24  ! g
 
@@ -64,7 +64,7 @@ integer :: i, j, p
 
 
 
-R = tab_r*radius_star ! R in cm
+R = star_r*radius_star ! R in cm
 phi = -tab_vesc**2/2.d0 ! phi in erg/g
 mxg = m_dm*1.782662d-24 ! WIMP mass in g
 initial_q = q0*5.344d-14 !cgs conversion for q0
@@ -151,7 +151,7 @@ double precision :: R(nlines), integrand(nlines)
 double precision :: Tx_integral
 
 ! integrand units: erg/cm/s
-R = tab_r*radius_star
+R = star_r*radius_star
 
 !print*, 'TX here'
 integrand = 4*pi*R**2*star_rho*Etrans_sp(T_x, sigma_N, Nwimps, niso)

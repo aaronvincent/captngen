@@ -17,7 +17,7 @@ module shared_mod
     !these are now set in init_sun
     double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
-    double precision, allocatable :: star_enclosed(:), star_rho(:), star_fractions(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
+    double precision, allocatable :: star_enclosed(:), star_rho(:), star_fractions(:,:), star_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
@@ -68,7 +68,7 @@ module shared_mod
 
         !allocate the arrays
         allocate(star_enclosed(nlines))
-        allocate(tab_r(nlines))
+        allocate(star_r(nlines))
         allocate(star_rho(nlines))
         allocate(star_fractions(nlines,29)) !we could just allocate niso, but this leads to problems
         allocate(tab_vesc(nlines))
@@ -83,24 +83,25 @@ module shared_mod
         !now actually read in the file
         open(99,file=filename)
         do i=1,nlines
-          read(99,*) star_enclosed(i),tab_r(i), tab_T(i), star_rho(i), Pres, Lumi, star_fractions(i,:)
+          read(99,*) star_enclosed(i),star_r(i), tab_T(i), star_rho(i), Pres, Lumi, star_fractions(i,:)
         end do
         close(99)
 
         !we calculate the escape velocity here since all the ingredients are ready
         phi(nlines) = -gm_over_r_sun
         tab_vesc(nlines) = sqrt(-2.d0*phi(nlines))
-        tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
+        tab_dr(nlines) = star_r(nlines)-star_r(nlines-1)
         do i = 1,nlines-1
           j = nlines-i !trapezoid integral
-          phi(j) = phi(j+1) + gm_over_r_sun*(tab_r(j)-tab_r(j+1))/2.*(star_enclosed(j)/tab_r(j)**2+star_enclosed(j+1)/tab_r(j+1)**2)
+          phi(j) = phi(j+1) + gm_over_r_sun*(star_r(j)-star_r(j+1))/2. &
+            * (star_enclosed(j)/star_r(j)**2+star_enclosed(j+1)/star_r(j+1)**2)
           tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
-          tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
+          tab_dr(j) = -star_r(j)+star_r(j+1) !while we're here, populate dr
           ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
-          tab_g(i) = -gm_over_r_sun*star_enclosed(i)/tab_r(i)**2/radius_star
+          tab_g(i) = -gm_over_r_sun*star_enclosed(i)/star_r(i)**2/radius_star
         end do
         ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -gm_over_r_sun*star_enclosed(nlines)/tab_r(nlines)**2/radius_star
+        tab_g(nlines) = -gm_over_r_sun*star_enclosed(nlines)/star_r(nlines)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         atomic_nums  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
@@ -160,7 +161,7 @@ end function gausstest
     !common solarmodel
     !external solarmodel
 
-    if  (.not. allocated(tab_r)) then !
+    if  (.not. allocated(star_r)) then !
         print*,"Capgen initializing from model: ",solarmodel
         call get_solar_params(solarmodel,nlines)
     end if

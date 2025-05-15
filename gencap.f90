@@ -148,7 +148,7 @@
         stop "Oh no! nq and nv can't both be nonzero."
       end if
 
-      if (.not. allocated(tab_r)) then
+      if (.not. allocated(star_r)) then
         stop "You haven't yet called init_sun to load the solar model!"
       end if
 
@@ -182,7 +182,7 @@
           call dsntdqagse(integrand,vdist_over_u,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
-          capped = capped + tab_r(ri)**2*int_result*tab_dr(ri)
+          capped = capped + star_r(ri)**2*int_result*tab_dr(ri)
 
           if (isnan(capped)) then
             capped = 0.d0
@@ -234,7 +234,7 @@
     integer, intent(in) :: nlines_mesa
     nlines = nlines_mesa
     allocate(star_enclosed(nlines))       !M(<r)
-    allocate(tab_r(nlines))           !r
+    allocate(star_r(nlines))           !r
     allocate(star_rho(nlines))     !rho
     allocate(star_fractions(nlines,8))       !mass fraction per isotope
     allocate(tab_atomic(8))
@@ -250,7 +250,7 @@
   subroutine deallocate_stellar_arrays()
     use capmod
     deallocate(star_enclosed)
-    deallocate(tab_r)
+    deallocate(star_r)
     deallocate(star_rho)
     deallocate(star_fractions) !we could just allocate niso, but this leads to problems
     deallocate(tab_atomic)
@@ -281,7 +281,7 @@
     escape_halo = vesc_in*1.d5
 
     radius_star = rmesa(nlines)
-    tab_r = rmesa/radius_star
+    star_r = rmesa/radius_star
     star_rho = rhomesa
     tab_vesc = mesavesc
     tab_T = tmesa
@@ -293,9 +293,9 @@
     atomic_nums(1:8) = tab_atomic
 
     do i = 1, nlines-1
-      tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr
+      tab_dr(i) = -star_r(i)+star_r(i+1) !while we're here, populate dr
     end do
-    tab_dr(nlines) = tab_r(nlines)-tab_r(nlines-1)
+    tab_dr(nlines) = star_r(nlines)-star_r(nlines-1)
 
     RETURN
   end subroutine get_stellar_params

@@ -63,7 +63,7 @@ double precision :: T_eq_Tx_index, r_T, a1, b1, c1, a2, b2, c2, A_MC, x0_MC, sig
 double precision :: A_LTE, x0_LTE, sigma_LTE, b_LTE, Ltrans_LTE(nlines), chi_LTE(nlines), g_LTE(nlines), T_index_array(1)
 
 lwk = 3*nlines !This is the length of pchipScratch. don't redefine this without also changing pchipScratch
-epso = tab_r(2)/10.d0 ! small number to prevent division by zero
+epso = star_r(2)/10.d0 ! small number to prevent division by zero
 ! smallr = (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1)
 smallgrid =  (/((i*1./dble(decsize-1)),i=1,decsize)/) - 1./dble(decsize-1) !(/i, i=1,decsize /)
 biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,nlines/)
@@ -92,7 +92,7 @@ end if
 
 if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
-if (.not. allocated(tab_r)) stop "Error: stellar parameters not allocated in transgen"
+if (.not. allocated(star_r)) stop "Error: stellar parameters not allocated in transgen"
 
 
 !set up extra stellar arrays that we need
@@ -105,7 +105,7 @@ dphidr = -tab_g
 
 ! DPCHEZ just outputs dTdr using a cubic spline (it doesn't do any smoothing)
 splinelog = .false.
-call DPCHEZ( nlines, tab_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
+call DPCHEZ( nlines, star_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
 	print*, 'DPCHEZ interpolant failed with error ', IERR
 	return
@@ -119,7 +119,7 @@ enddo
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 ! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components, delete top 95% of frequency components
-call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
+call fourier_smooth(star_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/radius_star
 
 if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
@@ -218,9 +218,9 @@ do i = 1,nlines
   end if
 
   nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
-  nxIso(i) = Nwimps*exp(-radius_star**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
+  nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
-  cumNx = cumNx + 4.*pi*tab_dr(i)*tab_r(i)**2*nxLTE(i)*radius_star**3.
+  cumNx = cumNx + 4.*pi*tab_dr(i)*star_r(i)**2*nxLTE(i)*radius_star**3.
 
 end do
 
@@ -244,7 +244,7 @@ Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltole
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
-hgoth = ((tab_r*radius_star - rchi)/rchi)**3 +1.
+hgoth = ((star_r*radius_star - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
@@ -256,7 +256,7 @@ select case (transport_formalism)
 		print*, "GR"
 		open(4, file = 'LtransGR.dat')
 
-		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*radius_star**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+		Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 		Ltrans = fgoth*hgoth*Ltrans_LTE
 
 		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -264,7 +264,7 @@ select case (transport_formalism)
 		!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
 		! There is no smoothing currently implemented here
 		splinelog = .false.
-		call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+		call DPCHEZ( nlines, star_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
 		if (ierr .lt. 0) then
 			print*, 'DPCHEZ interpolant failed with error ', IERR
 			return
@@ -273,7 +273,7 @@ select case (transport_formalism)
 		write(4,*) Ltrans
 		close(4)
 
-		Etrans = 1./(4.*pi*(tab_r+epso)**2*star_rho)*dLdR/radius_star**2
+		Etrans = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		! Check Ltrans
@@ -282,7 +282,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
-!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
 !		end do
 !		close(55)
@@ -294,7 +294,7 @@ select case (transport_formalism)
 
 	! 	T_index_array = (minloc(tab_T-Tx)) ! Just a stupid rank mismatch thing
 	! 	T_eq_Tx_index = T_index_array(1)
-	! 	r_T = tab_r(T_eq_Tx_index)! dimensionless
+	! 	r_T = star_r(T_eq_Tx_index)! dimensionless
 
 	! 	a1 = -41.64d0
 	! 	b1 = -3.26d0
@@ -307,17 +307,17 @@ select case (transport_formalism)
 	! 	x0_MC = 0.18d0
 	! 	sigma_MC = 0.34d0
 	! 	b_MC = -0.03658d0*K**(-1.818d0) - 3.227d0
-	! 	chi_MC = (log10(tab_r+epso/r_T) - x0_MC)/sigma_MC
+	! 	chi_MC = (log10(star_r+epso/r_T) - x0_MC)/sigma_MC
 	! 	g_MC = A_MC*exp(-chi_MC**2.d0/2.d0)*(1+erf(b_MC*chi_MC/sqrt(2.d0)))
 
 	! 	A_LTE = 27.17d0*K
 	! 	x0_LTE = 0.17d0
 	! 	sigma_LTE = 0.35d0
 	! 	b_MC = -4.35d0
-	! 	chi_LTE = (log10(tab_r+epso/r_T) - x0_LTE)/sigma_LTE
+	! 	chi_LTE = (log10(star_r+epso/r_T) - x0_LTE)/sigma_LTE
 	! 	g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
 
-	! 	Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*radius_star**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
+	! 	Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
 	! 	Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
 
 	! 	if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -325,14 +325,14 @@ select case (transport_formalism)
 	! 	!get derivative of luminosity - also noisy. Fourier method doesn't work as well here
 	! 	! There is no smoothing currently implemented here
 	! 	splinelog = .false.
-	! 	call DPCHEZ( nlines, tab_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
+	! 	call DPCHEZ( nlines, star_r, Ltrans, dLdR, SPLINElog, pchipScratch, LWK, IERR )
 	! 	if (ierr .lt. 0) then
 	! 		print*, 'DPCHEZ interpolant failed with error ', IERR
 	! 		return
 	! 	ENDIF
 	! 	dLdr = dLdr/radius_star
 
-	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*star_rho)*dLdR/radius_star**2
+	! 	Etrans = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		open(55,file = "scalar_params_gr_skew.dat")
@@ -340,7 +340,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
-!			write(55,*) tab_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
 !		end do
 !		close(55)
@@ -359,8 +359,8 @@ select case (transport_formalism)
 		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*star_rho, i)
-			! write(5,*) tab_r(i), Ltrans(i)
+			Ltrans(i) = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
+			! write(5,*) star_r(i), Ltrans(i)
 		enddo
 
 		!close the Ltrans data file
@@ -369,7 +369,7 @@ select case (transport_formalism)
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
 !		do i=1,nlines
-!			write(55,*) tab_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
+!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press
@@ -403,10 +403,10 @@ select case (transport_formalism)
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*star_rho, i)
+			Ltrans(i) = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
-			! write(7,*) tab_r(i), L
+			! write(7,*) star_r(i), L
 		enddo
 		! close(7)
 
@@ -417,12 +417,12 @@ select case (transport_formalism)
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2*Etrans*star_rho, nlines)
+EtransTot = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2*Etrans*star_rho, nlines)
 ! EtransTot = 1
 
 ! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff
 Etrans_test = Etrans
-call fourier_smooth(tab_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
+call fourier_smooth(star_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
 return
 
