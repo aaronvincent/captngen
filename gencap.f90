@@ -193,7 +193,7 @@
 
       end do
 
-      capped = 4.d0*pi*Rsun**3*capped
+      capped = 4.d0*pi*radius_star**3*capped
 
       if (capped .gt. 1.d100) then
         print*,"Capt'n General says: Oh my, it looks like you are capturing an"
@@ -280,8 +280,8 @@
     rho_dm =rho0_in
     escape_halo = vesc_in*1.d5
 
-    Rsun = rmesa(nlines)
-    tab_r = rmesa/Rsun
+    radius_star = rmesa(nlines)
+    tab_r = rmesa/radius_star
     tab_starrho = rhomesa
     tab_vesc = mesavesc
     tab_T = tmesa

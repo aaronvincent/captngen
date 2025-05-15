@@ -387,7 +387,7 @@ subroutine capture_rate_nreo(m_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP end critical
     !$OMP end parallel
 
-    capture_rate = 4.d0*pi*Rsun**3*capture_rate
+    capture_rate = 4.d0*pi*radius_star**3*capture_rate
 
     maxcapped = capture_maximum(m_dm)
     if (capture_rate .gt. maxcapped) then

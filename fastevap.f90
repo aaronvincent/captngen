@@ -43,7 +43,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   Tw = Tw*Tc*kBeV*1.d-9
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
-  ! nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
+  ! nxIso(i) = Nwimps*exp(-radius_star**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
   nxIso = exp(mdm*vescc**2/2./Tw);
   nin = 4.d0*pi*trapz(tab_r,tab_r**2.*nxIso,nlines) !%niso norm
   nxIso = nxIso/nin
@@ -73,7 +73,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
     print*, "WARNING, K = ", knud, " is < 0.1. Approximate evaporation scheme is likely very wrong."
   end if
 
-  suparg = trapz(tab_r,rsun/mfp,nlines)
+  suparg = trapz(tab_r,radius_star/mfp,nlines)
   Earg = escFrac*scatrate*exp(-suparg)*c0
 
   ! open(55,file = "sv.dat")

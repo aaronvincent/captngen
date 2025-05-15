@@ -15,7 +15,7 @@ module shared_mod
     double precision, parameter :: pi=3.141592653, avogadro=6.0221409d23, gm_over_r_sun=1.908e15
     double precision, parameter :: c0=2.99792458d10, m_proton=0.938
     !these are now set in init_sun
-    double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, Rsun
+    double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
@@ -50,7 +50,7 @@ module shared_mod
         double precision, allocatable :: phi(:) !this is used briefly
         integer :: i,j, nlines,iostatus
 
-        Rsun = 69.57d9 !this is set here, for other stars, this sub is not called
+        radius_star = 69.57d9 !this is set here, for other stars, this sub is not called
 
         !Get number of lines in the file
         open(99,file=filename)
@@ -97,10 +97,10 @@ module shared_mod
           tab_vesc(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
           tab_dr(j) = -tab_r(j)+tab_r(j+1) !while we're here, populate dr
           ! tab_g(j) = -(-phi(j)+phi(j+1))/tab_dr(j)
-          tab_g(i) = -gm_over_r_sun*tab_mencl(i)/tab_r(i)**2/Rsun
+          tab_g(i) = -gm_over_r_sun*tab_mencl(i)/tab_r(i)**2/radius_star
         end do
         ! tab_g(nlines) = tab_g(nlines-1)
-        tab_g(nlines) = -gm_over_r_sun*tab_mencl(nlines)/tab_r(nlines)**2/Rsun
+        tab_g(nlines) = -gm_over_r_sun*tab_mencl(nlines)/tab_r(nlines)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
@@ -141,7 +141,7 @@ end function gausstest
     double precision capture_maximum
     double precision, intent(in) :: mx
 
-    capture_maximum = pi/3.d0*rho_dm/mx*Rsun**2 &
+    capture_maximum = pi/3.d0*rho_dm/mx*radius_star**2 &
     *(exp(-3./2.*vel_sun**2/dispersion_dm**2)*sqrt(6.d0/pi)*dispersion_dm &
     + (6.d0*gm_over_r_sun/vel_sun + (dispersion_dm**2 + 3.d0*vel_sun**2)/vel_sun)*erf(sqrt(3./2.)*vel_sun/dispersion_dm))
 

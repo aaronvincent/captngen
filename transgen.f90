@@ -120,7 +120,7 @@ lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpac
 ! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components, delete top 95% of frequency components
 call fourier_smooth(tab_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
-dTdr = dTdr/Rsun
+dTdr = dTdr/radius_star
 
 if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
 
@@ -214,13 +214,13 @@ do i = 1,nlines
   integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
 
   if (i > 1) then
-  	cumint(i) = cumint(i-1) + integrand*tab_dr(i)*Rsun
+  	cumint(i) = cumint(i-1) + integrand*tab_dr(i)*radius_star
   end if
 
   nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
-  nxIso(i) = Nwimps*exp(-Rsun**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
+  nxIso(i) = Nwimps*exp(-radius_star**2*tab_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
-  cumNx = cumNx + 4.*pi*tab_dr(i)*tab_r(i)**2*nxLTE(i)*Rsun**3.
+  cumNx = cumNx + 4.*pi*tab_dr(i)*tab_r(i)**2*nxLTE(i)*radius_star**3.
 
 end do
 
@@ -244,7 +244,7 @@ Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltole
 
 !These are the interpolating functions used by G&R for transition to LTE regime
 fgoth = 1./(1.+(K/.4)**2)
-hgoth = ((tab_r*Rsun - rchi)/rchi)**3 +1.
+hgoth = ((tab_r*radius_star - rchi)/rchi)**3 +1.
 hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
@@ -256,7 +256,7 @@ select case (transport_formalism)
 		print*, "GR"
 		open(4, file = 'LtransGR.dat')
 
-		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+		Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*radius_star**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
 		Ltrans = fgoth*hgoth*Ltrans_LTE
 
 		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -269,16 +269,16 @@ select case (transport_formalism)
 			print*, 'DPCHEZ interpolant failed with error ', IERR
 			return
 		ENDIF
-		dLdr = dLdr/Rsun
+		dLdr = dLdr/radius_star
 		write(4,*) Ltrans
 		close(4)
 
-		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+		Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		! Check Ltrans
 !		open(55,file = "scalar_params_gr.dat")
-!		write(55,*) fgoth, rchi, Rsun
+!		write(55,*) fgoth, rchi, radius_star
 !		close(55)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
@@ -317,7 +317,7 @@ select case (transport_formalism)
 	! 	chi_LTE = (log10(tab_r+epso/r_T) - x0_LTE)/sigma_LTE
 	! 	g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
 
-	! 	Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*Rsun**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
+	! 	Ltrans_LTE = 4.*pi*(tab_r+epso)**2.*radius_star**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
 	! 	Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
 
 	! 	if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -330,13 +330,13 @@ select case (transport_formalism)
 	! 		print*, 'DPCHEZ interpolant failed with error ', IERR
 	! 		return
 	! 	ENDIF
-	! 	dLdr = dLdr/Rsun
+	! 	dLdr = dLdr/radius_star
 
-	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/Rsun**2
+	! 	Etrans = 1./(4.*pi*(tab_r+epso)**2*tab_starrho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		open(55,file = "scalar_params_gr_skew.dat")
-!		write(55,*) fgoth, rchi, Rsun
+!		write(55,*) fgoth, rchi, radius_star
 !		close(55)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
@@ -359,7 +359,7 @@ select case (transport_formalism)
 		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*tab_starrho, i)
 			! write(5,*) tab_r(i), Ltrans(i)
 		enddo
 
@@ -403,7 +403,7 @@ select case (transport_formalism)
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=1,nlines
-			Ltrans(i) = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2.d0*Etrans*tab_starrho, i)
+			Ltrans(i) = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2.d0*Etrans*tab_starrho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) tab_r(i), L
@@ -417,7 +417,7 @@ select case (transport_formalism)
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(tab_r*Rsun, 4.d0*pi*(tab_r*Rsun)**2*Etrans*tab_starrho, nlines)
+EtransTot = trapz(tab_r*radius_star, 4.d0*pi*(tab_r*radius_star)**2*Etrans*tab_starrho, nlines)
 ! EtransTot = 1
 
 ! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff
