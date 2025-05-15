@@ -101,27 +101,27 @@ species_dep=0.d0
 
 if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/star_rho ! The species independent part
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-star_temp)/star_rho ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0)
+		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0)
 	enddo
 	Etrans_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-tab_T)/star_rho/v0**(2.d0*nv) ! The species independent part
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-star_temp)/star_rho/v0**(2.d0*nv) ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nv)
+		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nv)
 	enddo
 	Etrans_sp = species_indep*species_dep
 else if (nq .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-tab_T)/star_rho*B/(initial_q)**(2.d0*nq)* &
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-star_temp)/star_rho*B/(initial_q)**(2.d0*nq)* &
 		(2.**nq)*mxg**(2.d0*nq) ! The species independent part
 	do i=1,niso
 	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
+		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
 	enddo
 	Etrans_sp = species_indep*species_dep
 end if
@@ -132,7 +132,7 @@ end if
 !write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
 !	"nlines=", nlines, "niso=", niso
 !do i=1,nlines
-!	write(55,*) R(i), tab_T(i), n_x(i), Etrans_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
+!	write(55,*) R(i), star_temp(i), n_x(i), Etrans_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
 !enddo
 !close(55)
 

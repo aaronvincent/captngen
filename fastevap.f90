@@ -26,7 +26,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   mdmg = m_dm*1.78d-24
   mnucg = m_proton*1.78d-24
 
-  Tc = tab_T(1)
+  Tc = star_temp(1)
   rhoc = star_rho(1)
   vescc = star_escape/c0
 
@@ -103,7 +103,7 @@ subroutine Twimp(nabund,niso,Tw)
   double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
   integer i,j
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
-  TGeV = tab_T*kBeV*1.d-9
+  TGeV = star_temp*kBeV*1.d-9
   TcGeV = TGeV(1)
   mdmg = m_dm*1.78266e-24
   ! print*,"TcGeV ", TcGeV
@@ -151,7 +151,7 @@ subroutine Twimp(nabund,niso,Tw)
 
 
 
-  ! call sigmav(2*nv,2*nq,tab_T/mdm,tab_T/mn,nlines,sv)
+  ! call sigmav(2*nv,2*nq,star_temp/mdm,star_temp/mn,nlines,sv)
 
 end subroutine Twimp
 

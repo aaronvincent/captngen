@@ -72,7 +72,7 @@ biggrid =  (/((i*1./dble(nlines-1)),i=1,nlines)/) - 1./dble(nlines-1) !(/i, i=1,
 
 mxg = m_dm*1.78d-24
 q0_cgs = q0*5.344d-14
-Tc = tab_T(1)
+Tc = star_temp(1)
 rhoc = star_rho(1)
 nq = nq_in
 nv = nv_in
@@ -105,7 +105,7 @@ dphidr = -tab_g
 
 ! DPCHEZ just outputs dTdr using a cubic spline (it doesn't do any smoothing)
 splinelog = .false.
-call DPCHEZ( nlines, star_r, tab_T, dTdr, SPLINElog, pchipScratch, LWK, IERR )
+call DPCHEZ( nlines, star_r, star_temp, dTdr, SPLINElog, pchipScratch, LWK, IERR )
 if (ierr .lt. 0) then
 	print*, 'DPCHEZ interpolant failed with error ', IERR
 	return
@@ -142,8 +142,8 @@ end do
 
 !need separate zeta factors for q- and v- dependent interactions
 do i = 1,nlines
-  zeta_q(i) = q0_cgs/(mxg*sqrt(2.d0*kB*tab_T(i)/mxg))
-  zeta_v(i) = v0/(sqrt(2.d0*kB*tab_T(i)/mxg))
+  zeta_q(i) = q0_cgs/(mxg*sqrt(2.d0*kB*star_temp(i)/mxg))
+  zeta_v(i) = v0/(sqrt(2.d0*kB*star_temp(i)/mxg))
 end do
 
 ! mean free path calcs for each nq,nv case here
@@ -211,13 +211,13 @@ do i = 1,nlines
   kappaofR(i) = 1./kappaofR(i)
 
   !perform the integral inside the exponent in nx
-  integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*tab_T(i))
+  integrand = (kB*alphaofR(i)*dTdr(i) + mxg*dphidr(i))/(kB*star_temp(i))
 
   if (i > 1) then
   	cumint(i) = cumint(i-1) + integrand*star_dr(i)*radius_star
   end if
 
-  nxLTE(i) = (tab_T(i)/Tc)**(3./2.)*exp(-cumint(i))
+  nxLTE(i) = (star_temp(i)/Tc)**(3./2.)*exp(-cumint(i))
   nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
   cumNx = cumNx + 4.*pi*star_dr(i)*star_r(i)**2*nxLTE(i)*radius_star**3.
@@ -230,8 +230,8 @@ end do
 nxLTE = nxLTE/cumNx*nwimps !normalize density
 
 ! Tx is the Spergel & Press one-zone WIMP temperature in K - calculate it here to use in nxIso
-guess_1 = maxval(tab_T)*1.1d0 ! One-zone WIMP temp guesses in K.
-guess_2 = maxval(tab_T)/10.d0
+guess_1 = maxval(star_temp)*1.1d0 ! One-zone WIMP temp guesses in K.
+guess_2 = maxval(star_temp)/10.d0
 reltolerance = 1.0d-6
 
 
@@ -256,7 +256,7 @@ select case (transport_formalism)
 		print*, "GR"
 		open(4, file = 'LtransGR.dat')
 
-		Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nx*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr;
+		Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nx*mfp*sqrt(kB*star_temp/mxg)*kB*dTdr;
 		Ltrans = fgoth*hgoth*Ltrans_LTE
 
 		if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -282,7 +282,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
 !		end do
 !		close(55)
@@ -292,7 +292,7 @@ select case (transport_formalism)
 
 	! 	skew gaussian rescaling is explained in MCrescaling.pdf
 
-	! 	T_index_array = (minloc(tab_T-Tx)) ! Just a stupid rank mismatch thing
+	! 	T_index_array = (minloc(star_temp-Tx)) ! Just a stupid rank mismatch thing
 	! 	T_eq_Tx_index = T_index_array(1)
 	! 	r_T = star_r(T_eq_Tx_index)! dimensionless
 
@@ -317,7 +317,7 @@ select case (transport_formalism)
 	! 	chi_LTE = (log10(star_r+epso/r_T) - x0_LTE)/sigma_LTE
 	! 	g_LTE = A_LTE*exp(-chi_LTE**2.d0/2.d0)*(1+erf(b_LTE*chi_LTE/sqrt(2.d0)))
 
-	! 	Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nxLTE*mfp*sqrt(kB*tab_T/mxg)*kB*dTdr
+	! 	Ltrans_LTE = 4.*pi*(star_r+epso)**2.*radius_star**2.*kappaofR*nxLTE*mfp*sqrt(kB*star_temp/mxg)*kB*dTdr
 	! 	Ltrans = (g_MC/g_LTE)*Ltrans_LTE ! g_MC/g_LTE replaces fgoth*hgoth
 
 	! 	if (any(isnan(Ltrans))) print *, "NAN encountered in Ltrans"
@@ -340,7 +340,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), tab_T(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
 !		end do
 !		close(55)
@@ -369,7 +369,7 @@ select case (transport_formalism)
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), tab_T(i), tab_g(i), dTdr(i), nabund(1,i)
+!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), star_temp(i), tab_g(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press

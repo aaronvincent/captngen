@@ -239,7 +239,7 @@
     allocate(star_fractions(nlines,8))       !mass fraction per isotope
     allocate(tab_atomic(8))
     allocate(star_escape(nlines))        !local escape velocity
-    allocate(tab_T(nlines))           !temperature
+    allocate(star_temp(nlines))           !temperature
     ! allocate(phi(nlines)) !! <--- not needed; computed in wimp_support.f
     allocate(star_dr(nlines))          !dr (nice)
     allocate(tab_g(nlines))           !local gravitational acceleration, needed for transport
@@ -255,7 +255,7 @@
     deallocate(star_fractions) !we could just allocate niso, but this leads to problems
     deallocate(tab_atomic)
     deallocate(star_escape)
-    deallocate(tab_T)
+    deallocate(star_temp)
     deallocate(star_dr)
     deallocate(tab_g)
     RETURN
@@ -284,7 +284,7 @@
     star_r = rmesa/radius_star
     star_rho = rhomesa
     star_escape = mesavesc
-    tab_T = tmesa
+    star_temp = tmesa
     tab_g = -mesag
     do i= 1,8
       star_fractions(:,i) = mfrmesa(i,:)
