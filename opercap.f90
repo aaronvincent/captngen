@@ -268,14 +268,14 @@ function velocity_integrand_nreo(init_velocity, dist_over_vel)
     double precision :: init_velocity, velocity_integrand_nreo
     double precision :: w
 
-    w = sqrt(init_velocity**2+vesc_shared_arr(shell_index_shared)**2)
+    w = sqrt(init_velocity**2+escape_shared(shell_index_shared)**2)
 
     !Switch depending on whether we are capturing on Hydrogen or not
     if (atomic_shared .gt. 2.d0) then
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,vesc_shared_arr(shell_index_shared),atomic_shared, &
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_a_nreo(w,escape_shared(shell_index_shared),atomic_shared, &
             q_shared)
     else
-        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,vesc_shared_arr(shell_index_shared),q_shared)
+        velocity_integrand_nreo = dist_over_vel(init_velocity)*gffi_h_nreo(w,escape_shared(shell_index_shared),q_shared)
     end if
     if (w_shared) then
         velocity_integrand_nreo = velocity_integrand_nreo * w**2
@@ -334,14 +334,14 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     !$OMP parallel default(none) &
     !$OMP private(vesc, elementalResult, a, mu, mu_plus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,star_escape,vesc_shared_arr,star_rho,star_fractions_nreo,star_r,star_dr, &
+    !$OMP shared(nlines,m_dm,escape_halo,prefactor_array,star_escape,escape_shared,star_rho,star_fractions_nreo,star_r,star_dr, &
     !$OMP   capture_rate,umin,limit,epsabs,epsrel)
     partialCapped = 0.d0
     !$OMP do
     do ri=1,nlines
         vesc = star_escape(ri)
         shell_index_shared = ri !make accessible via the module
-        vesc_shared_arr(ri) = vesc !make accessible via the module
+        escape_shared(ri) = vesc !make accessible via the module
 
         do eli=1,size(prefactor_array,dim=1)
             ! u_int_res(ri) = 0.d0

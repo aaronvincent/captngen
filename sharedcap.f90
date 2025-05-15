@@ -18,7 +18,7 @@ module shared_mod
     double precision :: vel_sun, dispersion_dm, rho_dm, escape_halo, radius_star
     !tab: means tabulated from file; so as not to be confused with other variables
     double precision, allocatable :: star_enclosed(:), star_rho(:), star_fractions(:,:), star_r(:), star_escape(:), star_dr(:)
-    double precision, allocatable :: star_fractions_nreo(:,:), star_temp(:), star_grav(:), tab_atomic(:), vesc_shared_arr(:)
+    double precision, allocatable :: star_fractions_nreo(:,:), star_temp(:), star_grav(:), tab_atomic(:), escape_shared(:)
     !this goes with the Serenelli table format
     double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
@@ -77,7 +77,7 @@ module shared_mod
         allocate(star_temp(nlines)) !not used in capgen; used for transgen (and anngen? )
         allocate(star_grav(nlines))
         allocate(star_fractions_nreo(nlines,16)) ! for the operator method
-        allocate(vesc_shared_arr(nlines)) ! for OMP stuff
+        allocate(escape_shared(nlines)) ! for OMP stuff
 
 
         !now actually read in the file
