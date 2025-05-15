@@ -20,7 +20,7 @@ module shared_mod
     double precision, allocatable :: tab_mencl(:), tab_starrho(:), tab_mfr(:,:), tab_r(:), tab_vesc(:), tab_dr(:)
     double precision, allocatable :: tab_mfr_oper(:,:), tab_T(:), tab_g(:), tab_atomic(:), vesc_shared_arr(:)
     !this goes with the Serenelli table format
-    double precision :: AtomicNumber(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
+    double precision :: atomic_nums(29) !29 is is the number from the Serenelli files; if you have fewer it shouldn't matter
 
     integer :: nlines, rindex_shared!, ri_for_omega
     double precision :: mdm, vesc_shared, a_shared, mu, muplus
@@ -103,7 +103,7 @@ module shared_mod
         tab_g(nlines) = -gm_over_r_sun*tab_mencl(nlines)/tab_r(nlines)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
-        AtomicNumber  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
+        atomic_nums  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
                           18., 20.2, 22.99, 24.3, 26.97, 28.1, 30.97,32.06, 35.45, &
                           39.948, 39.098, 40.08, 44.95, 47.86, 50.94, 51.99, &
                           54.93, 55.845, 58.933, 58.693/)

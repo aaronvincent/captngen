@@ -163,7 +163,7 @@
         !Loop over the different elements
         do eli = 1, niso
 
-          a = AtomicNumber(eli)
+          a = atomic_nums(eli)
           a_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
@@ -290,7 +290,7 @@
       tab_mfr(:,i) = mfrmesa(i,:)
     end do
     tab_atomic = atomicmesa
-    AtomicNumber(1:8) = tab_atomic
+    atomic_nums(1:8) = tab_atomic
 
     do i = 1, nlines-1
       tab_dr(i) = -tab_r(i)+tab_r(i+1) !while we're here, populate dr

@@ -71,7 +71,7 @@ initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
 do i=1,niso
-	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/AtomicNumber(i)/mnucg ! tab_starrho in gcm^-3
+	n_nuc(i,:) = tab_mfr(:,i)*tab_starrho/atomic_nums(i)/mnucg ! tab_starrho in gcm^-3
 enddo
 
 sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
@@ -103,16 +103,16 @@ if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	! Separate calc into species dependent and independent factors
 	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-tab_T)/tab_starrho ! The species independent part
 	do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0)
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
+		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0)
 	enddo
 	Etrans_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
 	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-tab_T)/tab_starrho/v0**(2.d0*nv) ! The species independent part
 	do i=1,niso
-	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nv)
+	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
+		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nv)
 	enddo
 	Etrans_sp = species_indep*species_dep
 else if (nq .ne. 0) then
@@ -120,8 +120,8 @@ else if (nq .ne. 0) then
 	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-tab_T)/tab_starrho*B/(initial_q)**(2.d0*nq)* &
 		(2.**nq)*mxg**(2.d0*nq) ! The species independent part
 	do i=1,niso
-	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*AtomicNumber(i)/((mxg+mnucg*AtomicNumber(i))**2)* &
-		(tab_T/(mnucg*AtomicNumber(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*AtomicNumber(i)))**(2.d0*nq)
+	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
+		(tab_T/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
 	enddo
 	Etrans_sp = species_indep*species_dep
 end if

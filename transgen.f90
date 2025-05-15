@@ -130,7 +130,7 @@ call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
 do i = 1,niso
-  a = AtomicNumber(i)
+  a = atomic_nums(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = mdm/a/m_proton
   sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (mdm+m_proton)**2 / (mdm+a*m_proton)**2

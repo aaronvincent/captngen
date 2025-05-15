@@ -34,9 +34,9 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
 
   do i = 1,niso
-  muarray(i) = mdm/AtomicNumber(i)/m_proton
-  sigma_N(i) = AtomicNumber(i)**4*(mdm+m_proton)**2/(mdm+AtomicNumber(i)*m_proton)**2 !not yet multiplied by sigma_0
-  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/AtomicNumber(i)/mnucg
+  muarray(i) = mdm/atomic_nums(i)/m_proton
+  sigma_N(i) = atomic_nums(i)**4*(mdm+m_proton)**2/(mdm+atomic_nums(i)*m_proton)**2 !not yet multiplied by sigma_0
+  nabund(i,:) = tab_mfr(:,i)*tab_starrho(:)/atomic_nums(i)/mnucg
   end do
 
   call Twimp(nabund,niso,Tw)
@@ -117,10 +117,10 @@ subroutine Twimp(nabund,niso,Tw)
     TwK = Tw/(kBeV*1.d-9)
 
     do i=1,Niso
-      mN = AtomicNumber(i)*m_proton
-      beta = AtomicNumber(i)*m_proton*(mdm + m_proton)/m_proton/(mdm + AtomicNumber(i)*m_proton);
+      mN = atomic_nums(i)*m_proton
+      beta = atomic_nums(i)*m_proton*(mdm + m_proton)/m_proton/(mdm + atomic_nums(i)*m_proton);
 
-      sigmaN = beta**2.*Atomicnumber(i)**2
+      sigmaN = beta**2.*atomic_nums(i)**2
 
       call sigmav(2*nv,2*nq,Tw/mdm,TGeV/mn,nlines,sv)
       ! print*,sv
