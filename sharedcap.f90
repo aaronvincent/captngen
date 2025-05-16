@@ -137,13 +137,13 @@ end function gaussian_test
 
 !   this is eqn 2.15 in 1504.04378
 !This is fine as long as the escape velocity is large enough
-  function capture_maximum(mx)
+  function capture_maximum(mass_dm)
     use shared_mod
     implicit none
     double precision capture_maximum
-    double precision, intent(in) :: mx
+    double precision, intent(in) :: mass_dm
 
-    capture_maximum = pi/3.d0*rho_dm/mx*radius_star**2 &
+    capture_maximum = pi/3.d0*rho_dm/mass_dm*radius_star**2 &
     *(exp(-3./2.*vel_sun**2/dispersion_dm**2)*sqrt(6.d0/pi)*dispersion_dm &
     + (6.d0*gm_over_r_sun/vel_sun + (dispersion_dm**2 + 3.d0*vel_sun**2)/vel_sun)*erf(sqrt(3./2.)*vel_sun/dispersion_dm))
 
