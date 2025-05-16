@@ -179,7 +179,7 @@
           umax = min(vesc * sqrt(mu)/abs(muminus), escape_halo)
 
           !Call integrator
-          call dsntdqagse(integrand,vdist_over_u,umin,umax, &
+          call dsntdqagse(integrand,distribution_over_vel,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
           capped = capped + star_r(ri)**2*int_result*star_dr(ri)

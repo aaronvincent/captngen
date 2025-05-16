@@ -30,69 +30,70 @@ module shared_mod
 
     !   this is the function f_sun(u) in 1504.04378 eqn 2.2 divided by u
     !velocity distribution,
-    function vdist_over_u(u)
-        double precision :: u, vdist_over_u, normfact
-        vdist_over_u = (3./2.)**(3./2.)*4.*rho_dm*u/sqrt(pi)/m_dm/dispersion_dm**3 &
-        *exp(-3.*(vel_sun**2+u**2)/(2.*dispersion_dm**2))*sinh(3.*u*vel_sun/dispersion_dm**2)/(3.*u*vel_sun/dispersion_dm**2)
+    function distribution_over_vel(velocity)
+        double precision :: velocity, distribution_over_vel, normfact
+        distribution_over_vel = (3./2.)**(3./2.)*4.*rho_dm*velocity/sqrt(pi)/m_dm/dispersion_dm**3 &
+        *exp(-3.*(vel_sun**2+velocity**2)/(2.*dispersion_dm**2))*sinh(3.*velocity*vel_sun/dispersion_dm**2) &
+          / (3.*velocity*vel_sun/dispersion_dm**2)
         !normfact = .5*erf(sqrt(3./2.)*(escape_halo-vel_sun)/dispersion_dm) + &
         !.5*erf(sqrt(3./2.)*(escape_halo+vel_sun)/dispersion_dm)+ dispersion_dm/(sqrt(6.*pi)*vel_sun) &
         !*(exp(-3.*(vel_sun+escape_halo)/2./dispersion_dm**2)-exp(-3.*(vel_sun-escape_halo)/2./dispersion_dm**2))
         normfact = 1.
         !print*,normfact
-        vdist_over_u = vdist_over_u/normfact
-    end function vdist_over_u
+        distribution_over_vel = distribution_over_vel/normfact
+    end function distribution_over_vel
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !read in solar parameters from Aldo Serenelli-style files, with header removed
-    subroutine get_solar_params(filename,nlines)
-        character*300 :: filename
+    subroutine read_solar_params(file_name, file_length)
+        character*300 :: file_name
         double precision :: Pres, Lumi !these aren't used, but dummies are required
         double precision, allocatable :: phi(:) !this is used briefly
-        integer :: i,j, nlines,iostatus
+        integer :: i,j, file_length,iostatus
 
         radius_star = 69.57d9 !this is set here, for other stars, this sub is not called
 
         !Get number of lines in the file
-        open(99,file=filename)
-        nlines=0
+        open(99,file=file_name)
+        file_length=0
         do
           read(99,*, iostat=iostatus)
           if(iostatus/=0) then ! to avoid end of file error.
             exit
           else
-            nlines=nlines+1
+            file_length=file_length+1
           end if
         end do
         close(99)
-        nlines = nlines -1
+        file_length = file_length -1
 
         !allocate the arrays
-        allocate(star_enclosed(nlines))
-        allocate(star_r(nlines))
-        allocate(star_rho(nlines))
-        allocate(star_fractions(nlines,29)) !we could just allocate niso, but this leads to problems
-        allocate(star_escape(nlines))
-        allocate(phi(nlines))
-        allocate(star_dr(nlines))
-        allocate(star_temp(nlines)) !not used in capgen; used for transgen (and anngen? )
-        allocate(star_grav(nlines))
-        allocate(star_fractions_nreo(nlines,16)) ! for the operator method
-        allocate(escape_shared(nlines)) ! for OMP stuff
+        allocate(star_enclosed(file_length))
+        allocate(star_r(file_length))
+        allocate(star_rho(file_length))
+        allocate(star_fractions(file_length,29)) !we could just allocate niso, but this leads to problems
+        allocate(star_escape(file_length))
+        allocate(phi(file_length))
+        allocate(star_dr(file_length))
+        allocate(star_temp(file_length)) !not used in capgen; used for transgen (and anngen? )
+        allocate(star_grav(file_length))
+        allocate(star_fractions_nreo(file_length,16)) ! for the operator method
+        allocate(escape_shared(file_length)) ! for OMP stuff
 
 
         !now actually read in the file
-        open(99,file=filename)
-        do i=1,nlines
+        open(99,file=file_name)
+        do i=1,file_length
           read(99,*) star_enclosed(i),star_r(i), star_temp(i), star_rho(i), Pres, Lumi, star_fractions(i,:)
         end do
         close(99)
 
         !we calculate the escape velocity here since all the ingredients are ready
-        phi(nlines) = -gm_over_r_sun
-        star_escape(nlines) = sqrt(-2.d0*phi(nlines))
-        star_dr(nlines) = star_r(nlines)-star_r(nlines-1)
-        do i = 1,nlines-1
-          j = nlines-i !trapezoid integral
+        phi(file_length) = -gm_over_r_sun
+        star_escape(file_length) = sqrt(-2.d0*phi(file_length))
+        star_dr(file_length) = star_r(file_length)-star_r(file_length-1)
+        do i = 1,file_length-1
+          j = file_length-i !trapezoid integral
           phi(j) = phi(j+1) + gm_over_r_sun*(star_r(j)-star_r(j+1))/2. &
             * (star_enclosed(j)/star_r(j)**2+star_enclosed(j+1)/star_r(j+1)**2)
           star_escape(j) = sqrt(-2.d0*phi(j)) !escape velocity in cm/s
@@ -100,8 +101,8 @@ module shared_mod
           ! star_grav(j) = -(-phi(j)+phi(j+1))/star_dr(j)
           star_grav(i) = -gm_over_r_sun*star_enclosed(i)/star_r(i)**2/radius_star
         end do
-        ! star_grav(nlines) = star_grav(nlines-1)
-        star_grav(nlines) = -gm_over_r_sun*star_enclosed(nlines)/star_r(nlines)**2/radius_star
+        ! star_grav(num_lines) = star_grav(num_lines-1)
+        star_grav(file_length) = -gm_over_r_sun*star_enclosed(file_length)/star_r(file_length)**2/radius_star
 
           ! Populate the atomic number tables here (because it relies on a specific format)
         atomic_nums  = (/ 1., 4., 3., 12., 13., 14., 15., 16., 17., &
@@ -111,7 +112,7 @@ module shared_mod
 
 
         return
-      end subroutine get_solar_params
+      end subroutine read_solar_params
 
     ! !this is to make sure the integrator does what it's supposed to
       function gaussinmod(x)
@@ -163,7 +164,7 @@ end function gausstest
 
     if  (.not. allocated(star_r)) then !
         print*,"Capgen initializing from model: ",solarmodel
-        call get_solar_params(solarmodel,nlines)
+        call read_solar_params(solarmodel,nlines)
     end if
 
     vel_sun = usun_in*1.d5

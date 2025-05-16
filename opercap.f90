@@ -370,7 +370,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
                         integrateResult = 0.d0
                         q_shared = q_pow - 1
                         !Call integrator
-                        call dsntdqagse(velocity_integrand_nreo,vdist_over_u,umin,umax, &
+                        call dsntdqagse(velocity_integrand_nreo,distribution_over_vel,umin,umax, &
                             epsabs,epsrel,limit,integrateResult,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
 
                         elementalResult = elementalResult + integrateResult * prefactor_array(eli,q_pow,w_pow)
