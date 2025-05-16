@@ -402,7 +402,7 @@ select case (transport_formalism)
 		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
 		! open(7, file = 'LtransNewSP.dat')
 
-		do i=1,nlines
+		do i=2,nlines
 			Ltrans(i) = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
