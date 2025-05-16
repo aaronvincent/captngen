@@ -124,11 +124,11 @@ end module shared_mod
 !Some functions that have to be external, because of the integrator.
 
 !Just a test for the integrator. Nothing to see here
-function gausstest(x)
+function gaussian_test(x)
     use shared_mod
-    double precision :: x,gausstest
-    gausstest = gaussian(x)
-end function gausstest
+    double precision :: x,gaussian_test
+    gaussian_test = gaussian(x)
+end function gaussian_test
 
 ! function dummyf(x)
 !     double precision :: x, dummyf

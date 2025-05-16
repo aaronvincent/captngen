@@ -126,7 +126,7 @@
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
       external integrand
-      external gausstest !this is just for testing
+      external gaussian_test !this is just for testing
 
       epsabs=1.d-8
       epsrel=1.d-8
