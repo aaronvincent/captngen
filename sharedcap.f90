@@ -152,24 +152,24 @@ end function gaussian_test
 
 !------!------!------!------!------INITIALIZATION FCT
 
-  subroutine init_sun(solarmodel,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine init_sun(file_name, rho0, u_sun, u0, vel_esc)
     !input velocities in km/s, not cm/s!!!
     use shared_mod
     use iso_c_binding, only: c_ptr
     implicit none
-    character (len=300) solarmodel
-    double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
-    !common solarmodel
-    !external solarmodel
+    character (len=300) file_name
+    double precision,intent(in) :: rho0,u_sun,u0,vel_esc
+    !common file_name
+    !external file_name
 
     if  (.not. allocated(star_r)) then !
-        print*,"Capgen initializing from model: ",solarmodel
-        call read_solar_params(solarmodel,nlines)
+        print*,"init_sun initializing from model: ",file_name
+        call read_solar_params(file_name,nlines)
     end if
 
-    vel_sun = usun_in*1.d5
-    dispersion_dm =  u0_in*1.d5
-    rho_dm =rho0_in
-    escape_halo = vesc_in*1.d5
+    vel_sun = u_sun*1.d5
+    dispersion_dm =  u0*1.d5
+    rho_dm =rho0
+    escape_halo = vel_esc*1.d5
 
   end subroutine init_sun

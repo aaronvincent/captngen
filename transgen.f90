@@ -12,7 +12,7 @@
 ! spin_in: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
 ! transport_formalism: 1=Gould & Raffelt, 2=Spergel & Press, 3=rescaled Spergel & Press
 
-!dm properties are set when you call capgen.
+!dm properties are set when you call init_sun.
 
 
 !Output
