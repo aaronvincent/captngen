@@ -115,10 +115,10 @@ module shared_mod
       end subroutine read_solar_params
 
     ! !this is to make sure the integrator does what it's supposed to
-      function gaussinmod(x)
-        double precision :: x,gaussinmod
-        gaussinmod = 1*exp(-x**2/2.d0)!*nq
-      end function gaussinmod
+      function gaussian(x)
+        double precision :: x,gaussian
+        gaussian = 1*exp(-x**2/2.d0)!*nq
+      end function gaussian
 end module shared_mod
 
 !Some functions that have to be external, because of the integrator.
@@ -127,7 +127,7 @@ end module shared_mod
 function gausstest(x)
     use shared_mod
     double precision :: x,gausstest
-    gausstest = gaussinmod(x)
+    gausstest = gaussian(x)
 end function gausstest
 
 ! function dummyf(x)
