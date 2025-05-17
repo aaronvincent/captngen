@@ -1,8 +1,9 @@
-      function RS2(m_N, c0, tau, taup, term, j_chi, couplings_nreo)
+      function response_dm_s2(m_proton, c0, tau1, tau2, term, j_chi,
+     &   couplings_nreo)
       implicit none
-      double precision :: RS2, m_N, c0, j_chi
+      double precision :: response_dm_s2, m_proton, c0, j_chi
       double precision :: couplings_nreo(14,2)
-      integer :: tau,taup
+      integer :: tau1,tau2
       integer :: term
       integer :: c, v2, q2, v2q2, q4
       double precision :: c4, c4p
@@ -17,30 +18,31 @@ c
       v2q2 = 3
       q4 = 4
 c
-      c4 = couplings_nreo(3,tau)
-      c4p = couplings_nreo(3,taup)
-      c6 = couplings_nreo(5,tau)
-      c6p = couplings_nreo(5,taup)
-      c10 = couplings_nreo(9,tau)
-      c10p = couplings_nreo(9,taup)
-      c12 = couplings_nreo(11,tau)
-      c12p = couplings_nreo(11,taup)
-      c13 = couplings_nreo(12,tau)
-      c13p = couplings_nreo(12,taup)
+      c4 = couplings_nreo(3,tau1)
+      c4p = couplings_nreo(3,tau2)
+      c6 = couplings_nreo(5,tau1)
+      c6p = couplings_nreo(5,tau2)
+      c10 = couplings_nreo(9,tau1)
+      c10p = couplings_nreo(9,tau2)
+      c12 = couplings_nreo(11,tau1)
+      c12p = couplings_nreo(11,tau2)
+      c13 = couplings_nreo(12,tau1)
+      c13p = couplings_nreo(12,tau2)
 c
       if (term.eq.c) then
-         RS2 = (j_chi*(j_chi+1))/12. * c4*c4p
+         response_dm_s2 = (j_chi*(j_chi+1))/12. * c4*c4p
       else if (term.eq.v2) then
-         RS2 = 1/c0**2 * (j_chi*(j_chi+1))/12. * c12*c12p
+         response_dm_s2 = 1/c0**2 * (j_chi*(j_chi+1))/12. * c12*c12p
       else if (term.eq.q2) then
-         RS2 = 1/m_N**2 * (1/4. * c10*c10p +
+         response_dm_s2 = 1/m_proton**2 * (1/4. * c10*c10p +
      &      (j_chi*(j_chi+1))/12. * (c4*c6p+c6*c4p))
       else if (term.eq.v2q2) then
-         RS2 = 1/c0**2 * 1/m_N**2 * (j_chi*(j_chi+1))/12. * c13*c13p
+         response_dm_s2 = 1/c0**2 * 1/m_proton**2 *
+     &      (j_chi*(j_chi+1))/12. * c13*c13p
       else if (term.eq.q4) then
-         RS2 = 1/m_N**4 * (j_chi*(j_chi+1))/12. * c6*c6p
+         response_dm_s2 = 1/m_proton**4 * (j_chi*(j_chi+1))/12. * c6*c6p
       else
-         RS2 = 0.
+         response_dm_s2 = 0.
       end if
 c
-      end function RS2
+      end function response_dm_s2

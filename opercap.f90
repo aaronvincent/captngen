@@ -92,7 +92,7 @@ module nreo_mod
         integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
         integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
-        double precision :: rd, response_dm_m, rmp2, rp1, rp2, rs1, rs1d, rs2 ! DM response R functions stored in their own source files
+        double precision :: rd, response_dm_m, rmp2, rp1, rp2, rs1, rs1d, response_dm_s2 ! DM response R functions stored in their own source files
 
         all_prefactors = 0.d0
         do eli = 1, size(all_prefactors,dim=1)
@@ -132,7 +132,7 @@ module nreo_mod
                                     case (1)
                                         r_const = response_dm_m(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo) !!!!!!!!!!!!!!! in the DM response R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
                                     case (2)
-                                        r_const =  rs2(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const = response_dm_s2(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (3)
                                         r_const =  rs1(m_proton,c0,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (4)
