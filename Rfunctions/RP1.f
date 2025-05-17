@@ -1,8 +1,9 @@
-      function RP1(m_N, tau, taup, term, j_chi, couplings_nreo)
+      function response_dm_p1(m_proton, tau1, tau2, term, j_chi,
+     &   couplings_nreo)
       implicit none
-      double precision :: RP1, m_N, j_chi
+      double precision :: response_dm_p1, m_proton, j_chi
       double precision :: couplings_nreo(14,2)
-      integer :: tau,taup
+      integer :: tau1,tau2
       integer :: term
       integer :: c, q2
       double precision :: c12, c12p
@@ -11,17 +12,18 @@ c
       c = 0
       q2 = 2
 c
-      c12 = couplings_nreo(11,tau)
-      c12p = couplings_nreo(11,taup)
-      c13 = couplings_nreo(12,tau)
-      c13p = couplings_nreo(12,taup)
+      c12 = couplings_nreo(11,tau1)
+      c12p = couplings_nreo(11,tau2)
+      c13 = couplings_nreo(12,tau1)
+      c13p = couplings_nreo(12,tau2)
 c
       if (term.eq.c) then
-         RP1 = (j_chi*(j_chi+1))/12. * c12*c12p
+         response_dm_p1 = (j_chi*(j_chi+1))/12. * c12*c12p
       else if (term.eq.q2) then
-         RP1 = 1/m_N**2 * (j_chi*(j_chi+1))/12. * c13*c13p
+         response_dm_p1 = 1/m_proton**2 * (j_chi*(j_chi+1))/12. *
+     &      c13*c13p
       else
-         RP1 = 0.
+         response_dm_p1 = 0.
       end if
 c
-      end function RP1
+      end function response_dm_p1
