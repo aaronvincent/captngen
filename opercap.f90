@@ -187,7 +187,8 @@ subroutine init_nreo()
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
-    real :: response_nuc_m, response_nuc_s2, response_nuc_s1, response_nuc_p2, response_nuc_p2m, response_nuc_p1, WD, WS1D
+    real :: response_nuc_m, response_nuc_s2, response_nuc_s1, response_nuc_p2, response_nuc_p2m, response_nuc_p1, response_nuc_d
+    real :: WS1D
     
     ! star_fractions_nreo is allocated in the read_solar_params subroutine
     ! take the regular array star_fractions and extract the isotopes used in the 1501.03729 paper (otherwise indices won't match on arrays)
@@ -233,7 +234,7 @@ subroutine init_nreo()
                         else if (m.eq.6) then
                             nuclear_responses(m,i,j,k,l) = response_nuc_p1(j-1,k-1,isotope_strings(i),terms(l))
                         else if (m.eq.7) then
-                            nuclear_responses(m,i,j,k,l) = WD(j-1,k-1,isotope_strings(i),terms(l))
+                            nuclear_responses(m,i,j,k,l) = response_nuc_d(j-1,k-1,isotope_strings(i),terms(l))
                         else
                             nuclear_responses(m,i,j,k,l) = WS1D(j-1,k-1,isotope_strings(i),terms(l))
                         end if
