@@ -1,8 +1,9 @@
-      function RM(m_N, c0, tau, taup, term, j_chi, couplings_nreo)
+      function response_dm_m(m_proton, c0, tau1, tau2, term, j_chi,
+     &   couplings_nreo)
       implicit none
-      double precision :: RM, m_N, c0, j_chi
+      double precision :: response_dm_m, m_proton, c0, j_chi
       double precision :: couplings_nreo(14,2)
-      integer :: tau,taup
+      integer :: tau1,tau2
       integer :: term
       integer :: c, v2, q2, v2q2
       double precision :: c1, c1p
@@ -15,25 +16,26 @@ c
       q2 = 2
       v2q2 = 3
 c
-      c1 = couplings_nreo(1,tau)
-      c1p = couplings_nreo(1,taup)
-      c5 = couplings_nreo(4,tau)
-      c5p = couplings_nreo(4,taup)
-      c8 = couplings_nreo(7,tau)
-      c8p = couplings_nreo(7,taup)
-      c11 = couplings_nreo(10,tau)
-      c11p = couplings_nreo(10,taup)
+      c1 = couplings_nreo(1,tau1)
+      c1p = couplings_nreo(1,tau2)
+      c5 = couplings_nreo(4,tau1)
+      c5p = couplings_nreo(4,tau2)
+      c8 = couplings_nreo(7,tau1)
+      c8p = couplings_nreo(7,tau2)
+      c11 = couplings_nreo(10,tau1)
+      c11p = couplings_nreo(10,tau2)
 c
       if (term.eq.c) then
-         RM = c1*c1p
+         response_dm_m = c1*c1p
       else if (term.eq.v2) then
-         RM = 1/c0**2 * (j_chi*(j_chi+1))/3. * c8*c8p
+         response_dm_m = 1/c0**2 * (j_chi*(j_chi+1))/3. * c8*c8p
       else if (term.eq.q2) then
-         RM = 1/m_N**2 * (j_chi*(j_chi+1))/3. * c11*c11p
+         response_dm_m = 1/m_proton**2 * (j_chi*(j_chi+1))/3. * c11*c11p
       else if (term.eq.v2q2) then
-         RM = 1/c0**2 * 1/m_N**2 * (j_chi*(j_chi+1))/3. * c5*c5p
+         response_dm_m = 1/c0**2 * 1/m_proton**2 *
+     &      (j_chi*(j_chi+1))/3. * c5*c5p
       else
-         RM = 0.
+         response_dm_m = 0.
       end if
 c
-      end function RM
+      end function response_dm_m
