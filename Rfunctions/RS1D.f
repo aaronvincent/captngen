@@ -1,8 +1,8 @@
-      function RS1D(tau, taup, term, j_chi, couplings_nreo)
+      function response_dm_ds1(tau1, tau2, term, j_chi, couplings_nreo)
       implicit none
-      double precision :: RS1D, j_chi
+      double precision :: response_dm_ds1, j_chi
       double precision :: couplings_nreo(14,2)
-      integer :: tau,taup
+      integer :: tau1,tau2
       integer :: term
       integer :: c
       double precision :: c5, c4p
@@ -10,15 +10,15 @@
 c
       c = 0
 c
-      c5 = couplings_nreo(4,tau)
-      c4p = couplings_nreo(3,taup)
-      c8 = couplings_nreo(7,tau)
-      c9p = couplings_nreo(8,taup)
+      c5 = couplings_nreo(4,tau1)
+      c4p = couplings_nreo(3,tau2)
+      c8 = couplings_nreo(7,tau1)
+      c9p = couplings_nreo(8,tau2)
 c
       if (term.eq.c) then
-         RS1D = (j_chi*(j_chi+1))/3. * (c5*c4p - c8*c9p)
+         response_dm_ds1 = (j_chi*(j_chi+1))/3. * (c5*c4p - c8*c9p)
       else
-         RS1D = 0.
+         response_dm_ds1 = 0.
       end if
 c
-      end function RS1D
+      end function response_dm_ds1

@@ -93,7 +93,7 @@ module nreo_mod
         integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
         double precision :: response_dm_d, response_dm_m, response_dm_p2m, response_dm_p1, response_dm_p2, response_dm_s1
-        double precision :: rs1d, response_dm_s2 ! DM response R functions stored in their own source files
+        double precision :: response_dm_ds1, response_dm_s2 ! DM response R functions stored in their own source files
 
         all_prefactors = 0.d0
         do eli = 1, size(all_prefactors,dim=1)
@@ -145,7 +145,7 @@ module nreo_mod
                                     case (7)
                                         r_const = response_dm_d(m_proton,tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case (8)
-                                        r_const = rs1d(tau,tau_p,term_r-1,spin_dm,couplings_nreo)
+                                        r_const = response_dm_ds1(tau,tau_p,term_r-1,spin_dm,couplings_nreo)
                                     case default
                                         print*, "Um, I ran out of DM response R functions to choose from?"
                                         stop
