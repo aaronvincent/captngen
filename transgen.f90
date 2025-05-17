@@ -2,7 +2,7 @@
 !!! Asymmetric dark matter transport routine, check out https://arxiv.org/pdf/1311.2074.pdf
 !!! The zetas in Eq. 31 should not be there
 !!! for constant, q- and v- dependent cross sections
-!!! Uses capmod from capgen.f90
+!!! Uses capture_mod from capgen.f90
 
 !Input:
 ! sigma_0: DM scattering cross-section
@@ -20,9 +20,9 @@
 
 subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
 
-! m_dm is stored in capmod
+! m_dm is stored in capture_mod
 ! Tx is the output one-zone WIMP temp
-use capmod
+use capture_mod
 use akmod
 use spergelpressmod
 implicit none

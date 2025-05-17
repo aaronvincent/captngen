@@ -10,7 +10,7 @@
 ! I apologize for the long function calls.
 
 module spergelpressmod
-use capmod
+use capture_mod
 implicit none
 
 double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24

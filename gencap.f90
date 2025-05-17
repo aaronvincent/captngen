@@ -17,7 +17,7 @@
 !   NOTE: removed evaporation calcs - for some reason fastevap was still being used even when
 !     option was turned off from DarkMESA side.
 
-    module capmod
+    module capture_mod
 
       use shared_mod
       implicit none
@@ -79,7 +79,7 @@
         return
       end function
 
-    end module capmod
+    end module capture_mod
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -90,7 +90,7 @@
 
     !The integrand for the integral over u
     function integrand(u,foveru)
-      use capmod
+      use capture_mod
       double precision :: u, w, integrand, foveru
       external foveru
 
@@ -111,7 +111,7 @@
 
 
     subroutine capture_rate(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
-      use capmod
+      use capture_mod
       implicit none
       integer, intent(in):: nq_in, nv_in, niso, spin_in
       ! integer, intent(in):: spin_in
@@ -230,7 +230,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! For mesa interface only: allocate arrays.
   subroutine allocate_stellar_arrays(nlines_mesa)
-    use capmod
+    use capture_mod
     integer, intent(in) :: nlines_mesa
     nlines = nlines_mesa
     allocate(star_enclosed(nlines))       !M(<r)
@@ -248,7 +248,7 @@
   end subroutine allocate_stellar_arrays
 
   subroutine deallocate_stellar_arrays()
-    use capmod
+    use capture_mod
     deallocate(star_enclosed)
     deallocate(star_r)
     deallocate(star_rho)
@@ -265,7 +265,7 @@
 !! This is called INSTEAD of read_solar_params, for use with MESA interface.
   subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,atomicmesa,mesavesc,Tmesa, &
                                 mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
-    use capmod
+    use capture_mod
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
@@ -302,7 +302,7 @@
 
 
   subroutine getnlines(nlines_out) !a little auxiliary trick
-    use capmod
+    use capture_mod
     integer, intent(out) :: nlines_out
     nlines_out = nlines
     return

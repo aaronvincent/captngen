@@ -5,7 +5,7 @@
 
 subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
-  use capmod
+  use capture_mod
   ! use akmod
   implicit none
   integer, intent(in):: niso
@@ -92,9 +92,9 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 end subroutine fastevap
 
 !Returns WIMP temperature over central temperature
-!knows about nv, nq, via capmod module
+!knows about nv, nq, via capture_mod module
 subroutine Twimp(nabund,niso,Tw)
-  use capmod
+  use capture_mod
   implicit none
   integer, intent(in) :: niso
   double precision :: sv(nlines),TGeV(nlines), TcGeV,Tw, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
@@ -188,7 +188,7 @@ fofn = f
 return
 end function
 
-!now in Capmod
+!now in capture_mod
 ! !Fast trapezoidal integral
 !   function trapz(x,y,flen)
 !   implicit none
