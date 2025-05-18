@@ -12,30 +12,30 @@ contains
 
 
 
-  subroutine interp1(xin,yin,lenxin,xout,yout)
+  subroutine interpolate_1d(x, y, length, interp_point, interp_value)
     !1d interpolation assuming monotonically increasing vector
-    integer, intent(in) :: lenxin
-    double precision, intent(in) :: xin(lenxin), yin(lenxin), xout
-    double precision :: yout
+    integer, intent(in) :: length
+    double precision, intent(in) :: x(length), y(length), interp_point
+    double precision :: interp_value
     integer :: i
 
-    if (xout .lt. xin(1)) then
-      print*,"xout ", xout, "xin min ", xin(1)
+    if (interp_point .lt. x(1)) then
+      print*,"xout ", interp_point, "xin min ", x(1)
       stop "Error in interpolation: xout < min(xin)"
     end if
-    if (xout .gt. xin(lenxin)) then
-    print*,"xout ", xout, "xin max ", xin(lenxin), lenxin
+    if (interp_point .gt. x(length)) then
+    print*,"xout ", interp_point, "xin max ", x(length), length
     stop "Error in interpolation: xout > max(xin)"
   end if
 
     i = 1
-    do while (xout .gt. xin(i))
+    do while (interp_point .gt. x(i))
       i = i+1
     end do
 
-    yout = yin(i-1)+(yin(i)-yin(i-1))/(xin(i)-xin(i-1))*(xout-xin(i-1))
+    interp_value = y(i-1)+(y(i)-y(i-1))/(x(i)-x(i-1))*(interp_point-x(i-1))
     return
-  end subroutine interp1
+  end subroutine interpolate_1d
 
     
 
