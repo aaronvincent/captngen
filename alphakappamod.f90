@@ -43,11 +43,11 @@ contains
 end module akmod
 
 
-subroutine get_alpha_kappa(nq,nv)
+subroutine read_alpha_kappa(q_pow, v_pow)
   use akmod
   implicit none
-  !v^2nv, q^2nq
-  integer, intent(in) :: nq, nv
+  !v^{2*v_pow}, q^{2*q_pow}
+  integer, intent(in) :: q_pow, v_pow
   integer i
   character*300 afilename, kfilename
 
@@ -57,25 +57,25 @@ subroutine get_alpha_kappa(nq,nv)
   end do
   close(99)
 
-  if ((nq .eq. 0) .and. (nv .eq. 0)) then
+  if ((q_pow .eq. 0) .and. (v_pow .eq. 0)) then
      afilename = "ak_files/aVect_0.dat"
      kfilename = "ak_files/kVect_0.dat"
-   else if (nq == 1) then
+   else if (q_pow == 1) then
      afilename = "ak_files/aVect_q2.dat"
      kfilename = "ak_files/kVect_q2.dat"
-   else if (nq == 2) then
+   else if (q_pow == 2) then
      afilename = "ak_files/aVect_q4.dat"
      kfilename = "ak_files/kVect_q4.dat"
-   else if (nq == -1) then
+   else if (q_pow == -1) then
      afilename = "ak_files/aVect_qm2.dat"
      kfilename = "ak_files/kVect_qm2.dat"
-   else if (nv == 1) then
+   else if (v_pow == 1) then
      afilename = "ak_files/aVect_v2.dat"
      kfilename = "ak_files/kVect_v2.dat"
-   else if (nv == 2) then
+   else if (v_pow == 2) then
      afilename = "ak_files/aVect_v4.dat"
      kfilename = "ak_files/kVect_v4.dat"
-   else if (nv == -1) then
+   else if (v_pow == -1) then
      afilename = "ak_files/aVect_vm2.dat"
      kfilename = "ak_files/kVect_vm2.dat"
    end if
@@ -91,4 +91,4 @@ subroutine get_alpha_kappa(nq,nv)
   close(95)
 
   return
-end subroutine get_alpha_kappa
+end subroutine read_alpha_kappa

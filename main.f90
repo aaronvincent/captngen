@@ -56,7 +56,7 @@ PROGRAM GENCAP
 ! Initialise transport calculations
     call get_num_lines(nlines)
     allocate(etrans(nlines))
-    call get_alpha_kappa(nq,nv)
+    call read_alpha_kappa(nq,nv)
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Use the original qv scaling capture calculation
