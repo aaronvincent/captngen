@@ -75,7 +75,7 @@ module shared_mod
         allocate(star_escape(file_length))
         allocate(phi(file_length))
         allocate(star_dr(file_length))
-        allocate(star_temp(file_length)) !not used in capgen; used for transgen (and anngen? )
+        allocate(star_temp(file_length)) !not used in capture_rate_qv; used for transgen (and anngen? )
         allocate(star_grav(file_length))
         allocate(star_fractions_nreo(file_length,16)) ! for the operator method
         allocate(escape_shared(file_length)) ! for OMP stuff

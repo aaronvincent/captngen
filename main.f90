@@ -71,7 +71,7 @@ PROGRAM GENCAP
             sigma_0 = 10.d0**(-37.d0)!10d0**(-45+dble(i)/2.)
 
             print*
-            call capture_rate(mx, sigma_0, num_isotopes, nq(j), nv(j), spin_dependency, capped)
+            call capture_rate_qv(mx, sigma_0, num_isotopes, nq(j), nv(j), spin_dependency, capped)
             maxcapture = capture_maximum(mx)
             print*, "sigma_0: ", sigma_0, "cm^2 ", &
                     "mx: ", mx, "GeV ", &

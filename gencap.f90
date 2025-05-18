@@ -110,14 +110,14 @@
     end function velocity_integrand_qv
 
 
-    subroutine capture_rate(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
+    subroutine capture_rate_qv(mass_dm, sigma_0, num_isotopes, q_pow, v_pow, is_spin_dep, capture_rate)
       use capture_mod
       implicit none
-      integer, intent(in):: nq_in, nv_in, niso, spin_in
-      ! integer, intent(in):: spin_in
+      integer, intent(in):: q_pow, v_pow, num_isotopes, is_spin_dep
+      ! integer, intent(in):: is_spin_dep
       integer eli, ri, limit
-      double precision, intent(in) :: mx_in, sigma_0
-      double precision :: capped !this is the output
+      double precision, intent(in) :: mass_dm, sigma_0
+      double precision :: capture_rate !this is the output
       double precision :: sigma_SD, sigma_SI
       double precision :: capture_maximum, maxcapped, a, muminus, sigma_N, umax, umin, vesc
       double precision :: epsabs, epsrel, abserr, neval  !for integrator
@@ -132,14 +132,14 @@
       epsrel=1.d-8
       limit=1000
 
-      m_dm = mx_in
-      nq = nq_in
-      nv = nv_in
+      m_dm = mass_dm
+      nq = q_pow
+      nv = v_pow
 
-      if (spin_in == 1) then
+      if (is_spin_dep == 1) then
         sigma_SD = sigma_0
         sigma_SI = 0.d0
-      else if (spin_in == 0) then
+      else if (is_spin_dep == 0) then
         sigma_SD = 0.d0
         sigma_SI = sigma_0
       end if
@@ -152,7 +152,7 @@
         stop "You haven't yet called init_sun to load the solar model!"
       end if
 
-      capped = 0.d0
+      capture_rate = 0.d0
 
       !Loop over the shells of constant radius in the star
       do ri = 1, nlines
@@ -161,15 +161,15 @@
         vesc_shared = vesc !make accessible via the module
 
         !Loop over the different elements
-        do eli = 1, niso
+        do eli = 1, num_isotopes
 
           a = atomic_nums(eli)
           atomic_shared = a !make accessible via the module
 
           !This is fine for SD as long as it's just hydrogen. Otherwise, spins must be added.
-          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mx_in+m_proton)**2/(mx_in+a*m_proton)**2
+          sigma_N = a**2 * (sigma_SI*a**2 + sigma_SD) * (mass_dm+m_proton)**2/(mass_dm+a*m_proton)**2
 
-          mu = mx_in/(m_proton*a)
+          mu = mass_dm/(m_proton*a)
           mu_plus = (1.+mu)/2.
           muminus = (mu-1.d0)/2.
 
@@ -181,11 +181,11 @@
           !Call integrator
           call dsntdqagse(velocity_integrand_qv,distribution_over_vel,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
-          int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
-          capped = capped + star_r(ri)**2*int_result*star_dr(ri)
+          int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mass_dm)**2
+          capture_rate = capture_rate + star_r(ri)**2*int_result*star_dr(ri)
 
-          if (isnan(capped)) then
-            capped = 0.d0
+          if (isnan(capture_rate)) then
+            capture_rate = 0.d0
             stop 'NaN encountered whilst trying compute capture rate.'
           end if
 
@@ -193,18 +193,18 @@
 
       end do
 
-      capped = 4.d0*pi*radius_star**3*capped
+      capture_rate = 4.d0*pi*radius_star**3*capture_rate
 
-      if (capped .gt. 1.d100) then
+      if (capture_rate .gt. 1.d100) then
         print*,"Capt'n General says: Oh my, it looks like you are capturing an"
         print*,"infinite amount of dark matter in the Sun. Best to look into that."
       end if
 
-      maxcapped = capture_maximum(mx_in)
-      if (capped .gt. maxcapped) then
-        capped = maxcapped
+      maxcapped = capture_maximum(mass_dm)
+      if (capture_rate .gt. maxcapped) then
+        capture_rate = maxcapped
       end if
-    end subroutine capture_rate
+    end subroutine capture_rate_qv
 
 
     !! capture_rate_constant calculates the capture rate for constant cross section.
@@ -213,8 +213,8 @@
     !   double precision, intent(in) :: mx_in, sigma_0
     !   double precision :: capped_SD,capped_SI
 
-    !   call capture_rate(mx_in,sigma_0,1,0,0,1,capped_SD)
-    !   call capture_rate(mx_in,sigma_0,29,0,0,0,capped_SI)
+    !   call capture_rate_qv(mx_in,sigma_0,1,0,0,1,capped_SD)
+    !   call capture_rate_qv(mx_in,sigma_0,29,0,0,0,capped_SI)
     ! end subroutine capture_rate_constant
 
     subroutine capture_rate_constant(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
@@ -222,8 +222,8 @@
       double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
       double precision :: capped_SD,capped_SI
 
-      call capture_rate(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
-      call capture_rate(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
+      call capture_rate_qv(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
+      call capture_rate_qv(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
     end subroutine capture_rate_constant
 
 
