@@ -151,7 +151,7 @@ subroutine Twimp(nabund,niso,Tw)
 
 
 
-  ! call sigmav(2*nv,2*nq,star_temp/mdm,star_temp/mn,nlines,sv)
+  ! call sigmav(2*nv,2*nq,star_temp/m_dm,star_temp/mn,nlines,sv)
 
 end subroutine Twimp
 
