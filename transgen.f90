@@ -359,7 +359,7 @@ select case (transport_formalism)
 		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
-			Ltrans(i) = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
+			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
 			! write(5,*) star_r(i), Ltrans(i)
 		enddo
 
@@ -403,7 +403,7 @@ select case (transport_formalism)
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=2,nlines
-			Ltrans(i) = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
+			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) star_r(i), L
@@ -417,7 +417,7 @@ select case (transport_formalism)
 end select
 
 ! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapz(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2*Etrans*star_rho, nlines)
+EtransTot = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2*Etrans*star_rho, nlines)
 ! EtransTot = 1
 
 ! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff

@@ -61,20 +61,20 @@
       end function gffi_a_qv
 
       !Fast trapezoidal integral
-      function trapz(x,y,flen)
+      function trapezoid(x, y, length)
         implicit none
-        integer, intent(in) :: flen
-        double precision, intent (in) :: x(flen), y(flen)
-        double precision trapz
+        integer, intent(in) :: length
+        double precision, intent (in) :: x(length), y(length)
+        double precision trapezoid
         integer i
 
-        trapz = y(1)*(x(2)-x(1))/2. 
+        trapezoid = y(1)*(x(2)-x(1))/2. 
 
-        do i = 2,flen-1
-          trapz = trapz + y(i)*(x(i)-x(i-1))
+        do i = 2,length-1
+          trapezoid = trapezoid + y(i)*(x(i)-x(i-1))
         end do
 
-        trapz = trapz + y(flen)*(x(flen)-x(flen-1))/2.
+        trapezoid = trapezoid + y(length)*(x(length)-x(length-1))/2.
 
         return
       end function

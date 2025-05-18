@@ -45,10 +45,10 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   !this vastly overestimates the evap rate
   ! nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
   nxIso = exp(m_dm*vescc**2/2./Tw);
-  nin = 4.d0*pi*trapz(star_r,star_r**2.*nxIso,nlines) !%niso norm
+  nin = 4.d0*pi*trapezoid(star_r,star_r**2.*nxIso,nlines) !%niso norm
   nxIso = nxIso/nin
 
-  ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapz(star_r,star_r**2.*nxIso,nlines)
+  ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapezoid(star_r,star_r**2.*nxIso,nlines)
   !Fraction of the kinetic distribution above the local escape velocity
   escFrac = sqrt(2.d0/pi)*vescc*sqrt(m_dm/Tw)*exp(-m_dm*vescc**2/Tw/2.d0) - derf(sqrt(m_dm/Tw/2.d0)*vescc) + 1.d0;
   ! print*,"EscFrac = ", escFrac,
@@ -73,7 +73,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
     print*, "WARNING, K = ", knud, " is < 0.1. Approximate evaporation scheme is likely very wrong."
   end if
 
-  suparg = trapz(star_r,radius_star/mfp,nlines)
+  suparg = trapezoid(star_r,radius_star/mfp,nlines)
   Earg = escFrac*scatrate*exp(-suparg)*c0
 
   ! open(55,file = "sv.dat")
@@ -83,7 +83,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   ! close(55)
 
 
-  EvapRate = Nwimps*4.*pi*trapz(star_r,star_r**2*nxIso*Earg,nlines)
+  EvapRate = Nwimps*4.*pi*trapezoid(star_r,star_r**2*nxIso*Earg,nlines)
 
   if (isnan(EvapRate)) then
     stop "NaN evap rate, check it"
@@ -130,8 +130,8 @@ subroutine Twimp(nabund,niso,Tw)
           sv = sv/v0**(2*nv)
       end if
       nxIso = exp(mdmg*star_escape**2/2./TwK/kB)
-      Tw_out_num(i) = trapz(star_r,star_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
-      Tw_out_denom(i) = trapz(star_r,star_r**2*sv*nxIso*nabund(i,:),nlines);
+      Tw_out_num(i) = trapezoid(star_r,star_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
+      Tw_out_denom(i) = trapezoid(star_r,star_r**2*sv*nxIso*nabund(i,:),nlines);
 
 
 
@@ -190,21 +190,21 @@ end function
 
 !now in capture_mod
 ! !Fast trapezoidal integral
-!   function trapz(x,y,flen)
+!   function trapezoid(x,y,flen)
 !   implicit none
 !   integer, intent(in) :: flen
 !   double precision, intent (in) :: x(flen), y(flen)
-!   double precision trapz
+!   double precision trapezoid
 !
 !   integer i
 !
 !
-!   trapz = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
+!   trapezoid = y(1)*(x(2)-x(1))/2. + y(flen)*(x(flen)-x(flen-1))/2.
 !   do i = 2,flen-1
-!     trapz = trapz + y(i)*(x(i)-x(i-1))
+!     trapezoid = trapezoid + y(i)*(x(i)-x(i-1))
 !
-!     if (trapz .lt. 0.d0) then
-!       print*, "negative encountered in trapz: i = ", i
+!     if (trapezoid .lt. 0.d0) then
+!       print*, "negative encountered in trapezoid: i = ", i
 !     end if
 !   end do
 !

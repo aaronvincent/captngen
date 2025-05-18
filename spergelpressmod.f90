@@ -39,7 +39,7 @@ mxg = m_dm*1.782662d-24  ! g
 !nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
 nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
 
-n_0 = Nwimps/trapz(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
+n_0 = Nwimps/trapezoid(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
 nx_isothermal = n_0*nx_isothermal
 
 if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
@@ -157,7 +157,7 @@ R = star_r*radius_star
 integrand = 4*pi*R**2*star_rho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
 
 ! integral is Etrans_tot (erg/s)
-Tx_integral = trapz(R, integrand, nlines)
+Tx_integral = trapezoid(R, integrand, nlines)
 
 return
 end function
