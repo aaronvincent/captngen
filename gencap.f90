@@ -263,33 +263,33 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! This is called INSTEAD of read_solar_params, for use with MESA interface.
-  subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,atomicmesa,mesavesc,Tmesa, &
-                                mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
+  subroutine get_stellar_params(radius, stellar_density, mass_fractions, atomic_numbers, stellar_esc, temperature, &
+                                gravity, mesamass,mesaradius, dm_density, stellar_velocity, dm_dispersion, halo_esc)
     use capture_mod
     !mesamass & mesaradius unused here but subroutine used in a few other places so I left them
     !in just in case
     double precision :: mesamass, mesaradius
-    double precision :: rhomesa(nlines), rmesa(nlines), mfrmesa(8,nlines)
-    double precision :: mesavesc(nlines),mesag(nlines),Tmesa(nlines)
-    double precision :: atomicmesa(8)
+    double precision :: stellar_density(nlines), radius(nlines), mass_fractions(8,nlines)
+    double precision :: stellar_esc(nlines),gravity(nlines),temperature(nlines)
+    double precision :: atomic_numbers(8)
     integer i
-    double precision,intent(in) :: rho0_in,usun_in,u0_in,vesc_in
+    double precision,intent(in) :: dm_density,stellar_velocity,dm_dispersion,halo_esc
 
-    vel_sun = usun_in*1.d5
-    dispersion_dm =  u0_in*1.d5
-    rho_dm =rho0_in
-    escape_halo = vesc_in*1.d5
+    vel_sun = stellar_velocity*1.d5
+    dispersion_dm =  dm_dispersion*1.d5
+    rho_dm =dm_density
+    escape_halo = halo_esc*1.d5
 
-    radius_star = rmesa(nlines)
-    star_r = rmesa/radius_star
-    star_rho = rhomesa
-    star_escape = mesavesc
-    star_temp = tmesa
-    star_grav = -mesag
+    radius_star = radius(nlines)
+    star_r = radius/radius_star
+    star_rho = stellar_density
+    star_escape = stellar_esc
+    star_temp = temperature
+    star_grav = -gravity
     do i= 1,8
-      star_fractions(:,i) = mfrmesa(i,:)
+      star_fractions(:,i) = mass_fractions(i,:)
     end do
-    tab_atomic = atomicmesa
+    tab_atomic = atomic_numbers
     atomic_nums(1:8) = tab_atomic
 
     do i = 1, nlines-1
