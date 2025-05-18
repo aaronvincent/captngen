@@ -44,21 +44,21 @@
       end function gffi_h_qv
 
       !generalized form factor: other elements
-      function GFFI_A(w,vesc,A)
-        double precision :: p, w,vesc,u,mN,A,Ei,B
-        double precision :: dgamic,GFFI_A
-        p = m_dm*w
-        u = sqrt(w**2-vesc**2)
-        mN = A*m_proton
+      function gffi_a_qv(vel_dm, vel_esc, atomic_number)
+        double precision :: p, vel_dm,vel_esc,u,mN,atomic_number,Ei,B
+        double precision :: dgamic,gffi_a_qv
+        p = m_dm*vel_dm
+        u = sqrt(vel_dm**2-vel_esc**2)
+        mN = atomic_number*m_proton
         Ei  = 5.8407d-2/(mN*(0.91*mN**(1./3.)+0.3)**2)
-        B = .5*m_dm*w**2/Ei/c0**2
+        B = .5*m_dm*vel_dm**2/Ei/c0**2
         if (nq .eq. 0) then
-          GFFI_A = Ei*c0**2*(exp(-m_dm*u**2/2/Ei/c0**2)-exp(-B*mu/mu_plus**2))
+          gffi_a_qv = Ei*c0**2*(exp(-m_dm*u**2/2/Ei/c0**2)-exp(-B*mu/mu_plus**2))
         else
-          GFFI_A = ((p)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/w**2) &
+          gffi_a_qv = ((p)/q0/c0)**(2*dble(nq))*Ei*c0**2/(B*mu)**dble(nq)*(dgamic(1.+dble(nq),B*u**2/vel_dm**2) &
                   - dgamic(1.+dble(nq),B*mu/mu_plus**2))
         end if
-      end function GFFI_A
+      end function gffi_a_qv
 
       !Fast trapezoidal integral
       function trapz(x,y,flen)
@@ -98,7 +98,7 @@
 
       !Switch depending on whether we are capturing on Hydrogen or not
       if (atomic_shared .gt. 2.d0) then
-        integrand = foveru(u)*GFFI_A(w,vesc_shared,atomic_shared)
+        integrand = foveru(u)*gffi_a_qv(w,vesc_shared,atomic_shared)
       else
         integrand = foveru(u)*gffi_h_qv(w,vesc_shared)
       end if
