@@ -54,7 +54,7 @@ PROGRAM GENCAP
 
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Initialise transport calculations
-    call getnlines(nlines)
+    call get_num_lines(nlines)
     allocate(etrans(nlines))
     call get_alpha_kappa(nq,nv)
 

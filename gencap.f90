@@ -301,9 +301,9 @@
   end subroutine get_stellar_params
 
 
-  subroutine getnlines(nlines_out) !a little auxiliary trick
+  subroutine get_num_lines(num_lines) !a little auxiliary trick
     use capture_mod
-    integer, intent(out) :: nlines_out
-    nlines_out = nlines
+    integer, intent(out) :: num_lines
+    num_lines = nlines
     return
-  end subroutine getnlines
+  end subroutine get_num_lines
