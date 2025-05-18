@@ -262,7 +262,7 @@
   end subroutine deallocate_stellar_arrays
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! This is called INSTEAD of get_solar_params, for use with MESA interface.
+!! This is called INSTEAD of read_solar_params, for use with MESA interface.
   subroutine get_stellar_params(rmesa,rhomesa,mfrmesa,atomicmesa,mesavesc,Tmesa, &
                                 mesag,mesamass,mesaradius,rho0_in,usun_in,u0_in,vesc_in)
     use capmod

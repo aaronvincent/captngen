@@ -188,7 +188,7 @@ subroutine init_nreo()
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
     real :: WM, WS2, WS1, WP2, WMP2, WP1, WD, WS1D
     
-    ! star_fractions_nreo is allocated in the get_solar_params subroutine
+    ! star_fractions_nreo is allocated in the read_solar_params subroutine
     ! take the regular array star_fractions and extract the isotopes used in the 1501.03729 paper (otherwise indices won't match on arrays)
     do i=1,nlines
         star_fractions_nreo(i,1) = star_fractions(i,1)
