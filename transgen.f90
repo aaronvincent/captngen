@@ -6,22 +6,23 @@
 
 !Input:
 ! sigma_0: DM scattering cross-section
-! nwimps: Total number of DM particles in the star. I know ADM is not WIMPs, stop complaining
-! niso: number of isotopes: 1 = spin-dependent
+! num_wimps: Total number of DM particles in the star. I know ADM is not WIMPs, stop complaining
+! num_isotopes: number of isotopes: 1 = spin-dependent
 ! nq, nv: v^n, q^n numberwang
-! spin_in: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
+! is_spin_dep: spin dependence: 1 = spin-dependent scattering, 0 = spin-independent scattering
 ! transport_formalism: 1=Gould & Raffelt, 2=Spergel & Press, 3=rescaled Spergel & Press
 
 !dm properties are set when you call init_sun.
 
 
 !Output
-!Etrans erg/g/s
+!transported erg/g/s
 
-subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,Tx,noise_indicator,etrans,EtransTot)
+subroutine transport_energy(sigma_0, num_wimps, num_isotopes, q_pow, v_pow, is_spin_dep, transport_formalism, temperature_dm, &
+	noise_indicator, transported, total_luminosity)
 
 ! m_dm is stored in capture_mod
-! Tx is the output one-zone WIMP temp
+! temperature_dm is the output one-zone WIMP temp
 use capture_mod
 use akmod
 use spergelpressmod
@@ -29,25 +30,25 @@ implicit none
 !nlines might be redundant
 integer, intent(in) :: transport_formalism
 logical splinelog, DCT !for PCHIP
-integer, intent(in):: niso, nv_in, nq_in, spin_in
-double precision, intent(in) :: sigma_0, Nwimps
+integer, intent(in):: num_isotopes, v_pow, q_pow, is_spin_dep
+double precision, intent(in) :: sigma_0, num_wimps
 double precision, intent(out) :: noise_indicator
 integer, parameter :: decsize = 75 !this should be done a bit more carefully
 integer i, j, ri, ierr
 integer (kind=4) :: lensav
-double precision :: epso,EtransTot
+double precision :: epso,total_luminosity
 double precision, parameter :: GN = 6.674d-8, kBeV=8.617e-5 ! kB and mnucg defined in spergelpressmod
 double precision :: mxg, q0_cgs, rchi, Tc, rhoc, K, L, integrand
 double precision :: capped, capture_maximum !this is the output
 double precision :: sigma_SI, sigma_SD, a
-double precision :: phi(nlines), Ltrans(nlines),Etrans(nlines),mfp(nlines),nabund(niso,nlines),sigma_N(niso), nxLTE(nlines)
-double precision :: thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
+double precision :: phi(nlines), Ltrans(nlines),transported(nlines),mfp(nlines),nabund(num_isotopes,nlines),sigma_N(num_isotopes)
+double precision :: nxLTE(nlines), thermavg_sigma(nlines), zeta_v(nlines), zeta_q(nlines)
 double precision :: nx(nlines),alphaofR(nlines),kappaofR(nlines),cumint(nlines),cumNx,nxIso(nlines),nxIso_func(nlines),cumNxIso
 double precision :: r_even(nlines), T_even(nlines), dTdr_even(nlines), work(2*nlines) ! Evenly spaced arrays for Fourier smoothing
 ! More evenly spaced arrays for Fourier
 double precision :: L_even(nlines), dLdr_even(nlines), Etrans_even(nlines), Etrans_test(nlines), Ltrans_cond(nlines)
 double precision :: r_double(2*nlines), dTdr_mirror(2*nlines-2), r_mesa(1999)
-double precision :: muarray(niso),alpha(niso),kappa(niso),dphidr(nlines),dTdr(nlines)
+double precision :: muarray(num_isotopes),alpha(num_isotopes),kappa(num_isotopes),dphidr(nlines),dTdr(nlines)
 double precision :: fgoth, hgoth(nlines), ggoth_mesa(1999), ggoth(nlines), dLdR(nlines),isplined1,dLdRscratch(nlines)
 double precision :: dggothdr_mesa(1999), dggothdr(nlines), test_array(2000)
 double precision :: biggrid(nlines), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines) ! for spline
@@ -57,7 +58,7 @@ double precision, allocatable :: wsave(:)
 double precision :: brcoeff(nlines), crcoeff(nlines), drcoeff(nlines) ! for spline
 double precision :: bdcoeff(decsize), cdcoeff(decsize), ddcoeff(decsize) ! for spline
 double precision :: smallgrid(decsize), smallR(decsize), smallT(decsize), smallL(decsize),smalldL(decsize),smalldT(decsize),ispline
-double precision :: Tx, guess_1, guess_2, reltolerance ! For the Spergel & Press scheme
+double precision :: temperature_dm, guess_1, guess_2, reltolerance ! For the Spergel & Press scheme
 double precision :: nK_0!(7) ! For the recalibrated Spergel & Press scheme
 double precision :: T_eq_Tx_index, r_T, a1, b1, c1, a2, b2, c2, A_MC, x0_MC, sigma_MC, b_MC, chi_MC(nlines), g_MC(nlines)
 double precision :: A_LTE, x0_LTE, sigma_LTE, b_LTE, Ltrans_LTE(nlines), chi_LTE(nlines), g_LTE(nlines), T_index_array(1)
@@ -74,25 +75,25 @@ mxg = m_dm*1.78d-24
 q0_cgs = q0*5.344d-14
 Tc = star_temp(1)
 rhoc = star_rho(1)
-nq = nq_in
-nv = nv_in
+nq = q_pow
+nv = v_pow
 
-if (spin_in == 1) then
+if (is_spin_dep == 1) then
   sigma_SD = sigma_0
   sigma_SI = 0.d0
-  if (niso .ne. 1) then
-  	print *, "Warning: transgen does not properly handle spin-dependent scattering on elements that aren't hydrogen."
+  if (num_isotopes .ne. 1) then
+  	print *, "Warning: transport_energy does not properly handle spin-dependent scattering on elements that aren't hydrogen."
   	print *, "For heat transport with spin-dependent cross sections, set num_isotopes=1."
   endif
-else if (spin_in == 0) then
+else if (is_spin_dep == 0) then
   sigma_SD = 0.d0
   sigma_SI = sigma_0
 end if
 
 
-if (decsize .ge. nlines) stop "Major problem in transgen: your low-res size is larger than the original"
+if (decsize .ge. nlines) stop "Major problem in transport_energy: your low-res size is larger than the original"
 !Check if the stellar parameters have been allocated
-if (.not. allocated(star_r)) stop "Error: stellar parameters not allocated in transgen"
+if (.not. allocated(star_r)) stop "Error: stellar parameters not allocated in transport_energy"
 
 
 !set up extra stellar arrays that we need
@@ -129,7 +130,7 @@ if (any(isnan(dTdr))) print *, "NAN encountered in dT/dr"
 call get_alpha_kappa(nq,nv)
 alphaofR(:) = 0.d0
 kappaofR(:) = 0.d0
-do i = 1,niso
+do i = 1,num_isotopes
   a = atomic_nums(i)
   !this is fine for SD as long as it's just hydrogen. Otherwise, spins must be added (use effective operator method)
   muarray(i) = m_dm/a/m_proton
@@ -218,7 +219,7 @@ do i = 1,nlines
   end if
 
   nxLTE(i) = (star_temp(i)/Tc)**(3./2.)*exp(-cumint(i))
-  nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
+  nxIso(i) = num_wimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3) !normalized correctly
 
   cumNx = cumNx + 4.*pi*star_dr(i)*star_r(i)**2*nxLTE(i)*radius_star**3.
 
@@ -227,18 +228,18 @@ end do
 
 
 
-nxLTE = nxLTE/cumNx*nwimps !normalize density
+nxLTE = nxLTE/cumNx*num_wimps !normalize density
 
-! Tx is the Spergel & Press one-zone WIMP temperature in K - calculate it here to use in nxIso
+! temperature_dm is the Spergel & Press one-zone WIMP temperature in K - calculate it here to use in nxIso
 guess_1 = maxval(star_temp)*1.1d0 ! One-zone WIMP temp guesses in K.
 guess_2 = maxval(star_temp)/10.d0
 reltolerance = 1.0d-6
 
 
 ! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
-Tx = binary_search(Tx_integral, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
+temperature_dm = binary_search(Tx_integral, sigma_N, num_wimps, num_isotopes, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
-!nxIso = nx_isothermal(Tx, Nwimps) ! Defined in spergelpressmod.f90
+!nxIso = nx_isothermal(temperature_dm, num_wimps) ! Defined in spergelpressmod.f90
 
 
 
@@ -249,7 +250,7 @@ hgoth(1) = 0.d0 !some floating point shenanigans.
 
 nx = fgoth*nxLTE + (1.-fgoth)*nxIso
 
-! 3 options to calculate etrans: 1: G&R, 2: S&P, 3: S&P rescaled
+! 3 options to calculate transported: 1: G&R, 2: S&P, 3: S&P rescaled
 select case (transport_formalism)
 
 	case (1) ! transport_formalism=1 -> use Gould & Raffelt
@@ -273,7 +274,7 @@ select case (transport_formalism)
 		write(4,*) Ltrans
 		close(4)
 
-		Etrans = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
+		transported = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		! Check Ltrans
@@ -282,7 +283,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), transported(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), hgoth(i)
 !		end do
 !		close(55)
@@ -292,7 +293,7 @@ select case (transport_formalism)
 
 	! 	skew gaussian rescaling is explained in MCrescaling.pdf
 
-	! 	T_index_array = (minloc(star_temp-Tx)) ! Just a stupid rank mismatch thing
+	! 	T_index_array = (minloc(star_temp-temperature_dm)) ! Just a stupid rank mismatch thing
 	! 	T_eq_Tx_index = T_index_array(1)
 	! 	r_T = star_r(T_eq_Tx_index)! dimensionless
 
@@ -332,7 +333,7 @@ select case (transport_formalism)
 	! 	ENDIF
 	! 	dLdr = dLdr/radius_star
 
-	! 	Etrans = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
+	! 	transported = 1./(4.*pi*(star_r+epso)**2*star_rho)*dLdR/radius_star**2
 
 !		! Useful when troubleshooting
 !		open(55,file = "scalar_params_gr_skew.dat")
@@ -340,7 +341,7 @@ select case (transport_formalism)
 !		close(55)
 !		open(55,file = "etrans_gr_skew.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Etrans(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
+!			write(55,*) star_r(i), transported(i), kappaofR(i), alphaofR(i), mfp(i), star_temp(i), dTdR(i), star_rho(i), nx(i), &
 !			dphidr(i), Ltrans(i), dLdr(i), star_fractions(i,1), cumint(i), hgoth(i), phi(i), g_MC(i), g_LTE(i), chi_MC(i), chi_LTE(i)
 !		end do
 !		close(55)
@@ -352,14 +353,14 @@ select case (transport_formalism)
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 
-		! Etrans in erg/g/s (according to Spergel Press)
-		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+		! transported in erg/g/s (according to Spergel Press)
+		transported = Etrans_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
 
 		!open a file to write Ltrans data to
 		! open(5, file = 'LtransSP.dat')
 		! Calculate Ltrans
 		do i=1,nlines
-			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
+			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*transported*star_rho, i)
 			! write(5,*) star_r(i), Ltrans(i)
 		enddo
 
@@ -369,7 +370,7 @@ select case (transport_formalism)
 !		! useful when troubleshooting
 !		open(55,file = "etrans_sp.dat")
 !		do i=1,nlines
-!			write(55,*) star_r(i), Ltrans(i), Etrans(i), nx(i), star_temp(i), star_grav(i), dTdr(i), nabund(1,i)
+!			write(55,*) star_r(i), Ltrans(i), transported(i), nx(i), star_temp(i), star_grav(i), dTdr(i), nabund(1,i)
 !		end do
 !		close(55)
 	case(3) ! transport_formalism=3 -> use rescaled Spergel & Press
@@ -398,12 +399,12 @@ select case (transport_formalism)
 
 
 
-		! Etrans in erg/g/s (according to Spergel Press)
-		Etrans = Etrans_sp(Tx, sigma_N, Nwimps, niso) ! erg/g/s
+		! transported in erg/g/s (according to Spergel Press)
+		transported = Etrans_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=2,nlines
-			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*Etrans*star_rho, i)
+			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*transported*star_rho, i)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) star_r(i), L
@@ -416,14 +417,14 @@ select case (transport_formalism)
 
 end select
 
-! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of Tx.
-EtransTot = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2*Etrans*star_rho, nlines)
-! EtransTot = 1
+! The total WIMP transported energy (erg/s). In the S&P scheme, this should be 0 by definition of temperature_dm.
+total_luminosity = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2*transported*star_rho, nlines)
+! total_luminosity = 1
 
-! This is just to determine how noisy Etrans is. noise_indicator is the sum of frequency components above the cutoff
-Etrans_test = Etrans
+! This is just to determine how noisy transported is. noise_indicator is the sum of frequency components above the cutoff
+Etrans_test = transported
 call fourier_smooth(star_r, Etrans_test, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 
 return
 
-end subroutine transgen
+end subroutine transport_energy

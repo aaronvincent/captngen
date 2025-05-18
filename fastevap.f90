@@ -57,7 +57,7 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
 
   !get scattering rate, mean free path
-  !this is copied from transgen, maybe unify?
+  !this is copied from transport_energy, maybe unify?
   if ((nq .eq. 0) .and. (nv .eq. 0)) then
     do i = 1,nlines
       mfp(i) = 1./sum(sigma_N*nabund(:,i))/sigma_0/2. !factor of 2 b/c  sigma_tot = 2 sigma_0

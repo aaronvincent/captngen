@@ -83,7 +83,7 @@ PROGRAM GENCAP
 
             nwimpsin = 5.d44
             ! nwimpsin = capped*3.d7*4.57d9
-            call transgen(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
+            call transport_energy(sigma_0, nwimpsin, num_isotopes, nq(j), nv(j), spin_dependency, transport_formalism, Tx, &
                             noise_indicator, Etrans, Etranstot)
             print*, "Number of WIMPs in: ", nwimpsin, &
                     "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
