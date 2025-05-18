@@ -24,7 +24,7 @@ subroutine transport_energy(sigma_0, num_wimps, num_isotopes, q_pow, v_pow, is_s
 ! m_dm is stored in capture_mod
 ! temperature_dm is the output one-zone WIMP temp
 use capture_mod
-use akmod
+use alpha_kappa_mod
 use spergelpressmod
 implicit none
 !nlines might be redundant

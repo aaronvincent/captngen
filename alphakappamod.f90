@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! This is for getting & storing the alpha and kappa tables
 
-module akmod
+module alpha_kappa_mod
   implicit none
 
   double precision :: muvect(100), alphavect(100), kappavect(100)
@@ -40,11 +40,11 @@ contains
     
 
 
-end module akmod
+end module alpha_kappa_mod
 
 
 subroutine read_alpha_kappa(q_pow, v_pow)
-  use akmod
+  use alpha_kappa_mod
   implicit none
   !v^{2*v_pow}, q^{2*q_pow}
   integer, intent(in) :: q_pow, v_pow
