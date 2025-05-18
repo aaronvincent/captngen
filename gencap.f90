@@ -89,25 +89,25 @@
 
 
     !The integrand for the integral over u
-    function integrand(u,foveru)
+    function velocity_integrand_qv(init_velocity, dist_over_vel)
       use capture_mod
-      double precision :: u, w, integrand, foveru
-      external foveru
+      double precision :: init_velocity, w, velocity_integrand_qv, dist_over_vel
+      external dist_over_vel
 
-      w = sqrt(u**2+vesc_shared**2)
+      w = sqrt(init_velocity**2+vesc_shared**2)
 
       !Switch depending on whether we are capturing on Hydrogen or not
       if (atomic_shared .gt. 2.d0) then
-        integrand = foveru(u)*gffi_a_qv(w,vesc_shared,atomic_shared)
+        velocity_integrand_qv = dist_over_vel(init_velocity)*gffi_a_qv(w,vesc_shared,atomic_shared)
       else
-        integrand = foveru(u)*gffi_h_qv(w,vesc_shared)
+        velocity_integrand_qv = dist_over_vel(init_velocity)*gffi_h_qv(w,vesc_shared)
       end if
 
       !Rescale for velocity-dependent cross-sections
       if (nv .ne. 0) then
-        integrand = integrand*(w/v0)**(2*nv)
+        velocity_integrand_qv = velocity_integrand_qv*(w/v0)**(2*nv)
       end if
-    end function integrand
+    end function velocity_integrand_qv
 
 
     subroutine capture_rate(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
@@ -125,7 +125,7 @@
       double precision :: int_result
 
       dimension alist(1000),blist(1000),elist(1000),iord(1000),   rlist(1000)!for integrator
-      external integrand
+      external velocity_integrand_qv
       external gaussian_test !this is just for testing
 
       epsabs=1.d-8
@@ -179,7 +179,7 @@
           umax = min(vesc * sqrt(mu)/abs(muminus), escape_halo)
 
           !Call integrator
-          call dsntdqagse(integrand,distribution_over_vel,umin,umax, &
+          call dsntdqagse(velocity_integrand_qv,distribution_over_vel,umin,umax, &
           epsabs,epsrel,limit,int_result,abserr,neval,ier,alist,blist,rlist,elist,iord,last)
           int_result = int_result * 2.d0 * sigma_N * avogadro * star_rho(ri)*star_fractions(ri,eli) * (mu_plus/mx_in)**2
           capped = capped + star_r(ri)**2*int_result*star_dr(ri)
