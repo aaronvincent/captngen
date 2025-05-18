@@ -229,10 +229,10 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! For mesa interface only: allocate arrays.
-  subroutine allocate_stellar_arrays(nlines_mesa)
+  subroutine allocate_stellar_arrays(mesa_length)
     use capture_mod
-    integer, intent(in) :: nlines_mesa
-    nlines = nlines_mesa
+    integer, intent(in) :: mesa_length
+    nlines = mesa_length
     allocate(star_enclosed(nlines))       !M(<r)
     allocate(star_r(nlines))           !r
     allocate(star_rho(nlines))     !rho
