@@ -30,18 +30,18 @@
         contains
 
       !generalized form factor: hydrogen
-      function GFFI_H(w,vesc)
-      double precision :: p, w,vesc,u,GFFI_H,G
-      p = m_dm*w
-      u = sqrt(w**2-vesc**2)
+      function gffi_h_qv(vel_dm, vel_esc)
+      double precision :: p, vel_dm,vel_esc,u,gffi_h_qv,G
+      p = m_dm*vel_dm
+      u = sqrt(vel_dm**2-vel_esc**2)
       if (nq .ne. -1) then
-        G = (p/q0/c0)**(2.d0*dble(nq))*m_dm*w**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
-        *((mu/mu_plus**2)**(dble(nq)+1.)-(u**2/w**2)**(dble(nq)+1.))
+        G = (p/q0/c0)**(2.d0*dble(nq))*m_dm*vel_dm**2/(2.d0*mu**dble(nq))*1./(1.+dble(nq)) &
+        *((mu/mu_plus**2)**(dble(nq)+1.)-(u**2/vel_dm**2)**(dble(nq)+1.))
       else
-        G = ((p)/q0/c0)**(2.d0*dble(nq))*m_dm*w**2/(2.d0*mu**dble(nq))*log(mu/mu_plus**2*w**2/(u)**2)
+        G = ((p)/q0/c0)**(2.d0*dble(nq))*m_dm*vel_dm**2/(2.d0*mu**dble(nq))*log(mu/mu_plus**2*vel_dm**2/(u)**2)
       endif
-      GFFI_H = G
-      end function GFFI_H
+      gffi_h_qv = G
+      end function gffi_h_qv
 
       !generalized form factor: other elements
       function GFFI_A(w,vesc,A)
@@ -100,7 +100,7 @@
       if (atomic_shared .gt. 2.d0) then
         integrand = foveru(u)*GFFI_A(w,vesc_shared,atomic_shared)
       else
-        integrand = foveru(u)*GFFI_H(w,vesc_shared)
+        integrand = foveru(u)*gffi_h_qv(w,vesc_shared)
       end if
 
       !Rescale for velocity-dependent cross-sections
