@@ -217,13 +217,13 @@
     !   call capture_rate_qv(mx_in,sigma_0,29,0,0,0,capped_SI)
     ! end subroutine capture_rate_constant
 
-    subroutine capture_rate_constant(mx_in,sigma_0_SD_in,sigma_0_SI_in,capped_SD,capped_SI)
+    subroutine capture_rate_constant(mass_dm, sigma_sd, sigma_si, capture_rate_sd, capture_rate_si)
       implicit none
-      double precision, intent(in) :: mx_in, sigma_0_SD_in,sigma_0_SI_in
-      double precision :: capped_SD,capped_SI
+      double precision, intent(in) :: mass_dm, sigma_sd,sigma_si
+      double precision :: capture_rate_sd,capture_rate_si
 
-      call capture_rate_qv(mx_in,sigma_0_SD_in,1,0,0,1,capped_SD)
-      call capture_rate_qv(mx_in,sigma_0_SI_in,29,0,0,0,capped_SI)
+      call capture_rate_qv(mass_dm,sigma_sd,1,0,0,1,capture_rate_sd)
+      call capture_rate_qv(mass_dm,sigma_si,29,0,0,0,capture_rate_si)
     end subroutine capture_rate_constant
 
 
