@@ -39,7 +39,7 @@ subroutine fast_evaporate(sigma_0, num_wimps, num_isotopes, evaporate_rate)
   nabund(i,:) = star_fractions(:,i)*star_rho(:)/atomic_nums(i)/mnucg
   end do
 
-  call Twimp(nabund,num_isotopes,Tw)
+  call temperature_dm_core_ratio(nabund,num_isotopes,Tw)
   Tw = Tw*Tc*kBeV*1.d-9
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
@@ -93,13 +93,13 @@ end subroutine fast_evaporate
 
 !Returns WIMP temperature over central temperature
 !knows about nv, nq, via capture_mod module
-subroutine Twimp(nabund,niso,Tw)
+subroutine temperature_dm_core_ratio(number_abundance, num_isotopes, temperature)
   use capture_mod
   implicit none
-  integer, intent(in) :: niso
-  double precision :: sv(nlines),TGeV(nlines), TcGeV,Tw, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
-  double precision :: Tw_out_num(niso), Tw_out_denom(niso),nxIso(nlines)
-  double precision nabund(niso,nlines)
+  integer, intent(in) :: num_isotopes
+  double precision :: sv(nlines),TGeV(nlines), TcGeV,temperature, tol, Tw_out,dT,TwK,mdmg,mN,beta,sigmaN
+  double precision :: Tw_out_num(num_isotopes), Tw_out_denom(num_isotopes),nxIso(nlines)
+  double precision number_abundance(num_isotopes,nlines)
   double precision, parameter :: GN = 6.674d-8, kB = 1.3806d-16,kBeV=8.617e-5,mnucg=1.67e-24
   integer i,j
   tol = 1.d-8! tolerance: good enough for evap, not for luminosity calc
@@ -107,22 +107,22 @@ subroutine Twimp(nabund,niso,Tw)
   TcGeV = TGeV(1)
   mdmg = m_dm*1.78266e-24
   ! print*,"TcGeV ", TcGeV
-  Tw = TcGeV
+  temperature = TcGeV
   Tw_out = 0.d0;
-  dT = abs(Tw - Tw_out)/Tw;
+  dT = abs(temperature - Tw_out)/temperature;
 
 
 
   do while (dT .gt. Tol)
-    TwK = Tw/(kBeV*1.d-9)
+    TwK = temperature/(kBeV*1.d-9)
 
-    do i=1,Niso
+    do i=1,num_isotopes
       mN = atomic_nums(i)*m_proton
       beta = atomic_nums(i)*m_proton*(m_dm + m_proton)/m_proton/(m_dm + atomic_nums(i)*m_proton);
 
       sigmaN = beta**2.*atomic_nums(i)**2
 
-      call sigmav(2*nv,2*nq,Tw/m_dm,TGeV/mn,nlines,sv)
+      call sigmav(2*nv,2*nq,temperature/m_dm,TGeV/mn,nlines,sv)
       ! print*,sv
       if (nq .ne. 0) then
           sv = sv*(2.*m_dm**2)**(nq)/(1.+m_dm/mN)**(2.*nq)/q0**(2*nq)
@@ -130,21 +130,21 @@ subroutine Twimp(nabund,niso,Tw)
           sv = sv/v0**(2*nv)
       end if
       nxIso = exp(mdmg*star_escape**2/2./TwK/kB)
-      Tw_out_num(i) = trapezoid(star_r,star_r**2*TGeV*sv*nxIso*nabund(i,:),nlines);
-      Tw_out_denom(i) = trapezoid(star_r,star_r**2*sv*nxIso*nabund(i,:),nlines);
+      Tw_out_num(i) = trapezoid(star_r,star_r**2*TGeV*sv*nxIso*number_abundance(i,:),nlines);
+      Tw_out_denom(i) = trapezoid(star_r,star_r**2*sv*nxIso*number_abundance(i,:),nlines);
 
 
 
     end do
             Tw_out = sum(Tw_out_num)/sum(Tw_out_denom);
-            dT = abs(Tw - Tw_out)/Tw;
-            Tw = Tw_out;
+            dT = abs(temperature - Tw_out)/temperature;
+            temperature = Tw_out;
   end do
-  Tw = Tw/TcGeV;
+  temperature = temperature/TcGeV;
 
   ! open(55,file = "svTw.dat")
   ! do j=1,nlines
-  ! write(55,*) star_r(j),sv(j), nxIso(j), nabund(1,j),TGeV(j),star_escape(j),TwK
+  ! write(55,*) star_r(j),sv(j), nxIso(j), number_abundance(1,j),TGeV(j),star_escape(j),TwK
   ! end do
   ! close(55)
 
@@ -153,7 +153,7 @@ subroutine Twimp(nabund,niso,Tw)
 
   ! call sigmav(2*nv,2*nq,star_temp/m_dm,star_temp/mn,nlines,sv)
 
-end subroutine Twimp
+end subroutine temperature_dm_core_ratio
 
 
 SUBROUTINE sigmav(vpow,qpow,xx,xn,nlines,sv) !dimensionless <sigma v>
