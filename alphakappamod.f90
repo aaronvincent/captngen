@@ -4,7 +4,7 @@
 module alpha_kappa_mod
   implicit none
 
-  double precision :: dm_target_ratio(100), alpha_loaded(100), kappavect(100)
+  double precision :: dm_target_ratio(100), alpha_loaded(100), kappa_loaded(100)
   integer, parameter :: alpha_kappa_length =100 !because lazy
 contains
 
@@ -85,7 +85,7 @@ subroutine read_alpha_kappa(q_pow, v_pow)
   open(95,file=kfilename)
   do i=1,alpha_kappa_length
   read(99,*) alpha_loaded(i)
-  read(95,*) kappavect(i)
+  read(95,*) kappa_loaded(i)
   end do
   close(99)
   close(95)

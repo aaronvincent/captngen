@@ -138,7 +138,7 @@ do i = 1,num_isotopes
   nabund(i,:) = star_fractions(:,i)*star_rho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
   call interpolate_1d(dm_target_ratio, alpha_loaded, alpha_kappa_length,muarray(i),alpha(i))
-  call interpolate_1d(dm_target_ratio, kappaVect, alpha_kappa_length,muarray(i),kappa(i))
+  call interpolate_1d(dm_target_ratio, kappa_loaded, alpha_kappa_length,muarray(i),kappa(i))
 end do
 
 !need separate zeta factors for q- and v- dependent interactions
