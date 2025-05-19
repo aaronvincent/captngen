@@ -161,7 +161,7 @@ SUBROUTINE thermal_average_sigma_v(v_pow, q_pow, temp_over_mass_dm, temp_over_ma
   double precision, parameter :: pi=3.141592653
   double precision dgamma
   integer, intent(in) :: v_pow,q_pow,num_lines
-  double precision :: n, fofn
+  double precision :: n, thermal_avg_q_factor
   double precision, intent(in) :: temp_over_mass_dm, temp_over_mass_target(num_lines)
   double precision, intent(out) :: cross(num_lines)
 ! x = T/m;
@@ -171,20 +171,20 @@ if (v_pow .ne. 0) then
     cross = 2.d0*2.**(n+3./2.)*dgamma(n+2.)*(temp_over_mass_dm + temp_over_mass_target)**(n+1./2.)/sqrt(pi)
 elseif (q_pow .ne. 0) then
     n = q_pow/2
-    cross = 2.d0**(n+3./2.)*dgamma(n+2.)*(temp_over_mass_dm + temp_over_mass_target)**(n+1./2.)/sqrt(pi)*fofn(n) !needs to be multiplied by that other factor
+    cross = 2.d0**(n+3./2.)*dgamma(n+2.)*(temp_over_mass_dm + temp_over_mass_target)**(n+1./2.)/sqrt(pi)*thermal_avg_q_factor(n) !needs to be multiplied by that other factor
 else
     cross = 2.*2.d0**(3./2.)*sqrt(temp_over_mass_dm+temp_over_mass_target)/sqrt(pi)
 end if
 end subroutine thermal_average_sigma_v
 
-double precision function fofn(n)
+double precision function thermal_avg_q_factor(n)
   double precision f,n
 if (n .le. 0.d0) then
     f = 2.d0
 else
     f = 2.d0**((n)+1.)/((n)+1.)
 end if
-fofn = f
+thermal_avg_q_factor = f
 return
 end function
 
