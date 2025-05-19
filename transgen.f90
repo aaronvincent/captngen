@@ -25,7 +25,7 @@ subroutine transport_energy(sigma_0, num_wimps, num_isotopes, q_pow, v_pow, is_s
 ! temperature_dm is the output one-zone WIMP temp
 use capture_mod
 use alpha_kappa_mod
-use spergelpressmod
+use spergel_press_mod
 implicit none
 !nlines might be redundant
 integer, intent(in) :: transport_formalism

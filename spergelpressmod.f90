@@ -9,7 +9,7 @@
 ! All units are cgs except star_r and star_dr
 ! I apologize for the long function calls.
 
-module spergelpressmod
+module spergel_press_mod
 use capture_mod
 implicit none
 
@@ -319,4 +319,4 @@ rolling_avg(nlines) = (y(nlines-2)+y(nlines-1)+y(nlines))/3.d0
 return
 end function
 
-end module spergelpressmod
+end module spergel_press_mod
