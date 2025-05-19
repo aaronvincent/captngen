@@ -137,7 +137,7 @@ do i = 1,num_isotopes
   sigma_N(i) = a**2 * (sigma_SI*a**2 + sigma_SD) * (m_dm+m_proton)**2 / (m_dm+a*m_proton)**2
   nabund(i,:) = star_fractions(:,i)*star_rho(:)/a/mnucg
   !these shouldn't really be done every iteration, can fix later
-  call interpolate_1d(dm_target_ratio, alphaVect, alpha_kappa_length,muarray(i),alpha(i))
+  call interpolate_1d(dm_target_ratio, alpha_loaded, alpha_kappa_length,muarray(i),alpha(i))
   call interpolate_1d(dm_target_ratio, kappaVect, alpha_kappa_length,muarray(i),kappa(i))
 end do
 
