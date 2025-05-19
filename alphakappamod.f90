@@ -4,7 +4,7 @@
 module alpha_kappa_mod
   implicit none
 
-  double precision :: muvect(100), alphavect(100), kappavect(100)
+  double precision :: dm_target_ratio(100), alphavect(100), kappavect(100)
   integer, parameter :: nlinesinaktable =100 !because lazy
 contains
 
@@ -53,7 +53,7 @@ subroutine read_alpha_kappa(q_pow, v_pow)
 
   open(99,file="ak_files/mVect.dat")
   do i=1,nlinesinaktable
-  read(99,*) muVect(i)
+  read(99,*) dm_target_ratio(i)
   end do
   close(99)
 
