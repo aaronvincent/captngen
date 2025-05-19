@@ -122,7 +122,7 @@ subroutine temperature_dm_core_ratio(number_abundance, num_isotopes, temperature
 
       sigmaN = beta**2.*atomic_nums(i)**2
 
-      call sigmav(2*nv,2*nq,temperature/m_dm,TGeV/mn,nlines,sv)
+      call thermal_average_sigma_v(2*nv,2*nq,temperature/m_dm,TGeV/mn,nlines,sv)
       ! print*,sv
       if (nq .ne. 0) then
           sv = sv*(2.*m_dm**2)**(nq)/(1.+m_dm/mN)**(2.*nq)/q0**(2*nq)
@@ -151,31 +151,31 @@ subroutine temperature_dm_core_ratio(number_abundance, num_isotopes, temperature
 
 
 
-  ! call sigmav(2*nv,2*nq,star_temp/m_dm,star_temp/mn,nlines,sv)
+  ! call thermal_average_sigma_v(2*nv,2*nq,star_temp/m_dm,star_temp/mn,nlines,sv)
 
 end subroutine temperature_dm_core_ratio
 
 
-SUBROUTINE sigmav(vpow,qpow,xx,xn,nlines,sv) !dimensionless <sigma v>
+SUBROUTINE thermal_average_sigma_v(v_pow, q_pow, temp_over_mass_dm, temp_over_mass_target, num_lines, cross) !dimensionless <sigma v>
   implicit none
   double precision, parameter :: pi=3.141592653
   double precision dgamma
-  integer, intent(in) :: vpow,qpow,nlines
+  integer, intent(in) :: v_pow,q_pow,num_lines
   double precision :: n, fofn
-  double precision, intent(in) :: xx, xn(nlines)
-  double precision, intent(out) :: sv(nlines)
+  double precision, intent(in) :: temp_over_mass_dm, temp_over_mass_target(num_lines)
+  double precision, intent(out) :: cross(num_lines)
 ! x = T/m;
 !remember to multiply by sigma_i/ q^2n
-if (vpow .ne. 0) then
-    n = dble(vpow/2)
-    sv = 2.d0*2.**(n+3./2.)*dgamma(n+2.)*(xx + xn)**(n+1./2.)/sqrt(pi)
-elseif (qpow .ne. 0) then
-    n = qpow/2
-    sv = 2.d0**(n+3./2.)*dgamma(n+2.)*(xx + xn)**(n+1./2.)/sqrt(pi)*fofn(n) !needs to be multiplied by that other factor
+if (v_pow .ne. 0) then
+    n = dble(v_pow/2)
+    cross = 2.d0*2.**(n+3./2.)*dgamma(n+2.)*(temp_over_mass_dm + temp_over_mass_target)**(n+1./2.)/sqrt(pi)
+elseif (q_pow .ne. 0) then
+    n = q_pow/2
+    cross = 2.d0**(n+3./2.)*dgamma(n+2.)*(temp_over_mass_dm + temp_over_mass_target)**(n+1./2.)/sqrt(pi)*fofn(n) !needs to be multiplied by that other factor
 else
-    sv = 2.*2.d0**(3./2.)*sqrt(xx+xn)/sqrt(pi)
+    cross = 2.*2.d0**(3./2.)*sqrt(temp_over_mass_dm+temp_over_mass_target)/sqrt(pi)
 end if
-end subroutine sigmav
+end subroutine thermal_average_sigma_v
 
 double precision function fofn(n)
   double precision f,n
