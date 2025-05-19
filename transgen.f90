@@ -354,7 +354,7 @@ select case (transport_formalism)
 		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 
 		! transported in erg/g/s (according to Spergel Press)
-		transported = Etrans_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
+		transported = transport_energy_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
 
 		!open a file to write Ltrans data to
 		! open(5, file = 'LtransSP.dat')
@@ -400,7 +400,7 @@ select case (transport_formalism)
 
 
 		! transported in erg/g/s (according to Spergel Press)
-		transported = Etrans_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
+		transported = transport_energy_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s
 		! open(7, file = 'LtransNewSP.dat')
 
 		do i=2,nlines

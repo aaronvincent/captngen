@@ -2,7 +2,7 @@
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
 !	-isothermal_dm_num_density: Calculates the WIMP density in the Spergel-Press scheme
-! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
+! 	-transport_energy_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
 
@@ -48,19 +48,19 @@ return
 end function
 
 
-function Etrans_sp(T_x, sigma_N, Nwimps, niso)
+function transport_energy_sp(iso_temperature_dm, diff_sigma, num_wimps, num_isotopes)
 implicit none
 ! Calculates WIMP transported energy (erg/g/s) using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 
-integer, intent(in) :: niso
-double precision, intent(in) :: T_x, Nwimps
-double precision, intent(in) :: sigma_N(niso)
+integer, intent(in) :: num_isotopes
+double precision, intent(in) :: iso_temperature_dm, num_wimps
+double precision, intent(in) :: diff_sigma(num_isotopes)
 double precision :: n_0, mxg, B, A, initial_q
-double precision :: R(nlines), phi(nlines), n_nuc(niso,nlines)
-double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(niso)
-double precision :: Etrans_sp(nlines)
+double precision :: R(nlines), phi(nlines), n_nuc(num_isotopes,nlines)
+double precision :: n_x(nlines), species_indep(nlines), species_dep(nlines), sigma_nuc(num_isotopes)
+double precision :: transport_energy_sp(nlines)
 integer :: i, j, p
-! T_x in K, sigma_N in cm^2,
+! iso_temperature_dm in K, diff_sigma in cm^2,
 
 
 
@@ -70,17 +70,17 @@ mxg = m_dm*1.782662d-24 ! WIMP mass in g
 initial_q = q0*5.344d-14 !cgs conversion for q0
 
 ! n_nuc in cm^-3
-do i=1,niso
+do i=1,num_isotopes
 	n_nuc(i,:) = star_fractions(:,i)*star_rho/atomic_nums(i)/mnucg ! star_rho in gcm^-3
 enddo
 
-sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
+sigma_nuc = 2.d0*diff_sigma ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
-!print*, sigma_N, sigma_nuc
+!print*, diff_sigma, sigma_nuc
 
 !print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
-n_x = isothermal_dm_num_density(T_x, Nwimps)
+n_x = isothermal_dm_num_density(iso_temperature_dm, num_wimps)
 
 p = (nv + nq)
 if ((p .eq. 0)) then
@@ -101,38 +101,38 @@ species_dep=0.d0
 
 if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(T_x-star_temp)/star_rho ! The species independent part
-	do i=1,niso
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0)*n_x*(iso_temperature_dm-star_temp)/star_rho ! The species independent part
+	do i=1,num_isotopes
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0)
+		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0)
 	enddo
-	Etrans_sp = species_indep*species_dep ! erg/g/s
+	transport_energy_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(T_x-star_temp)/star_rho/v0**(2.d0*nv) ! The species independent part
-	do i=1,niso
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nv)*n_x*(iso_temperature_dm-star_temp)/star_rho/v0**(2.d0*nv) ! The species independent part
+	do i=1,num_isotopes
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nv)
+		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0+nv)
 	enddo
-	Etrans_sp = species_indep*species_dep
+	transport_energy_sp = species_indep*species_dep
 else if (nq .ne. 0) then
 	! Separate calc into species dependent and independent factors
-	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(T_x-star_temp)/star_rho*B/(initial_q)**(2.d0*nq)* &
+	species_indep = A*sqrt(2.d0/pi)*kB**(3.d0/2.d0+nq)*n_x*(iso_temperature_dm-star_temp)/star_rho*B/(initial_q)**(2.d0*nq)* &
 		(2.**nq)*mxg**(2.d0*nq) ! The species independent part
-	do i=1,niso
-	species_dep = species_dep + sigma_N(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
-		(star_temp/(mnucg*atomic_nums(i)) + T_x/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
+	do i=1,num_isotopes
+	species_dep = species_dep + diff_sigma(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
+		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
 	enddo
-	Etrans_sp = species_indep*species_dep
+	transport_energy_sp = species_indep*species_dep
 end if
 
 
 !! Useful when troubleshooting
 !open(55, file="/home/luke/summer_2021/mesa/test_files/Etrans_sp_params.txt")
-!write(55,*) "scalar params: T_x=", T_x, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
-!	"nlines=", nlines, "niso=", niso
+!write(55,*) "scalar params: iso_temperature_dm=", iso_temperature_dm, "m_x=", mxg, "m_nuc=", mnucg, "sigma_nuc=", sigma_nuc(1), &
+!	"nlines=", nlines, "num_isotopes=", num_isotopes
 !do i=1,nlines
-!	write(55,*) R(i), star_temp(i), n_x(i), Etrans_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
+!	write(55,*) R(i), star_temp(i), n_x(i), transport_energy_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
 !enddo
 !close(55)
 
@@ -154,7 +154,7 @@ double precision :: Tx_integral
 R = star_r*radius_star
 
 !print*, 'TX here'
-integrand = 4*pi*R**2*star_rho*Etrans_sp(T_x, sigma_N, Nwimps, niso)
+integrand = 4*pi*R**2*star_rho*transport_energy_sp(T_x, sigma_N, Nwimps, niso)
 
 ! integral is Etrans_tot (erg/s)
 Tx_integral = trapezoid(R, integrand, nlines)
