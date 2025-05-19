@@ -3,15 +3,15 @@
 !Don't trust in the LTE limit you will underestimate the evaporation rate
 !Also needs to be properly generalized to SD scattering (heavier than H)
 
-subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
+subroutine fast_evaporate(sigma_0, num_wimps, num_isotopes, evaporate_rate)
 
   use capture_mod
   ! use akmod
   implicit none
-  integer, intent(in):: niso
-  double precision, intent(in) :: sigma_0, Nwimps
-  double precision, intent(out) :: EvapRate
-  double precision :: Earg(nlines), muarray(niso),nabund(niso,nlines),sigma_N(niso)
+  integer, intent(in):: num_isotopes
+  double precision, intent(in) :: sigma_0, num_wimps
+  double precision, intent(out) :: evaporate_rate
+  double precision :: Earg(nlines), muarray(num_isotopes),nabund(num_isotopes,nlines),sigma_N(num_isotopes)
   double precision :: suparg,Knud,rchi
   double precision :: mdmg,mnucg, Tc, rhoc,mn, Tw,nin,escFrac(nlines),vescc(nlines),nxIso(nlines),mfp(nlines),scatrate(nlines)
   double precision, parameter :: kBeV=8.617d-5, GN =6.674d-8, kB=1.3806d-16
@@ -30,22 +30,22 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   rhoc = star_rho(1)
   vescc = star_escape/c0
 
-  ! print*,"attempting to evaporate, Nwimps = ", Nwimps
+  ! print*,"attempting to evaporate, num_wimps = ", num_wimps
 
 
-  do i = 1,niso
+  do i = 1,num_isotopes
   muarray(i) = m_dm/atomic_nums(i)/m_proton
   sigma_N(i) = atomic_nums(i)**4*(m_dm+m_proton)**2/(m_dm+atomic_nums(i)*m_proton)**2 !not yet multiplied by sigma_0
   nabund(i,:) = star_fractions(:,i)*star_rho(:)/atomic_nums(i)/mnucg
   end do
 
-  call Twimp(nabund,niso,Tw)
+  call Twimp(nabund,num_isotopes,Tw)
   Tw = Tw*Tc*kBeV*1.d-9
   ! print*,"Tw = ", Tw
   !this vastly overestimates the evap rate
-  ! nxIso(i) = Nwimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
+  ! nxIso(i) = num_wimps*exp(-radius_star**2*star_r(i)**2/rchi**2)/(pi**(3./2.)*rchi**3)
   nxIso = exp(m_dm*vescc**2/2./Tw);
-  nin = 4.d0*pi*trapezoid(star_r,star_r**2.*nxIso,nlines) !%niso norm
+  nin = 4.d0*pi*trapezoid(star_r,star_r**2.*nxIso,nlines) !%num_isotopes norm
   nxIso = nxIso/nin
 
   ! print*,"norm guy ", nin ! "one: ", 4.d0*pi*trapezoid(star_r,star_r**2.*nxIso,nlines)
@@ -83,13 +83,13 @@ subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
   ! close(55)
 
 
-  EvapRate = Nwimps*4.*pi*trapezoid(star_r,star_r**2*nxIso*Earg,nlines)
+  evaporate_rate = num_wimps*4.*pi*trapezoid(star_r,star_r**2*nxIso*Earg,nlines)
 
-  if (isnan(EvapRate)) then
+  if (isnan(evaporate_rate)) then
     stop "NaN evap rate, check it"
   end if
 
-end subroutine fastevap
+end subroutine fast_evaporate
 
 !Returns WIMP temperature over central temperature
 !knows about nv, nq, via capture_mod module

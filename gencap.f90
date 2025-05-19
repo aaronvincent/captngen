@@ -14,7 +14,7 @@
 
 !   Updated 2020 just to handle all nq,nv=-1,0,1,2 cases (integration limits were causing issues).
 !   Working for spin-dependent interactions with atomic hydrogen (niso=1)
-!   NOTE: removed evaporation calcs - for some reason fastevap was still being used even when
+!   NOTE: removed evaporation calcs - for some reason fast_evaporate was still being used even when
 !     option was turned off from DarkMESA side.
 
     module capture_mod

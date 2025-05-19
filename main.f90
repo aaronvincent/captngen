@@ -18,7 +18,7 @@ PROGRAM GENCAP
 ! Variables used for the energy transport calculation
     integer :: transport_formalism, nlines
     double precision :: Tx, nwimpsin, noise_indicator, EtransTot
-    ! double precision :: evapRate ! Used in fastevap()
+    ! double precision :: evapRate ! Used in fast_evaporate()
     double precision, allocatable :: Etrans(:)
 !-----------------------------------------------------------------------------------------------------------------------------------
 ! Variables used in the NREO formalism calculation
@@ -88,7 +88,7 @@ PROGRAM GENCAP
             print*, "Number of WIMPs in: ", nwimpsin, &
                     "Energy Transport Total: ", EtransTot, "UNITS?" !FIXME units?
 
-            ! call fastevap(sigma_0, 1.d0, 28, EvapRate)
+            ! call fast_evaporate(sigma_0, 1.d0, 28, EvapRate)
             ! print*, "Evap rate: ", EvapRate, "s^-1"
 
             write(94,*) sigma_0, mx, capped, maxcapture, nwimpsin, Etranstot
