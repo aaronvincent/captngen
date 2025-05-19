@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Spergel-Press WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
-!	-nx_isothermal: Calculates the WIMP density in the Spergel-Press scheme
+!	-isothermal_dm_num_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-Etrans_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-Tx_integral: to be used in newtons_meth
 !	-newtons_meth: solves Tx_integral=0 which defines Tx
@@ -18,10 +18,10 @@ double precision, parameter :: kB=1.38064852d-16, mnucg=1.6726219e-24
 contains
 
 
-function nx_isothermal(T_x, Nwimps)
+function isothermal_dm_num_density(iso_temperature_dm, num_wimps)
 implicit none
-double precision, intent(in) :: T_x, Nwimps
-double precision :: nx_isothermal(nlines)
+double precision, intent(in) :: iso_temperature_dm, num_wimps
+double precision :: isothermal_dm_num_density(nlines)
 double precision :: n_0, mxg
 double precision :: R(nlines), phi(nlines)
 integer :: i
@@ -36,13 +36,13 @@ mxg = m_dm*1.782662d-24  ! g
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
-!nx_isothermal = exp(-mxg*phi/kB/T_x)          !previous calulation that doesn't work above 8GeV
-nx_isothermal = exp(-mxg*(phi-phi(1))/kB/T_x)  !the minus phi(1) lets the code run with a mass above 8 GeV
+!isothermal_dm_num_density = exp(-mxg*phi/kB/iso_temperature_dm)          !previous calulation that doesn't work above 8GeV
+isothermal_dm_num_density = exp(-mxg*(phi-phi(1))/kB/iso_temperature_dm)  !the minus phi(1) lets the code run with a mass above 8 GeV
 
-n_0 = Nwimps/trapezoid(r, 4.d0*pi*r**2.d0*nx_isothermal, nlines) ! Normalize so that integral(nx) = Nwimps
-nx_isothermal = n_0*nx_isothermal
+n_0 = num_wimps/trapezoid(r, 4.d0*pi*r**2.d0*isothermal_dm_num_density, nlines) ! Normalize so that integral(nx) = num_wimps
+isothermal_dm_num_density = n_0*isothermal_dm_num_density
 
-if (any(isnan(nx_isothermal))) print *, "NAN encountered in nx_isothermal"
+if (any(isnan(isothermal_dm_num_density))) print *, "NAN encountered in isothermal_dm_num_density"
 
 return
 end function
@@ -80,7 +80,7 @@ sigma_nuc = 2.d0*sigma_N ! Total WIMP-nucleus cross section in cm^2v. Only works
 
 !print*,'Etrans here'
 ! isothermal WIMP number density in cm^-3.
-n_x = nx_isothermal(T_x, Nwimps)
+n_x = isothermal_dm_num_density(T_x, Nwimps)
 
 p = (nv + nq)
 if ((p .eq. 0)) then
