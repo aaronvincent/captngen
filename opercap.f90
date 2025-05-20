@@ -536,7 +536,7 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
     ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] @endwarning
     !!
-    energy_transported = 0.5/(1.d0+(k_0/knudsen)**2)*energy_transported
+    energy_transported = 0.5d0/(1.d0+(k_0/knudsen)**2)*energy_transported
 end subroutine energy_transport_nreo
 
 
