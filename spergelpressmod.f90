@@ -290,31 +290,31 @@ enddo
 
 end subroutine
 
-function rolling_avg(y, nlines)
+function rolling_average(y, num_lines)
 ! Takes a 1D array f of length N, returns an array of length N whose ith entry
 ! is the average of f(i) and its 4 nearest neighbours
-integer, intent(in) ::  nlines
-double precision, intent(in) :: y(nlines)
+integer, intent(in) ::  num_lines
+double precision, intent(in) :: y(num_lines)
 integer :: i, j
-double precision :: rolling_avg(nlines)
+double precision :: rolling_average(num_lines)
 
-do i=5,nlines-4
-    rolling_avg(i) = 0.d0
+do i=5,num_lines-4
+    rolling_average(i) = 0.d0
     do j=-4,4
-        rolling_avg(i) = rolling_avg(i) + y(i+j)
+        rolling_average(i) = rolling_average(i) + y(i+j)
     enddo
-    rolling_avg(i) = rolling_avg(i)/9.d0
+    rolling_average(i) = rolling_average(i)/9.d0
 enddo
 ! do boundary values manually
-rolling_avg(1) = (y(1)+y(2)+y(3))/3.d0
-rolling_avg(2) = (y(1)+y(2)+y(3)+y(4))/4.d0
-rolling_avg(3) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6))/6.d0
-rolling_avg(4) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6)+y(7)+y(8))/8.d0
-rolling_avg(nlines-1) = (y(nlines-7)+y(nlines-6)+y(nlines-5)+y(nlines-4) &
-							+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/8.d0
-rolling_avg(nlines-1) = (y(nlines-5)+y(nlines-4)+y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/6.d0
-rolling_avg(nlines-1) = (y(nlines-3)+y(nlines-2)+y(nlines-1)+y(nlines))/4.d0
-rolling_avg(nlines) = (y(nlines-2)+y(nlines-1)+y(nlines))/3.d0
+rolling_average(1) = (y(1)+y(2)+y(3))/3.d0
+rolling_average(2) = (y(1)+y(2)+y(3)+y(4))/4.d0
+rolling_average(3) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6))/6.d0
+rolling_average(4) = (y(1)+y(2)+y(3)+y(4)+y(5)+y(6)+y(7)+y(8))/8.d0
+rolling_average(num_lines-1) = (y(num_lines-7)+y(num_lines-6)+y(num_lines-5)+y(num_lines-4) &
+							+y(num_lines-3)+y(num_lines-2)+y(num_lines-1)+y(num_lines))/8.d0
+rolling_average(num_lines-1) = (y(num_lines-5)+y(num_lines-4)+y(num_lines-3)+y(num_lines-2)+y(num_lines-1)+y(num_lines))/6.d0
+rolling_average(num_lines-1) = (y(num_lines-3)+y(num_lines-2)+y(num_lines-1)+y(num_lines))/4.d0
+rolling_average(num_lines) = (y(num_lines-2)+y(num_lines-1)+y(num_lines))/3.d0
 
 return
 end function
