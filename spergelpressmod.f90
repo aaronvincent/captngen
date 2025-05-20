@@ -236,56 +236,56 @@ binary_search = x_3
 return
 end function
 
-subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, nlines, lensav, ierr)
+subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, num_lines, prime_length, error)
 ! Cuts out the high frequency components of y. E.g. if cutoff=0.05, the top 95% of frequency components are cut
 ! Also returns a "noise indicator" - The sum of the frequency components above the cutoff
-integer, intent(in) :: nlines, lensav
-integer :: ierr, i
-double precision, intent(in) :: x(nlines), x_even(nlines), cutoff
-double precision, intent(inout) :: y(nlines)
+integer, intent(in) :: num_lines, prime_length
+integer :: error, i
+double precision, intent(in) :: x(num_lines), x_even(num_lines), cutoff
+double precision, intent(inout) :: y(num_lines)
 double precision, intent(out) :: noise_indicator
-double precision :: y_even(nlines), work(nlines), wsave(lensav), bcoeff(nlines), ccoeff(nlines), dcoeff(nlines)
+double precision :: y_even(num_lines), work(num_lines), wsave(prime_length), bcoeff(num_lines), ccoeff(num_lines), dcoeff(num_lines)
 double precision :: ispline, denominator
 
 ! Make evenly spaced y array
-call spline(x, y, bcoeff, ccoeff, dcoeff, nlines)
-do i=1,nlines
-	y_even(i) = ispline(x_even(i), x, y, bcoeff, ccoeff, dcoeff, nlines)
+call spline(x, y, bcoeff, ccoeff, dcoeff, num_lines)
+do i=1,num_lines
+	y_even(i) = ispline(x_even(i), x, y, bcoeff, ccoeff, dcoeff, num_lines)
 enddo
 
 ! Compute FFT of y
-call dfft1i (nlines, wsave, lensav, ierr)  !Initialize (required by fftpack)
-if (ierr /= 0) print *, "FFT initializer 'dfft1i' failed with error ", ierr
+call dfft1i (num_lines, wsave, prime_length, error)  !Initialize (required by fftpack)
+if (error /= 0) print *, "FFT initializer 'dfft1i' failed with error ", error
 
-call dfft1f(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr) ! Take FFT
-if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ierr
+call dfft1f(num_lines, 1, y_even, num_lines, wsave, prime_length, work, num_lines, error) ! Take FFT
+if (error /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", error
 ! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
 
 noise_indicator = 0.d0
 ! Take the ratio of high frequency components to low frequency components as a measure of how noisy the data is
-do i=int(cutoff*nlines),nlines
+do i=int(cutoff*num_lines),num_lines
 	noise_indicator = noise_indicator + abs(y_even(i))
 enddo
-do i=1,int(cutoff*nlines)
+do i=1,int(cutoff*num_lines)
 	denominator = denominator + abs(y_even(i))
 enddo
 noise_indicator = noise_indicator/denominator
 
 ! Cut out top 100*(1-cutoff)% of Fourier components
-do i=1,nlines
-	if (i > int(cutoff*nlines)) then
+do i=1,num_lines
+	if (i > int(cutoff*num_lines)) then
 		y_even(i) = 0.d0
 	endif
 enddo
 
 ! Rebuild y with high frequency components cut out
-call dfft1b(nlines, 1, y_even, nlines, wsave, lensav, work, nlines, ierr)
-if (ierr /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", ierr
+call dfft1b(num_lines, 1, y_even, num_lines, wsave, prime_length, work, num_lines, error)
+if (error /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", error
 
 ! Evaluate y on original grid (ie go convert y_even --> y)
-call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
-do i=1,nlines
-	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, nlines)
+call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, num_lines)
+do i=1,num_lines
+	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, num_lines)
 enddo
 
 end subroutine
