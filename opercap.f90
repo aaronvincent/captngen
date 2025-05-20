@@ -191,7 +191,7 @@ module opermod
         double precision :: qw_terms(size(path_length)), this_term(size(path_length)), density_target(size(path_length))
 
         m_target = mnuc*AtomicNumber_oper
-        isotopic_term = abs( -(4*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) )
+        isotopic_term = abs( -2*(2*hbar*c0*mdm / (mdm/m_target+1))**2 / (sqrt(pi) * (2*AtomicSpin_oper+1)) )
         !* @warning
         ! I have a leading negative sign on my calculation of the thermally averaged cross section \( {\langle \sigma_i(w)
         ! \rangle}_\text{NREO} \), this leads the mean free path to be negative. For now, we are assuming that the total cross
@@ -211,8 +211,8 @@ module opermod
             !!
             do nq = 0, size(prefactor_array,dim=2)-1
                 do nw = 0, size(prefactor_array,dim=3)-1
-                    this_term = prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
-                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw) * (mdm/((nq+1)*c0))**(2*nq)
+                    this_term = prefactor_array(iso,nq+1,nw+1) * 2**(2*nq)/(nq+1) * gamma((2*nq+2*nw+3)/2.d0) * &
+                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw) * (mdm/c0)**(2*nq)
                     qw_terms = qw_terms + this_term
                 end do !nw
             end do !nq
