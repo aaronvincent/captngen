@@ -3,8 +3,8 @@
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
 !	-isothermal_dm_num_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-transport_energy_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
-!	-luminosity_dm: to be used in newtons_meth
-!	-newtons_meth: solves luminosity_dm=0 which defines Tx
+!	-luminosity_dm: to be used in newtons_method
+!	-newtons_method: solves luminosity_dm=0 which defines the isothermal dark matter temperature
 
 ! All units are cgs except star_r and star_dr
 ! I apologize for the long function calls.
@@ -163,36 +163,36 @@ return
 end function
 
 
-function newtons_meth(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
+function newtons_method(func, diff_sigma, num_wimps, num_isotopes, guess_1, guess_2, relative_tolerance)
 ! Performs Newton's method to solve luminosity_dm(T_x)=0 for T_x (the function returns T_x)
-! The parameter f is the luminosity_dm function
+! The parameter func is the luminosity_dm function
 implicit none
 
-integer, intent(in) :: niso
-double precision :: f ! luminosity_dm
-double precision, intent(in) :: Nwimps, reltolerance, guess_1, guess_2
-double precision, intent(in) :: sigma_N(niso)
+integer, intent(in) :: num_isotopes
+double precision :: func ! luminosity_dm
+double precision, intent(in) :: num_wimps, relative_tolerance, guess_1, guess_2
+double precision, intent(in) :: diff_sigma(num_isotopes)
 double precision :: x_1, x_2, x_3, f1, f2, error
-double precision :: newtons_meth
+double precision :: newtons_method
 ! m_x and m_p in grams, T_x, T_star in Kelvin, sigma in cm^2, n_nuc, n_x in cm^-3
 
 ! x_1 and x_2 are temperatures (K)
 x_1 = guess_1
 x_2 = guess_2
-error = reltolerance + 1	! So that the first iteration is executed
+error = relative_tolerance + 1	! So that the first iteration is executed
 
 ! Newton's method loop
-do while (error > reltolerance)
+do while (error > relative_tolerance)
 	! Update x_3 using Newton's method formula
-	f1 = f(x_1, sigma_N, Nwimps, niso)
-	f2 = f(x_2, sigma_N, Nwimps, niso)
+	f1 = func(x_1, diff_sigma, num_wimps, num_isotopes)
+	f2 = func(x_2, diff_sigma, num_wimps, num_isotopes)
 	x_3 = x_2 - f2*(x_2-x_1)/(f2 - f1)
 	error = abs(x_3-x_2)/x_2
 	x_1 = x_2
 	x_2 = x_3
 enddo
 
-newtons_meth = x_3 ! The solution to the nonlinear equation
+newtons_method = x_3 ! The solution to the nonlinear equation
 
 return
 end function

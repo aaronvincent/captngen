@@ -236,7 +236,7 @@ guess_2 = maxval(star_temp)/10.d0
 reltolerance = 1.0d-6
 
 
-! newtons_meth finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
+! newtons_method finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
 temperature_dm = binary_search(luminosity_dm, sigma_N, num_wimps, num_isotopes, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
 !nxIso = isothermal_dm_num_density(temperature_dm, num_wimps) ! Defined in spergelpressmod.f90
