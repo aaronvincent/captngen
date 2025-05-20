@@ -3,8 +3,8 @@
 ! Contains the functions used in the Spergel Press section of transgen.f90. These are:
 !	-isothermal_dm_num_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-transport_energy_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
-!	-Tx_integral: to be used in newtons_meth
-!	-newtons_meth: solves Tx_integral=0 which defines Tx
+!	-luminosity_dm: to be used in newtons_meth
+!	-newtons_meth: solves luminosity_dm=0 which defines Tx
 
 ! All units are cgs except star_r and star_dr
 ! I apologize for the long function calls.
@@ -140,36 +140,36 @@ return
 end function
 
 
-function Tx_integral(T_x, sigma_N, Nwimps, niso)
+function luminosity_dm(iso_temperature_dm, diff_sigma, num_wimps, num_isotopes)
 implicit none
-! Calculates the Tx defining integral
+! Calculates the dark matter temperature defining integral
 
-integer, intent(in) :: niso
-double precision, intent(in) :: T_x, Nwimps
-double precision, intent(in) :: sigma_N(niso)
+integer, intent(in) :: num_isotopes
+double precision, intent(in) :: iso_temperature_dm, num_wimps
+double precision, intent(in) :: diff_sigma(num_isotopes)
 double precision :: R(nlines), integrand(nlines)
-double precision :: Tx_integral
+double precision :: luminosity_dm
 
 ! integrand units: erg/cm/s
 R = star_r*radius_star
 
 !print*, 'TX here'
-integrand = 4*pi*R**2*star_rho*transport_energy_sp(T_x, sigma_N, Nwimps, niso)
+integrand = 4*pi*R**2*star_rho*transport_energy_sp(iso_temperature_dm, diff_sigma, num_wimps, num_isotopes)
 
 ! integral is Etrans_tot (erg/s)
-Tx_integral = trapezoid(R, integrand, nlines)
+luminosity_dm = trapezoid(R, integrand, nlines)
 
 return
 end function
 
 
 function newtons_meth(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
-! Performs Newton's method to solve Tx_integral(T_x)=0 for T_x (the function returns T_x)
-! The parameter f is the Tx_integral function
+! Performs Newton's method to solve luminosity_dm(T_x)=0 for T_x (the function returns T_x)
+! The parameter f is the luminosity_dm function
 implicit none
 
 integer, intent(in) :: niso
-double precision :: f ! Tx_integral
+double precision :: f ! luminosity_dm
 double precision, intent(in) :: Nwimps, reltolerance, guess_1, guess_2
 double precision, intent(in) :: sigma_N(niso)
 double precision :: x_1, x_2, x_3, f1, f2, error
@@ -200,7 +200,7 @@ end function
 function binary_search(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
 integer, intent(in) :: niso
 integer :: i
-double precision :: f ! Tx_integral
+double precision :: f ! luminosity_dm
 double precision, intent(in) :: Nwimps, reltolerance, guess_1, guess_2
 double precision, intent(in) :: sigma_N(niso)
 double precision :: x_1, x_2, x_3, f1, f2, f3, error
