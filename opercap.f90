@@ -522,7 +522,7 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
             do q_pow = 0, size(prefactor_array, dim=2) - 1
                 prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
                 if ( prefactor.ne. 0.d0 ) then
-                    call transport_sp_nreo(q_pow-1, w_pow-1, prefactor, temp_dm, nwimpsin, m_target(eli), nabund, etrans)
+                    call transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target(eli), nabund, etrans)
                     energy_transported = energy_transported + etrans
                 end if
             end do !q_pow
