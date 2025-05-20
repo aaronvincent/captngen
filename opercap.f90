@@ -211,8 +211,8 @@ module opermod
             !!
             do nq = 0, size(prefactor_array,dim=2)-1
                 do nw = 0, size(prefactor_array,dim=3)-1
-                    this_term = (prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
-                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw))/((nq+1) * (c0*mdm)**(2*nq))
+                    this_term = prefactor_array(iso,nq+1,nw+1) * 2**(2*nq) * gamma((2*nq+2*nw+3)/2.d0) * &
+                        (mdm/m_target(iso)+1)**(nw-nq) * (thermal_target)**(nq+nw) * (mdm/((nq+1)*c0))**(2*nq)
                     qw_terms = qw_terms + this_term
                 end do !nw
             end do !nq
