@@ -197,12 +197,12 @@ newtons_method = x_3 ! The solution to the nonlinear equation
 return
 end function
 
-function binary_search(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
-integer, intent(in) :: niso
+function binary_search(func, diff_sigma, num_wimps, num_isotopes, guess_1, guess_2, relative_tolerance)
+integer, intent(in) :: num_isotopes
 integer :: i
-double precision :: f ! luminosity_dm
-double precision, intent(in) :: Nwimps, reltolerance, guess_1, guess_2
-double precision, intent(in) :: sigma_N(niso)
+double precision :: func ! luminosity_dm
+double precision, intent(in) :: num_wimps, relative_tolerance, guess_1, guess_2
+double precision, intent(in) :: diff_sigma(num_isotopes)
 double precision :: x_1, x_2, x_3, f1, f2, f3, error
 double precision :: binary_search
 
@@ -210,16 +210,16 @@ double precision :: binary_search
 ! x_1 and x_2 are temperatures (K)
 x_1 = guess_1
 x_2 = guess_2
-error = reltolerance + 1.d0	! So that the first iteration is executed
+error = relative_tolerance + 1.d0	! So that the first iteration is executed
 
 ! Binary search loop
 i = 0
 
-do while (error > reltolerance)
+do while (error > relative_tolerance)
 	x_3 = (x_1 + x_2)/2.d0
-	f1 = f(x_1, sigma_N, Nwimps, niso)
-	f2 = f(x_2, sigma_N, Nwimps, niso)
-	f3 = f(x_3, sigma_N, Nwimps, niso)
+	f1 = func(x_1, diff_sigma, num_wimps, num_isotopes)
+	f2 = func(x_2, diff_sigma, num_wimps, num_isotopes)
+	f3 = func(x_3, diff_sigma, num_wimps, num_isotopes)
 	if (f3 == 0.d0) then
 		exit
 	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
