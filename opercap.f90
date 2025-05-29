@@ -529,10 +529,11 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
         end do !w_pow
     end do !eli
     k_0 = 0.4d0
-    !* @warning
+    !* @todo
     ! `k_0 = 0.4` IS ONLY FOR CONSTANT XSEC! Needs other values from Tab. 2 of
     ! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#table.2)] and Tab. 1 of
-    ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] @endwarning
+    ! [[arXiv:2412.14342](https://arxiv.org/pdf/2412.14342#table.2)] in future. These scaling factors mut be computed for each
+    ! interaction type, so for now \( K_0 = 0.4 \) is acceptable. @endtodo
     !!
     energy_transported = 0.5d0/(1.d0+(k_0/knudsen)**2)*energy_transported
 end subroutine energy_transport_nreo
