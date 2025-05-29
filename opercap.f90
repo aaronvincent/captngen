@@ -478,10 +478,8 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     ! ************ Finding Dark Matter Temperature ************    
     ! starting binary search method
     tolerance = 1.0d-8
-    ! temp_high = maxval(tab_T) ! Temperature of the core
-  	! temp_low = tab_T(minloc(abs(Rsun*tab_r-radius_dm), dim=1)) ! Stelar temperature at the calculated dark matter radius
-    temp_high = maxval(tab_T)*1.1d0
-    temp_low = maxval(tab_T)/10.d0
+    temp_high = maxval(tab_T) ! Temperature of the core
+  	temp_low = minval(tab_T) ! Temperature of the surface
 
     error = tolerance + 1.d0
     do while (error > tolerance)
