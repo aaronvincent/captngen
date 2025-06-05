@@ -22,6 +22,7 @@ subroutine transgen(sigma_0,Nwimps,niso,nq_in,nv_in,spin_in,transport_formalism,
 
 ! mdm is stored in capmod
 ! Tx is the output one-zone WIMP temp
+use phys, only : mnuc, gev_erg, c0, kB, pi, GN
 use sharedmod
 use capmod
 use akmod

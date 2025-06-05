@@ -5,6 +5,7 @@
 
 subroutine fastevap(sigma_0,Nwimps,niso,EvapRate)
 
+  use phys, only : mnuc, gev_erg, c0, pi, kB, GN
   use capmod
   ! use akmod
   implicit none
@@ -94,6 +95,7 @@ end subroutine fastevap
 !Returns WIMP temperature over central temperature
 !knows about nv, nq, via capmod module
 subroutine Twimp(nabund,niso,Tw)
+  use phys, only : mnuc, kB
   use capmod
   implicit none
   integer, intent(in) :: niso

@@ -30,6 +30,7 @@ module opermod
 
     ! having removed the scaling momentum, are the units off here? I'm looking at the p/c0 in particular
     function GFFI_H_oper(w,vesc,mq)
+        use phys, only : mnuc, c0
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
         integer mq
         p = mdm*w
@@ -45,6 +46,7 @@ module opermod
     end function GFFI_H_oper
     
     function GFFI_A_oper(w,vesc,A,mq)
+        use phys, only : mnuc, c0
         double precision :: p, mu,w,vesc,u,muplus,mN,A,Ei,B
         double precision :: dgamic,GFFI_A_oper
         integer :: mq
@@ -81,6 +83,7 @@ module opermod
         !! [\(^{58}\text{Ni}\)](https://arxiv.org/pdf/1501.03729#equation.C.16)). Here \(q\) is the momentum transferred in the
         !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
         !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
+        use phys, only : mnuc, c0
         double precision, intent(in):: j_chi
             !! The spin of the dark matter.
         double precision, intent(out) :: total_prefactors(:,:,:)
@@ -284,6 +287,7 @@ end function integrand_oper
 
 ! call captn_oper to run capt'n with the effective operator method
 subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
+    use phys, only : mnuc, NAvo, hbar, c0, pi
     use opermod
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first

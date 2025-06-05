@@ -12,6 +12,7 @@ WDIR = ./Wfunctions
 RDIR = ./Rfunctions
 
 MAIN = main.o
+CONSTS = physical-constants.o
 MFSHR = sharedcap.o
 MFOBJ = gencap.o
 MFCAP = opercap.o
@@ -27,8 +28,8 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
  INTRVL.o HVAL.o HPVAL.o
 
 
-gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+gencaplib.so: $(CONSTS) $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) -shared -o $@ $(CONSTS) $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 # -L tells the linker where to look for shared libraries
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
@@ -45,6 +46,9 @@ $(NUMF90OBJ): %.o : $(NUMDIR)/%.f90
 	$(FC) $(FOPT) -Wno-argument-mismatch -c  $<
 
 $(TSOBJ): %.o : $(TSDIR)/%.f
+	$(FC) $(FOPT) -c  $<
+
+$(CONSTS): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
 
 $(MFSHR): %.o: %.f90

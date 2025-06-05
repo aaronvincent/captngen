@@ -30,6 +30,7 @@
 
       !generalized form factor: hydrogen
       function GFFI_H(w,vesc)
+      use phys, only : c0
       double precision :: p, w,vesc,u,GFFI_H,G
       p = mdm*w
       u = sqrt(w**2-vesc**2)
@@ -44,6 +45,7 @@
 
       !generalized form factor: other elements
       function GFFI_A(w,vesc,A)
+        use phys, only : mnuc, c0
         double precision :: p, w,vesc,u,mN,A,Ei,B
         double precision :: dgamic,GFFI_A
         p = mdm*w
@@ -110,6 +112,7 @@
 
 
     subroutine captn_general(mx_in,sigma_0,niso,nq_in,nv_in,spin_in,capped)
+      use phys, only : mnuc, NAvo, pi
       use capmod
       implicit none
       integer, intent(in):: nq_in, nv_in, niso, spin_in

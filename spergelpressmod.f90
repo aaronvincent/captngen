@@ -18,6 +18,7 @@ contains
 
 
 function nx_isothermal(T_x, Nwimps)
+use phys, only : kB, pi
 implicit none
 double precision, intent(in) :: T_x, Nwimps
 double precision :: nx_isothermal(nlines)
@@ -48,6 +49,7 @@ end function
 
 
 function Etrans_sp(T_x, sigma_N, Nwimps, niso)
+use phys, only : mnuc, gev_erg, c0, pi, kB
 implicit none
 ! Calculates WIMP transported energy (erg/g/s) using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 
@@ -141,6 +143,7 @@ end function
 
 
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
+use phys, only : pi
 implicit none
 ! Calculates the Tx defining integral
 
