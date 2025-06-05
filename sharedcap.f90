@@ -10,6 +10,10 @@
 
 
 module sharedmod
+    !! The constants come from the tables found in the
+    !! [PDG](https://pdg.lbl.gov/2025/reviews/contents_sports.html#collapseListGroupConstants), where 'PDG 2024' indicates the value
+    !! is from the 2024 release of the PDG, and 'exact' inicates that the value is precise to all places. Lacking these, the value
+    !! is derived from other constants.
     use omp_lib
     implicit none
     double precision, parameter :: pi = 3.141592653589793238d0 !! \( \pi \) (PDG 2024) [\( \text{1} \)]
