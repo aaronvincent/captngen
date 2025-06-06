@@ -141,7 +141,71 @@ end if
 return
 end function
 
+subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, integral_result)
+	!! This gives the result of the Spergel & Press energy transfer with a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)], except for the interaction-dependent terms
+	!! \( (1-Q) \sigma_\text{tot} \).
+	use phys, only : pi, kB, gev_erg, c0
+	implicit none
+	integer, intent(in) :: n !! Total number of relative velocity \( z^{2n} \) terms in the integrand [\( 1 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: integral_result(:) !! [\( (\text{erg} \cdot \text{g}^{-1} \text{s}^{-1}) (\text{cm}^{-2}) {(\text{cm} \cdot \text{s}^{-1})}^{2n} \)]
+	double precision :: a_factor
 
+	a_factor = 2.d0**(2+n) * gamma(real(n)+3)
+	!* @note
+	! These `a_factor`s have been calculated via Sympy and Mathematica analytic solutions to the Eq. 2.10 linked above. They are
+	! *very* slow to calculate, and I was unsucessful in convincing either CAS to produce a general expression, so I'm stuck with
+	! simply (and slowly) looping over successive powers of \( z^{2n} \). In doing this I discovered that sucessive numerical
+	! factors followed the recursive relation \( A_n=(2n+4)A_{n-1} \). The expression for the nth term \( A_n=2^{2+n}\Gamma(n+3) \)
+	! matches the values I found using Sympy and Mathematica up to and including \( A_{12} \). @endnote
+	!!
+
+	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * nx_isothermal(temp_dm, num_dm) &
+		* ndensity_target * (temp_dm - tab_t) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*gev_erg*c0**2)**(1+2*n))
+
+end subroutine transport_sp_generic
+
+subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+	!! \( \epsilon_\text{SP} \) of a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using an NREO differential cross section defined as
+	!! \begin{align}
+	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} \cos\theta} &= \frac{\mathrm{d} E_R}{\mathrm{d} \cos\theta} \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} \, , \\
+	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} &= \frac{- P_{T,n_q,n_w} \hbar^2 c^{2(1-n_q)}}{(2J + 1)(1 + n_q)} {\left( \frac{2m_\chi}{1 + \mu} \right)}^{2(1+n_q)} w^{2(n_q+n_w)} \, .
+	!! \end{align}
+	!! The units of the prefactor are: \([P_{T,n_q,n_w}] = \text{GeV}^{-4} \cdot \text{GeV}^{-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \).
+	use phys, only : hbar, c0
+	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( (2J+1) \) [\( \text{GeV}^{-4-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: epsilon_sp(:) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
+	double precision :: sigma_tot
+	double precision, allocatable :: integral_result(:)
+
+	if (.not. allocated(integral_result)) then
+		allocate(integral_result(size(epsilon_sp)))
+	end if
+
+	sigma_tot = abs( -prefactor * (hbar * c0**(1-q_pow) * (2*mdm/(1+mu))**(1+q_pow))**2 / (1+q_pow) )
+	!* @warning
+	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. @endwarning
+	!!
+	call transport_sp_generic(q_pow+w_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
+
+	epsilon_sp = ( 1 - (-q_pow/(q_pow+2))) * sigma_tot * integral_result
+
+end subroutine transport_sp_nreo
+
+	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. For now we
+	! enforce that the total cross section is strictly positive, but is there a more convincing argument beyond that? @endwarning
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
 use phys, only : pi
 implicit none
