@@ -225,7 +225,8 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 
 	sigma_tot = abs( -prefactor * (hbar * c0**(1-q_pow) * (2*mdm/(1+mu))**(1+q_pow))**2 / (1+q_pow) )
 	!* @warning
-	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. @endwarning
+	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. For now we
+	! enforce that the total cross section is strictly positive, but is there a more convincing argument beyond that? @endwarning
 	!!
 	call transport_sp_generic(q_pow+w_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 
@@ -233,8 +234,32 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 
 end subroutine transport_sp_nreo
 
-	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. For now we
-	! enforce that the total cross section is strictly positive, but is there a more convincing argument beyond that? @endwarning
+double precision function luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target) result(luminosity)
+	!! Calculates the net luminosity \( L_{\chi,T,n_q,n_w} \) from dark matter scattering with a single target isotope in the NREO
+	!! formalism. This is done by performing the integral
+	!! \begin{align}
+	!! L_{\chi,T,n_q,n_w} &= 4\pi {\int}_{0}^{R_*} \rho(R) \epsilon_{T,n_q,n_w}(R) R^2 \mathrm{d}R \, , \\
+	!!                    &= 4\pi {R_*}^3 {\int}_{0}^{1} \rho(r) \epsilon_{T,n_q,n_w}(r) r^2 \mathrm{d}r \, .
+	!! \end{align}
+	!! Where the total luminosity can be found by summing over the targets, and powers of \( q^{2n_q} \) and \( w^{2n_w} \).
+	use phys, only : pi
+	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: prefactor !! Numerical RW prefactor for the given `q_pow` and `w_pow`, divided by \( 2J+1 \) [\( \text{cm}^2 \cdot 1 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, allocatable :: transport(:)
+
+	if (.not. allocated(transport)) allocate(transport(size(tab_r)))
+
+	call transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, transport)
+	luminosity = 4.d0*pi*Rsun**3 * trapz(tab_r, tab_starrho*transport*tab_r**2, size(tab_r))
+	
+end function luminosity_sp_nreo
+
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
 use phys, only : pi
 implicit none
