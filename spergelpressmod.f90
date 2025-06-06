@@ -169,6 +169,35 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, i
 
 end subroutine transport_sp_generic
 
+subroutine transport_sp_qv(q_pow, v_pow, sigma_0, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
+	!! \( \epsilon_\text{SP} \) of a given target isotope as defined in Eq. 2.10 of
+	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using a momentum-velocity scaled differential cross
+	!! section defined as
+	!! \( \frac{\mathrm{d} \sigma}{\mathrm{d} \cos\theta} = \sigma_0 {\frac{q}{q_0}}^{2n_q} {\frac{v}{v_0}}^{2n_v} \).
+	use phys, only : c0
+	implicit none
+	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
+	integer, intent(in) :: v_pow !! The number of powers of velocity \( v^{2 v_\text{pow}} \) [\( 1 \)]
+	double precision, intent(in) :: sigma_0 !! Reference cross section [\( \text{cm}^2 \)]
+	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
+	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
+	double precision, intent(in) :: m_target !! Mass of the target isotope [\( \text{GeV} \)]
+	double precision, intent(in) :: ndensity_target(:) !! Radial profile of the number density of the target isotope [\( \text{cm}^{-3} \)]
+	double precision, intent(out) :: epsilon_sp(:) !! [\( \text{erg} \cdot \text{g}^{-1} \text{s}^{-1} \)]
+	double precision :: sigma_tot
+	double precision, allocatable :: integral_result(:)
+
+	if (.not. allocated(integral_result)) then
+		allocate(integral_result(size(epsilon_sp)))
+	end if
+
+	sigma_tot = sigma_0 * 2/(q_pow+1) * (2*mdm/(c0*(1+mu)*q0))**(2*q_pow) * v0**(-2*v_pow)
+	call transport_sp_generic(q_pow+v_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
+
+	epsilon_sp = ( 1 - (-q_pow/(q_pow+2))) * sigma_tot * integral_result
+
+end subroutine transport_sp_qv
+
 subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target, ndensity_target, epsilon_sp)
 	!! \( \epsilon_\text{SP} \) of a given target isotope as defined in Eq. 2.10 of
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using an NREO differential cross section defined as
