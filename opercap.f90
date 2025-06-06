@@ -83,12 +83,8 @@ module opermod
         !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
         !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
         use phys, only : mnuc, c0
-        double precision, intent(in):: j_chi
-            !! The spin of the dark matter.
-        double precision, intent(out) :: total_prefactors(:,:,:)
-            !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran
-            !! arrays start with 1). This typically means `16,9,2`.
-
+        double precision, intent(in):: j_chi !! The spin of the dark matter.
+        double precision, intent(out) :: total_prefactors(:,:,:) !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran arrays start with 1). This typically means `16,9,2`.
         integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
         integer :: q_func, q_index ! indices used in tracking the powers of momentum transfer q^{2 (q_index-1)}
         double precision :: prefactor_func, r_const, prefactor ! intermediate variables
