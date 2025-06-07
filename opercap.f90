@@ -190,9 +190,12 @@ subroutine captn_init_oper()
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
     real :: WM, WS2, WS1, WP2, WMP2, WP1, WD, WS1D
     
-    ! tab_mfr_oper is allocated in the get_solar_params subroutine
-    ! take the regular array tab_mfr and extract the isotopes used in the 1501.03729 paper (otherwise indices won't match on arrays)
-    ! The elements beyond Ne are reported as a sum of all isotopes, so get isotopic abundances from table 9 of [arxiv:1912.00844].
+    !* @note
+    ! `tab_mfr_oper` is allocated in the `get_solar_params` subroutine. Here we take `tab_mfr` and extract the isotopes used in
+    ! [[arxiv:1501.03729](https://arxiv.org/abs/1501.03729)] (otherwise indices won't match on arrays). The elements beyond **Ne**
+    ! are reported as a sum of all isotopes in the solar model files, so we can calculate individual isotopic abundances from Tab. 9
+    ! in [[arxiv:1912.00844](https://arxiv.org/pdf/1912.00844#page=52)]. @endnote
+    !!
     do i=1,nlines
         tab_mfr_oper(i,1) = tab_mfr(i,1)                ! H
         tab_mfr_oper(i,2) = tab_mfr(i,3)                ! He3
