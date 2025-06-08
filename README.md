@@ -14,18 +14,15 @@ Run the `cleanup.sh` script to clear all installed files and temporary `.dat` fi
 ## Development
 
 Can be built using `make` as a library by default (or by explicitly calling `make libgencap.so`), or can be built as a standalone executable using `make gentest.x`.
-
-To enable debugging, set the shell variable `debug_mode` to `true`:
-
-```shell
-export debug_mode=true
-```
-
-To disable debugging, simply unset `debug_mode`:
+To enable (or disable) debugging, set (or unset) the shell variable `debug` to any non-empty value:
 
 ```shell
-unset debug_mode
+export debug=foo
+unset debug
 ```
+
+This can be done for a single `make` call by adding the assignment after the make target(s): `make bar debug=foo`.
+Make sure to clear all build files when switching to and from debugging mode to endure all object files are compiled with the same flags!
 
 See `main.f90` for examples of how to call the executable, `gentest.x`.
 

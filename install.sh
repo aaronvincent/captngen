@@ -28,7 +28,7 @@ while getopts hxg FLAG; do
             exit 0
             ;;
         x) do_exe=true;;
-        g) export debug_mode=true;;
+        g) export debug=true;;
     esac
 done
 
