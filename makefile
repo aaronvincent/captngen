@@ -74,7 +74,7 @@ nuke: clean # and also clears the testing executable and library
 $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so: $(NUMOBJS) $(QAGOBJS) $(CAPTNOBJS) $(WROBJS) | $(LIBDIR)
 	$(FC) $(FFLAGS) -shared $^ -o $@
 
-$(BINDIR)/$(TESTING_EXE): $(MAINOBJ) lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
+$(BINDIR)/$(TESTING_EXE): $(MAINOBJ) $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so | $(BINDIR)
 	$(FC) $(FFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 
