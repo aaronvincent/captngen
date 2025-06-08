@@ -1,3 +1,6 @@
+# Default target is the library
+CAPTNGEN_LIBNAME = gencap
+lib$(CAPTNGEN_LIBNAME).so:
 # -------------------------------- Directories ---------------------------------
 SRCDIR = src
 NUMDIR = numerical
@@ -10,16 +13,35 @@ LIBDIR = lib
 
 
 # ----------------------- Source Files and their Targets -----------------------
-# The files must be sorted in their module call order so they compile in order
-CAPTNSRCS = $(addprefix $(SRCDIR)/, \
-				sharedcap.f90 \
-				gencap.f90 \
-				opercap.f90 \
-				alphakappamod.f90 spergelpressmod.f90 \
-				transgen.f90 fastevap.f90 \
-			)
-MAINSRC = $(SRCDIR)/main.f90
+# The file module call dependencies are defined here:
+# gencap.f90 and opercap.f90 use sharedcap.f90
+$(addprefix $(OBJDIR)/, \
+	gencap.o \
+	opercap.o \
+): $(addprefix $(OBJDIR)/, \
+	sharedcap.o \
+)
+
+# spergelpressmod.f90 and fastevap.f90 use gencap.f90
+$(addprefix $(OBJDIR)/, \
+	spergelpressmod.o \
+	fastevap.o \
+): $(addprefix $(OBJDIR)/, \
+	gencap.o \
+)
+
+# transgen.f90 uses gencap.f90, spergelpressmod.f90, and alphakappamod.f90
+$(addprefix $(OBJDIR)/, \
+	transgen.o \
+): $(addprefix $(OBJDIR)/, \
+	gencap.o \
+	spergelpressmod.o \
+	alphakappamod.o \
+)
+
 # Grab the f and f90 source files via wildcards
+CAPTNSRCS = $(wildcard $(SRCDIR)/*.f90)
+MAINSRC = $(SRCDIR)/main.f90
 WRSRCS = $(wildcard $(SRCDIR)/$(WDIR)/*.f $(SRCDIR)/$(RDIR)/*.f)
 NUMSRCS = $(wildcard $(SRCDIR)/$(NUMDIR)/*.f*)
 QAGSRCS = $(wildcard $(SRCDIR)/$(QAGDIR)/*.f)
@@ -32,8 +54,7 @@ temp = $(NUMSRCS:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 NUMOBJS = $(temp:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 QAGOBJS = $(QAGSRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 
-# Name of the library and testing executable
-CAPTNGEN_LIBNAME = gencap
+# Name of the testing executable
 TESTING_EXE = gentest.x
 
 
