@@ -83,8 +83,8 @@ LDLIBS=-l $(CAPTNGEN_LIBNAME)
 lib$(CAPTNGEN_LIBNAME).so: $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so
 $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
 clean: # clears all objects and modules
-	rm -f *.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod
-	rm -f *.o $(OBJDIR)/*.o $(OBJDIR)/*/*.o
+	rm -f $(SRCDIR)/*.mod $(OBJDIR)/*.mod $(OBJDIR)/*/*.mod
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/*/*.o
 nuke: clean # and also clears the testing executable and library
 	rm -f $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so
 	rm -f $(BINDIR)/$(TESTING_EXE)
