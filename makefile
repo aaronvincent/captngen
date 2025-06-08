@@ -42,8 +42,9 @@ FC=gfortran
 #legacy is required if you are running gcc 10 or later due to the arguement-mismatch warning being promoted to error
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
 ifeq ($(debug_mode),true) # Enable most warnings and extra debugging help
-	FFLAGS+= -g -Og -Wall -Wextra -Wconversion
-	FFLAGS+= -fbacktrace -fbounds-check -ffpe-trap=zero,overflow,underflow
+	FFLAGS+= -g -O0 -Wall -Wextra -Wconversion
+	FFLAGS+= -fbacktrace -fcheck=all -ffpe-trap=zero,overflow,underflow,denormal
+	FFLAGS+= -fdebug-aux-vars# -fimplicit-none --- numerical/dgamic.f misbehaves with the implicit-none restriction!
 else
 	FFLAGS+= -O3
 endif

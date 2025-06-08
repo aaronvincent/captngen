@@ -17,8 +17,8 @@ TEST EXECUTABLE:
       library's capabilities
 
 DEBUGGING MODE:
-  -g  enables the debugging flags 'g', 'O0', 'Wall', and 'fbounds-check' for
-      gfortran"
+  -g  enables the debugging flags 'g', 'Og', 'Wall', and other helpful flags
+      for gfortran"
 
 unset do_exe
 while getopts hxg FLAG; do
