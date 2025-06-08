@@ -39,7 +39,7 @@ TESTING_EXE = gentest.x
 
 # ----------------------------- Compiler and Flags -----------------------------
 FC=gfortran
-#legacy is required if you are running gcc 10 or later
+#legacy is required if you are running gcc 10 or later due to the arguement-mismatch warning being promoted to error
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
 ifeq ($(debug_mode),true) # Enable most warnings and extra debugging help
 	FFLAGS+= -g -Og -Wall -Wextra -Wconversion
@@ -47,7 +47,6 @@ ifeq ($(debug_mode),true) # Enable most warnings and extra debugging help
 else
 	FFLAGS+= -O3
 endif
-MISMATCH=-Wno-argument-mismatch # add mismatch flag to some compilations
 
 # -L tells where the linker to look at compile time
 # -Wl sends a comma separated list of arguments to the linker
@@ -89,11 +88,7 @@ $(OBJDIR)/$(WDIR)/%.o: $(SRCDIR)/$(WDIR)/%.f | $(OBJDIR)/$(WDIR)
 $(OBJDIR)/$(RDIR)/%.o: $(SRCDIR)/$(RDIR)/%.f | $(OBJDIR)/$(RDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
 
-# Both pchip.f90 and fftpack5.f90 raise a large number of 'argument-mismatch' errors
-$(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f90 | $(OBJDIR)/$(NUMDIR)
-	$(FC) $(FFLAGS) $(MISMATCH) -c $< -o $@
-
-$(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f | $(OBJDIR)/$(NUMDIR)
+$(OBJDIR)/$(NUMDIR)/%.o: $(SRCDIR)/$(NUMDIR)/%.f* | $(OBJDIR)/$(NUMDIR)
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $(OBJDIR)/$(QAGDIR)/%.o: $(SRCDIR)/$(QAGDIR)/%.f | $(OBJDIR)/$(QAGDIR)
