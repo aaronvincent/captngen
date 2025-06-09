@@ -90,7 +90,8 @@ LDLIBS=-l $(CAPTNGEN_LIBNAME)
 
 
 # ------------------------------- Phony Targets --------------------------------
-.PHONY: lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE) clean nuke
+# debug=true isn't an actual target, but PHONY makes it appear in tab completion
+.PHONY: lib$(CAPTNGEN_LIBNAME).so $(TESTING_EXE) clean nuke debug=true
 
 lib$(CAPTNGEN_LIBNAME).so: $(LIBDIR)/lib$(CAPTNGEN_LIBNAME).so
 $(TESTING_EXE): $(BINDIR)/$(TESTING_EXE)
