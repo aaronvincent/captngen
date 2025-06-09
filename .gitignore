@@ -15,3 +15,6 @@
 
 # ignore any VScode settings
 .vscode/*
+
+# ignore any macOS folder settings
+.DS_store
