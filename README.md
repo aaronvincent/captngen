@@ -22,7 +22,9 @@ unset debug
 ```
 
 This can be done for a single `make` call by adding the assignment after the make target(s): `make bar debug=foo`.
-Make sure to clear all build files when switching to and from debugging mode to endure all object files are compiled with the same flags!
+The debug compiled objects, modules, library, and executable can be found in directories appended with **-debug**.
+This keeps the debug build files seperate from the regular build files.
+The debug files can be cleaned by passing the same `debug` variable to either of the `clean` or `nuke` make targets.
 
 See `main.f90` for examples of how to call the executable, `gentest.x`.
 

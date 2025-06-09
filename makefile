@@ -7,9 +7,21 @@ NUMDIR = numerical
 QAGDIR = dqag
 WDIR = Wfunctions
 RDIR = Rfunctions
-OBJDIR = obj
-BINDIR = bin
-LIBDIR = lib
+OBJDIR_name = obj
+BINDIR_name = bin
+LIBDIR_name = lib
+DEBUG_name = debug
+
+# Put debug-compiled files in a seperate directory
+ifneq ($(strip $(debug)),)
+	OBJDIR = $(OBJDIR_name)-$(DEBUG_name)
+	BINDIR = $(BINDIR_name)-$(DEBUG_name)
+	LIBDIR = $(LIBDIR_name)-$(DEBUG_name)
+else
+	OBJDIR = $(OBJDIR_name)
+	BINDIR = $(BINDIR_name)
+	LIBDIR = $(LIBDIR_name)
+endif
 
 
 # ----------------------- Source Files and their Targets -----------------------
