@@ -118,7 +118,7 @@ do i=1,nlines
 	r_even(i) =  i*1./dble(nlines)
 end do
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
-! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
+! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergel_press.f90
 ! Keep lowest 5% of components, delete top 95% of frequency components
 call fourier_smooth(star_r, dTdr, r_even, dTdr_even, 0.05d0, noise_indicator, nlines, lensav, ierr)
 dTdr = dTdr/radius_star
@@ -237,9 +237,9 @@ reltolerance = 1.0d-6
 
 
 ! newtons_method finds the one-zone wimp temp that gives 0 total transported energy in Spergel-Press scheme
-temperature_dm = binary_search(luminosity_dm, sigma_N, num_wimps, num_isotopes, guess_1, guess_2, reltolerance) ! defined in spergelpressmod.f90
+temperature_dm = binary_search(luminosity_dm, sigma_N, num_wimps, num_isotopes, guess_1, guess_2, reltolerance) ! defined in spergel_press.f90
 ! Using Spergel-Press nxIso in Gould-Raffelt scheme gives numerical problems, but ideally we would use it.
-!nxIso = isothermal_dm_num_density(temperature_dm, num_wimps) ! Defined in spergelpressmod.f90
+!nxIso = isothermal_dm_num_density(temperature_dm, num_wimps) ! Defined in spergel_press.f90
 
 
 
@@ -351,7 +351,7 @@ select case (transport_formalism)
 
 		print*, "SP"
 		! The Spergel-Press heat transport scheme: articles.adsabs.harvard.edu/pdf/1985ApJ...294..663S
-		! The functions of interest are in spergelpressmod.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
+		! The functions of interest are in spergel_press.f90. These also use https://arxiv.org/pdf/0809.1871.pdf
 
 		! transported in erg/g/s (according to Spergel Press)
 		transported = transport_energy_sp(temperature_dm, sigma_N, num_wimps, num_isotopes) ! erg/g/s

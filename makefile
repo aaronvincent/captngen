@@ -26,29 +26,29 @@ endif
 
 # ----------------------- Source Files and their Targets -----------------------
 # The file module call dependencies are defined here:
-# gencap.f90 and opercap.f90 use sharedcap.f90
+# general.f90 and nreo.f90 use shared.f90
 $(addprefix $(OBJDIR)/, \
-	gencap.o \
-	opercap.o \
+	general.o \
+	nreo.o \
 ): $(addprefix $(OBJDIR)/, \
-	sharedcap.o \
+	shared.o \
 )
 
-# spergelpressmod.f90 and fastevap.f90 use gencap.f90
+# spergel_press.f90 and fast_evaporation.f90 use general.f90
 $(addprefix $(OBJDIR)/, \
-	spergelpressmod.o \
-	fastevap.o \
+	spergel_press.o \
+	fast_evaporation.o \
 ): $(addprefix $(OBJDIR)/, \
-	gencap.o \
+	general.o \
 )
 
-# transgen.f90 uses gencap.f90, spergelpressmod.f90, and alphakappamod.f90
+# transport.f90 uses general.f90, spergel_press.f90, and alpha_kappa.f90
 $(addprefix $(OBJDIR)/, \
-	transgen.o \
+	transport.o \
 ): $(addprefix $(OBJDIR)/, \
-	gencap.o \
-	spergelpressmod.o \
-	alphakappamod.o \
+	general.o \
+	spergel_press.o \
+	alpha_kappa.o \
 )
 
 # Grab the f and f90 source files via wildcards

@@ -1,6 +1,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Spergel-Press WIMP heat transport module !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Contains the functions used in the Spergel Press section of transgen.f90. These are:
+! Contains the functions used in the Spergel Press section of transport.f90. These are:
 !	-isothermal_dm_num_density: Calculates the WIMP density in the Spergel-Press scheme
 ! 	-transport_energy_sp: calculates the WIMP transported energy (eps_x) given the WIMP temperature (Tx)
 !	-luminosity_dm: to be used in newtons_method

@@ -1,6 +1,6 @@
 ! Capt'n General testing program
 !
-! Main capture routines can be found in gencap.f90 and opercap.f90
+! Main capture routines can be found in general.f90 and nreo.f90
 
 PROGRAM GENCAP
     implicit none

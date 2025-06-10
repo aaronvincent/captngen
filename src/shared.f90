@@ -1,7 +1,7 @@
 !   Capt'n Shared
 !   Designed as a module to house shared variables and functions
 !   between both the General and Operator variants
-!   Most of this was already written by Aaron Vincent in the older gencap.f90 file
+!   Most of this was already written by Aaron Vincent in the older general.f90 file
 !   Neal Avis Kozar 2020
 !   all units of distance: cm
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
