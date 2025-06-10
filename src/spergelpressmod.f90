@@ -36,7 +36,7 @@ mxg = m_dm*1.782662d-24  ! g
 !print*, 'nx_iso here'
 ! WIMP number density in isothermal approximation
 
-!isothermal_dm_num_density = exp(-mxg*phi/kB/iso_temperature_dm)          !previous calulation that doesn't work above 8GeV
+!isothermal_dm_num_density = exp(-mxg*phi/kB/iso_temperature_dm)          !previous calculation that doesn't work above 8GeV
 isothermal_dm_num_density = exp(-mxg*(phi-phi(1))/kB/iso_temperature_dm)  !the minus phi(1) lets the code run with a mass above 8 GeV
 
 n_0 = num_wimps/trapezoid(r, 4.d0*pi*r**2.d0*isothermal_dm_num_density, nlines) ! Normalize so that integral(nx) = num_wimps
@@ -72,7 +72,7 @@ initial_q = q0*5.344d-14 !cgs conversion for q0
 ! n_nuc in cm^-3
 do i=1,num_isotopes
 	n_nuc(i,:) = star_fractions(:,i)*star_rho/atomic_nums(i)/mnucg ! star_rho in gcm^-3
-enddo
+end do
 
 sigma_nuc = 2.d0*diff_sigma ! Total WIMP-nucleus cross section in cm^2v. Only works for q/v independent cross-sections
 
@@ -105,7 +105,7 @@ if ( (nq .eq. 0) .and. (nv .eq. 0) ) then
 	do i=1,num_isotopes
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
 		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0)
-	enddo
+	end do
 	transport_energy_sp = species_indep*species_dep ! erg/g/s
 else if (nv .ne. 0) then
 	! Separate calc into species dependent and independent factors
@@ -113,7 +113,7 @@ else if (nv .ne. 0) then
 	do i=1,num_isotopes
 	species_dep = species_dep + sigma_nuc(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
 		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0+nv)
-	enddo
+	end do
 	transport_energy_sp = species_indep*species_dep
 else if (nq .ne. 0) then
 	! Separate calc into species dependent and independent factors
@@ -122,7 +122,7 @@ else if (nq .ne. 0) then
 	do i=1,num_isotopes
 	species_dep = species_dep + diff_sigma(i)*n_nuc(i,:)*mxg*mnucg*atomic_nums(i)/((mxg+mnucg*atomic_nums(i))**2)* &
 		(star_temp/(mnucg*atomic_nums(i)) + iso_temperature_dm/mxg)**(1.d0/2.d0+nq)/(1.+mxg/(mnucg*atomic_nums(i)))**(2.d0*nq)
-	enddo
+	end do
 	transport_energy_sp = species_indep*species_dep
 end if
 
@@ -133,7 +133,7 @@ end if
 !	"nlines=", nlines, "num_isotopes=", num_isotopes
 !do i=1,nlines
 !	write(55,*) R(i), star_temp(i), n_x(i), transport_energy_sp(i) !n_x(i), star_rho(i), n_nuc(1,i), species_indep(i), phi(i)
-!enddo
+!end do
 !close(55)
 
 return
@@ -190,7 +190,7 @@ do while (error > relative_tolerance)
 	error = abs(x_3-x_2)/x_2
 	x_1 = x_2
 	x_2 = x_3
-enddo
+end do
 
 newtons_method = x_3 ! The solution to the nonlinear equation
 
@@ -229,7 +229,7 @@ do while (error > relative_tolerance)
 	endif
 	error = abs(x_2-x_1)/x_2
 	i = i + 1
-enddo
+end do
 
 binary_search = x_3
 
@@ -251,7 +251,7 @@ double precision :: ispline, denominator
 call spline(x, y, bcoeff, ccoeff, dcoeff, num_lines)
 do i=1,num_lines
 	y_even(i) = ispline(x_even(i), x, y, bcoeff, ccoeff, dcoeff, num_lines)
-enddo
+end do
 
 ! Compute FFT of y
 call dfft1i (num_lines, wsave, prime_length, error)  !Initialize (required by fftpack)
@@ -265,10 +265,10 @@ noise_indicator = 0.d0
 ! Take the ratio of high frequency components to low frequency components as a measure of how noisy the data is
 do i=int(cutoff*num_lines),num_lines
 	noise_indicator = noise_indicator + abs(y_even(i))
-enddo
+end do
 do i=1,int(cutoff*num_lines)
 	denominator = denominator + abs(y_even(i))
-enddo
+end do
 noise_indicator = noise_indicator/denominator
 
 ! Cut out top 100*(1-cutoff)% of Fourier components
@@ -276,7 +276,7 @@ do i=1,num_lines
 	if (i > int(cutoff*num_lines)) then
 		y_even(i) = 0.d0
 	endif
-enddo
+end do
 
 ! Rebuild y with high frequency components cut out
 call dfft1b(num_lines, 1, y_even, num_lines, wsave, prime_length, work, num_lines, error)
@@ -286,7 +286,7 @@ if (error /= 0) print *, "Backward FFT calculator 'dfft1b' failed with error ", 
 call spline(x_even, y_even, bcoeff, ccoeff, dcoeff, num_lines)
 do i=1,num_lines
 	y(i) = ispline(x(i), x_even, y_even, bcoeff, ccoeff, dcoeff, num_lines)
-enddo
+end do
 
 end subroutine
 
@@ -302,9 +302,9 @@ do i=5,num_lines-4
     rolling_average(i) = 0.d0
     do j=-4,4
         rolling_average(i) = rolling_average(i) + y(i+j)
-    enddo
+    end do
     rolling_average(i) = rolling_average(i)/9.d0
-enddo
+end do
 ! do boundary values manually
 rolling_average(1) = (y(1)+y(2)+y(3))/3.d0
 rolling_average(2) = (y(1)+y(2)+y(3)+y(4))/4.d0

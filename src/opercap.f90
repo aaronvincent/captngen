@@ -1,5 +1,5 @@
 !   Capt'n Oper
-!   Module to house everying specific to captn operator
+!   Module to house everything specific to captn operator
 !   Neal Avis Kozar 2020
 !   all units of distance: cm
 !   all units of mass/energy : GeV (or GeV/c^2, don't forget)
@@ -212,7 +212,7 @@ subroutine init_nreo()
     end do
     
     ! this array stores each of the constants of the W polynomials from paper 1501.03729's appendix individually
-    ! array index m handles the 8 varients of the W functions in order [M, S", S', P", MP", P', Delta, S'Delta]
+    ! array index m handles the 8 variants of the W functions in order [M, S", S', P", MP", P', Delta, S'Delta]
     ! index i handles the 16 isotopes [H, He3, He4, C12, N14, O16, Ne20, Na 23, Mg24, Al27, Si28, S32, Ar40, Ca40, Fe56, Ni58]
     ! index j & k handle the two superscripts for each W function, each taking values of 0 and 1
     ! index L determines the power of each constant ranging from y^0 to y^6
@@ -257,7 +257,7 @@ end subroutine init_nreo
 
 ! this is the integral over R in eqn 2.3 in 1501.03729
 ! note that Omega there is expanded and broken into terms of the form const. * q^2n * exp{E_R/E_i}
-! I've doen this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
+! I've done this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function velocity_integrand_nreo(init_velocity, dist_over_vel)
     use nreo_mod
@@ -330,7 +330,7 @@ subroutine capture_rate_nreo(mass_dm, spin_dm, capture_rate)!, isotopeChosen)
     ! Get the prefactors for the q and v terms
     call init_rw_prefactors(spin_dm, prefactor_array)
 
-    ! now with all the prefactors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
+    ! now with all the pre-factors computed, any 0.d0 entries in prefactor_array means that we can skip that integral evaluation!
     umin = 0.d0
     capture_rate = 0.d0
     !$OMP parallel default(none) &

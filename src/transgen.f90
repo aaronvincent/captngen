@@ -116,7 +116,7 @@ ENDIF
 ! First build evenly spaced r and dTdr arrays
 do i=1,nlines
 	r_even(i) =  i*1./dble(nlines)
-enddo
+end do
 lensav = nlines + int(log(real(nlines))) + 4 ! Minimum length required by fftpack
 ! Cut out high frequency components of dTdr. The subroutine fourier_smooth is located in spergelpressmod.f90
 ! Keep lowest 5% of components, delete top 95% of frequency components
@@ -362,7 +362,7 @@ select case (transport_formalism)
 		do i=1,nlines
 			Ltrans(i) = trapezoid(star_r*radius_star, 4.d0*pi*(star_r*radius_star)**2.d0*transported*star_rho, i)
 			! write(5,*) star_r(i), Ltrans(i)
-		enddo
+		end do
 
 		!close the Ltrans data file
 		close(5)
@@ -408,7 +408,7 @@ select case (transport_formalism)
       Ltrans(i) =  0.5*(1/(1+(nK_0/K)**2.))*Ltrans(i)
 			! L = 0.5*(1/(1+(nK_0(j)/K)**2.))*Ltrans(i)
 			! write(7,*) star_r(i), L
-		enddo
+		end do
 		! close(7)
 
 	case default

@@ -1,3 +1,3 @@
-make libgencap.so
+make
 cp -r ak_files $DARKMESADIR
-cp libgencap.so $DARKMESADIR
+cp lib/libgencap.so $DARKMESADIR
