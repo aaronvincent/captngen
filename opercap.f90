@@ -226,6 +226,34 @@ module opermod
         end do !iso
         path_length = 1/inverse_path_length
     end subroutine mfp_nreo
+
+    double precision function net_dm_luminosity(T_dm, nwimp, prefactor_array) result(luminosity)
+        !! The resulting net dark matter luminosity [\( \text{erg} \text{s}^{-1} \)]
+        use phys, only : gev_erg
+        use sharedmod, only : nlines, tab_starrho, tab_mfr_oper
+        use spergelpressmod, only : luminosity_sp_nreo
+        implicit none
+        double precision :: T_dm !! The dark matter temperature [\( \text{K} \)]
+        double precision :: nwimp !! The number of DM particles [\( \text{1} \)]
+        double precision, dimension(size(tab_mfr_oper,dim=2), 9, 2) :: prefactor_array !! Set of prefactors for NREO
+        integer :: eli, w_pow, q_pow
+        double precision :: m_target(size(AtomicNumber_oper)), nabund(nlines), prefactor
+
+        luminosity = 0.d0
+        m_target = AtomicNumber_oper * mnuc
+
+        do eli = 1, size(prefactor_array, dim=1)
+            nabund = tab_mfr_oper(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
+            do w_pow = 0, size(prefactor_array, dim=3) - 1
+                do q_pow = 0, size(prefactor_array, dim=2) - 1
+                    prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
+                    if ( prefactor .ne. 0.d0 ) then
+                        luminosity = luminosity + luminosity_sp_nreo(q_pow, w_pow, prefactor, T_dm, nwimp, m_target(eli), nabund)
+                    end if
+                end do !q_pow
+            end do !w_pow
+        end do !eli
+    end function net_dm_luminosity
 end module opermod
 
 subroutine captn_init_oper()
@@ -457,8 +485,8 @@ end subroutine captn_oper
 subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energy_transported)
     use phys, only : kB, pi, gev_erg, GN, c0, mnuc
     use sharedmod, only : mdm, nlines, tab_r, tab_T, tab_starrho, tab_mfr_oper
-    use opermod, only : AtomicNumber_oper, AtomicSpin_oper, RW_prefactors, mfp_nreo
-    use spergelpressmod, only : luminosity_sp_nreo, transport_sp_nreo
+    use opermod, only : AtomicNumber_oper, AtomicSpin_oper, RW_prefactors, mfp_nreo, net_dm_luminosity
+    use spergelpressmod, only : transport_sp_nreo
     implicit none
     double precision, intent(in) :: mx_in !! Mass of the dark matter [\( \text{GeV} \)]
     double precision, intent(in) :: jx_in !! Spin of the dark matter [\( \text{1} \)]
@@ -498,25 +526,13 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
 
     error = tolerance + 1.d0
     do while (error > tolerance)
-        lumin_high = 0d0
         lumin_low = 0d0
         lumin_dm = 0d0
+        lumin_high = 0d0
         temp_dm = (temp_high + temp_low)/2.d0
-        do eli = 1, size(prefactor_array, dim=1)
-            nabund = tab_mfr_oper(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
-            do w_pow = 0, size(prefactor_array, dim=3) - 1
-                do q_pow = 0, size(prefactor_array, dim=2) - 1
-                    prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
-                    if ( prefactor .ne. 0.d0 ) then
-                        lumin_high = lumin_high + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_high, nwimpsin, m_target(eli), &
-                            nabund)
-                  		lumin_low = lumin_low + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_low, nwimpsin, m_target(eli), &
-                            nabund)
-                  		lumin_dm = lumin_dm + luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, nwimpsin, m_target(eli), nabund)
-                    end if
-                end do !q_pow
-            end do !w_pow
-        end do !eli
+        lumin_low = net_dm_luminosity(temp_low, nwimpsin, prefactor_array)
+        lumin_dm = net_dm_luminosity(temp_dm, nwimpsin, prefactor_array)
+        lumin_high = net_dm_luminosity(temp_high, nwimpsin, prefactor_array)
         if (lumin_dm == 0.d0) then
             exit
         else if (lumin_high*lumin_dm .gt. 0) then ! if lumin_high and lumin_dm have the same sign, the T_x upper guess is too high so decrease it
