@@ -10,8 +10,8 @@
 ! I apologize for the long function calls.
 
 module spergelpressmod
-use sharedmod
-use capmod
+use phys, only : pi, gev_erg, c0, kB
+use sharedmod, only : mdm, nlines, Rsun, tab_r, tab_vesc
 implicit none
 
 contains
@@ -24,7 +24,7 @@ function iso_dm_density(temp_dm, num_dm) result(density)
 	!! N_\text{wimps} &= N {\int}_{0}^{R_*} n_\chi(R) 4\pi R^2 \mathrm{d}R \, , \\
     !!                &= N 4\pi {R_*}^3 {\int}_{0}^{1} n_\chi(r) r^2 \mathrm{d}r \, .
 	!! \end{align}
-	use phys, only : kB, gev_erg, c0, pi
+	use capmod, only : trapz
 	implicit none
 	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
 	double precision, intent(in) :: num_dm !! Total number of dark matter particles in the star [\( 1 \)]
@@ -47,7 +47,9 @@ end function iso_dm_density
 
 
 function Etrans_sp(T_x, sigma_N, Nwimps, niso)
-use phys, only : mnuc, gev_erg, c0, pi, kB
+use phys, only : mnuc
+use sharedmod, only : AtomicNumber, tab_T, tab_mfr, tab_starrho
+use capmod, only : q0, v0, nq, nv
 implicit none
 ! Calculates WIMP transported energy (erg/g/s) using eq. (2.40) in https://arxiv.org/pdf/0809.1871.pdf
 
@@ -143,7 +145,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, i
 	!! This gives the result of the Spergel & Press energy transfer with a given target isotope as defined in Eq. 2.10 of
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)], except for the interaction-dependent terms
 	!! \( (1-Q) \sigma_\text{tot} \).
-	use phys, only : pi, kB, gev_erg, c0
+	use sharedmod, only : tab_T, tab_starrho
 	implicit none
 	integer, intent(in) :: n !! Total number of relative velocity \( z^{2n} \) terms in the integrand [\( 1 \)]
 	double precision, intent(in) :: temp_dm !! Isothermal temperature of the dark matter [\( \text{K} \)]
@@ -163,7 +165,7 @@ subroutine transport_sp_generic(n, temp_dm, num_dm, m_target, ndensity_target, i
 	!!
 
 	integral_result = a_factor/tab_starrho * sqrt(2/pi) * mdm*m_target/(mdm+m_target)**2 * iso_dm_density(temp_dm, num_dm) &
-		* ndensity_target * (temp_dm - tab_t) * kB * sqrt(((tab_t/m_target + temp_dm/mdm) * kB*gev_erg*c0**2)**(1+2*n))
+		* ndensity_target * (temp_dm - tab_T) * kB * sqrt(((tab_T/m_target + temp_dm/mdm) * kB*gev_erg*c0**2)**(1+2*n))
 
 end subroutine transport_sp_generic
 
@@ -172,7 +174,7 @@ subroutine transport_sp_qv(q_pow, v_pow, sigma_0, temp_dm, num_dm, m_target, nde
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using a momentum-velocity scaled differential cross
 	!! section defined as
 	!! \( \frac{\mathrm{d} \sigma}{\mathrm{d} \cos\theta} = \sigma_0 {\frac{q}{q_0}}^{2n_q} {\frac{v}{v_0}}^{2n_v} \).
-	use phys, only : c0
+	use capmod, only : q0, v0
 	implicit none
 	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
 	integer, intent(in) :: v_pow !! The number of powers of velocity \( v^{2 v_\text{pow}} \) [\( 1 \)]
@@ -189,7 +191,7 @@ subroutine transport_sp_qv(q_pow, v_pow, sigma_0, temp_dm, num_dm, m_target, nde
 		allocate(integral_result(size(epsilon_sp)))
 	end if
 
-	sigma_tot = sigma_0 * 2/(q_pow+1) * (2*mdm/(c0*(1+mu)*q0))**(2*q_pow) * v0**(-2*v_pow)
+	sigma_tot = sigma_0 * 2/(q_pow+1) * (2*mdm/(c0*(1+(mdm/m_target))*q0))**(2*q_pow) * v0**(-2*v_pow)
 	call transport_sp_generic(q_pow+v_pow, temp_dm, num_dm, m_target, ndensity_target, integral_result)
 
 	epsilon_sp = ( 1 - (-q_pow/(q_pow+2))) * sigma_tot * integral_result
@@ -201,10 +203,10 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 	!! [[arXiv:2111.06895](https://arxiv.org/pdf/2111.06895#equation.2.10)]. Using an NREO differential cross section defined as
 	!! \begin{align}
 	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} \cos\theta} &= \frac{\mathrm{d} E_R}{\mathrm{d} \cos\theta} \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} \, , \\
-	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} &= \frac{- P_{T,n_q,n_w} \hbar^2 c^{2(1-n_q)}}{(2J + 1)(1 + n_q)} {\left( \frac{2m_\chi}{1 + \mu} \right)}^{2(1+n_q)} w^{2(n_q+n_w)} \, .
+	!! \frac{\mathrm{d} \sigma_T}{\mathrm{d} E_R} &= \frac{- P_{T,n_q,n_w} \hbar^2 c^{2(1-n_q)}}{(2J + 1)(1 + n_q)} {\left( \frac{2m_\chi}{1 + \frac{m_\chi}{m_T}} \right)}^{2(1+n_q)} w^{2(n_q+n_w)} \, .
 	!! \end{align}
 	!! The units of the prefactor are: \([P_{T,n_q,n_w}] = \text{GeV}^{-4} \cdot \text{GeV}^{-2n_q} \cdot (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \).
-	use phys, only : hbar, c0
+	use phys, only : hbar
 	implicit none
 	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
 	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
@@ -221,7 +223,7 @@ subroutine transport_sp_nreo(q_pow, w_pow, prefactor, temp_dm, num_dm, m_target,
 		allocate(integral_result(size(epsilon_sp)))
 	end if
 
-	sigma_tot = abs( -prefactor * (hbar * c0**(1-q_pow) * (2*mdm/(1+mu))**(1+q_pow))**2 / (1+q_pow) )
+	sigma_tot = abs( -prefactor * (hbar * c0**(1-q_pow) * (2*mdm/(1+(mdm/m_target)))**(1+q_pow))**2 / (1+q_pow) )
 	!* @warning
 	! This is *not* complete, I'm still concerned about how we calculate \( \sigma_\text{tot} \) in the NREO formalism. For now we
 	! enforce that the total cross section is strictly positive, but is there a more convincing argument beyond that? @endwarning
@@ -240,7 +242,8 @@ double precision function luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, n
 	!!                    &= 4\pi {R_*}^3 {\int}_{0}^{1} \rho(r) \epsilon_{T,n_q,n_w}(r) r^2 \mathrm{d}r \, .
 	!! \end{align}
 	!! Where the total luminosity can be found by summing over the targets, and powers of \( q^{2n_q} \) and \( w^{2n_w} \).
-	use phys, only : pi
+	use sharedmod, only : tab_starrho
+	use capmod, only : trapz
 	implicit none
 	integer, intent(in) :: q_pow !! The number of powers of transfer momentum \( q^{2 q_\text{pow}} \) [\( 1 \)]
 	integer, intent(in) :: w_pow !! The number of powers of velocity \( w^{2 w_\text{pow}} \) [\( 1 \)]
@@ -259,7 +262,8 @@ double precision function luminosity_sp_nreo(q_pow, w_pow, prefactor, temp_dm, n
 end function luminosity_sp_nreo
 
 function Tx_integral(T_x, sigma_N, Nwimps, niso)
-use phys, only : pi
+use sharedmod, only : tab_starrho
+use capmod, only : trapz
 implicit none
 ! Calculates the Tx defining integral
 
@@ -317,6 +321,7 @@ return
 end function
 
 function binary_search(f, sigma_N, Nwimps, niso, guess_1, guess_2, reltolerance)
+implicit none
 integer, intent(in) :: niso
 integer :: i
 double precision :: f ! Tx_integral
@@ -358,6 +363,7 @@ end function
 subroutine fourier_smooth(x, y, x_even, y_even, cutoff, noise_indicator, nlines, lensav, ierr)
 ! Cuts out the high frequency components of y. E.g. if cutoff=0.05, the top 95% of frequency components are cut
 ! Also returns a "noise indicator" - The sum of the frequency components above the cutoff
+implicit none
 integer, intent(in) :: nlines, lensav
 integer :: ierr, i
 double precision, intent(in) :: x(nlines), x_even(nlines), cutoff
@@ -412,6 +418,7 @@ end subroutine
 function rolling_avg(y, nlines)
 ! Takes a 1D array f of length N, returns an array of length N whose ith entry
 ! is the average of f(i) and its 4 nearest neighbours
+implicit none
 integer, intent(in) ::  nlines
 double precision, intent(in) :: y(nlines)
 integer :: i, j

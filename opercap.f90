@@ -8,7 +8,8 @@
 
 
 module opermod
-    use sharedmod
+    use phys, only : mnuc, c0
+    use sharedmod, only : mdm
     implicit none
     !this goes with the Serenelli table format
     
@@ -29,7 +30,7 @@ module opermod
     contains
 
     function GFFI_H_oper(w,vesc,mq)
-        use phys, only : mnuc, c0
+        implicit none
         double precision :: p, mu,w,vesc,u,muplus,GFFI_H_oper,G
         integer mq
         p = mdm*w
@@ -45,7 +46,7 @@ module opermod
     end function GFFI_H_oper
     
     function GFFI_A_oper(w,vesc,A,mq)
-        use phys, only : mnuc, c0
+        implicit none
         double precision :: p, mu,w,vesc,u,muplus,mN,A,Ei,B
         double precision :: dgamic,GFFI_A_oper
         integer :: mq
@@ -82,7 +83,8 @@ module opermod
         !! [\(^{58}\text{Ni}\)](https://arxiv.org/pdf/1501.03729#equation.C.16)). Here \(q\) is the momentum transferred in the
         !! interaction, and \(w\) is the relative velocity between the dark matter and target nucleus. A prefactor \(P_{i,n_q,n_w}\)
         !! carries units of \(\text{GeV}^{-4-2n_q} {(\text{cm}\cdot\text{s}^{-1})}^{-2n_w}\).
-        use phys, only : mnuc, c0
+        use sharedmod, only : mu
+        implicit none
         double precision, intent(in):: j_chi !! The spin of the dark matter.
         double precision, intent(out) :: total_prefactors(:,:,:) !! The returned array of prefactors. It should be of size \(N_\text{isotopes}, \max(n_q)+1, \max(n_w)+1\) (Fortran arrays start with 1). This typically means `16,9,2`.
         integer :: eli, func_type, tau, tau_p, term_w, term_r ! loop indices
@@ -183,7 +185,8 @@ module opermod
         !! \[ \ell_\chi (r) = \frac{1}{\sum_i n_i(r) {\langle\sigma_i(w) \rangle}_\text{NREO}} \quad , \]
         !! where \(i\) is the ith isotope, \(n_i\) is the number density of the relevant nucleus, \(\langle\sigma_i(w) \rangle\) is
         !! the thermally averaged cross section, and \(w\) is the relative velocity between the nucleon and the dark matter.
-        use phys, only: mnuc, kB, gev_erg, c0, hbar, pi
+        use phys, only : pi, gev_erg, kB, hbar
+        use sharedmod, only : tab_T, tab_starrho, tab_mfr_oper
         implicit none
         double precision, intent(in) :: prefactor_array(:,:,:) !! Prefactors of the NREO differential cross section, where \(P_{i,n_q,n_w}\) are defined in [subroutine:RW_prefactors] [\( \text{GeV}^{-4-2n_q} (\text{cm} \cdot \text{s}^{-1})^{-2n_w} \)] 
         double precision, intent(out) :: path_length(:) !! Mean free path \(\ell_\chi (r)\) of all isotopes combined \(\text{cm}\)
@@ -226,7 +229,8 @@ module opermod
 end module opermod
 
 subroutine captn_init_oper()
-    use opermod
+    use opermod, only : AtomicNumber_oper, isotopes, W_array, yConverse_array, coupling_Array
+    use sharedmod, only : nlines, tab_mfr, tab_mfr_oper
     implicit none
     integer :: i, j, k, l, m
     character (len=2) :: terms(7) = [character(len=2) :: "y0", "y1", "y2", "y3", "y4", "y5", "y6"]
@@ -306,7 +310,8 @@ end subroutine captn_init_oper
 ! I've doen this so that I can tap into the GFFI functions in eqn 2.9 of 1504.04378
 !THIS IS THE IMPORTANT FUNCTION: the integrand for the integral over u
 function integrand_oper(u, foveru)
-    use opermod
+    use sharedmod, only : a_shared, rindex_shared, vesc_shared_arr
+    use opermod, only : q_shared, w_shared, GFFI_A_oper, GFFI_H_oper
     implicit none
     interface
         function foveru(arg1)
@@ -334,7 +339,10 @@ end function integrand_oper
 ! call captn_oper to run capt'n with the effective operator method
 subroutine captn_oper(mx_in, jx_in, capped)!, isotopeChosen)
     use phys, only : mnuc, NAvo, hbar, c0, pi
-    use opermod
+    use sharedmod, only : mdm, vesc_halo, mu, muplus
+    use sharedmod, only : nlines, Rsun, tab_r, tab_dr, tab_starrho, tab_vesc, tab_mfr_oper
+    use sharedmod, only : a_shared, rindex_shared, vesc_shared_arr, vdist_over_u
+    use opermod, only : q_shared, w_shared, AtomicNumber_oper, AtomicSpin_oper, RW_prefactors
     implicit none
     interface !Required unless these functions are moved to a different module file that gets compiled first
         function integrand_oper(arg1, func1)
@@ -447,9 +455,10 @@ end subroutine captn_oper
 
 !SB: Only works for Hydrogen + const for now (21-11-2023)
 subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energy_transported)
-    use phys, only : kB, pi, GN, gev_erg, c0, mnuc
+    use phys, only : kB, pi, gev_erg, GN, c0, mnuc
+    use sharedmod, only : mdm, nlines, tab_r, tab_T, tab_starrho, tab_mfr_oper
+    use opermod, only : AtomicNumber_oper, AtomicSpin_oper, RW_prefactors, mfp_nreo
     use spergelpressmod, only : luminosity_sp_nreo, transport_sp_nreo
-    use opermod
     implicit none
     double precision, intent(in) :: mx_in !! Mass of the dark matter [\( \text{GeV} \)]
     double precision, intent(in) :: jx_in !! Spin of the dark matter [\( \text{1} \)]
@@ -494,8 +503,7 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
         lumin_dm = 0d0
         temp_dm = (temp_high + temp_low)/2.d0
         do eli = 1, size(prefactor_array, dim=1)
-            mu = mdm/m_target(eli)
-            nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
+            nabund = tab_mfr_oper(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
             do w_pow = 0, size(prefactor_array, dim=3) - 1
                 do q_pow = 0, size(prefactor_array, dim=2) - 1
                     prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
@@ -522,8 +530,7 @@ subroutine energy_transport_nreo(mx_in, jx_in, nwimpsin, knudsen, temp_dm, energ
     ! ************ Calculating Energy Transport ************
     energy_transported = 0d0
     do eli = 1, size(prefactor_array, dim=1)
-        mu = mdm/m_target(eli)
-        nabund = tab_mfr(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
+        nabund = tab_mfr_oper(:,eli) * tab_starrho / m_target(eli) * gev_erg*c0**2
         do w_pow = 0, size(prefactor_array, dim=3) - 1
             do q_pow = 0, size(prefactor_array, dim=2) - 1
                 prefactor = prefactor_array(eli, q_pow+1, w_pow+1) / (2*AtomicSpin_oper(eli) + 1)
@@ -548,7 +555,7 @@ subroutine populate_array(val, couple, isospin)
     ! in the 1501.03729 paper, the non-zero values chosen were 1.65*10^-8 (represented as 1.65d-8 in the code)
     ! I was trying to directly edit 'couple' and 'isospin' to use in the array indices, but Fortran was throwing segfaults when doing this
     ! might want a way to quit out of subroutine early if error is reached
-    use opermod
+    use opermod, only : coupling_Array
     implicit none
     integer :: couple, isospin
     double precision :: val
