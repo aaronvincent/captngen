@@ -76,7 +76,7 @@ FC=gfortran
 FFLAGS=-fopenmp -fPIC -std=legacy -J $(OBJDIR)
 ifneq ($(strip $(debug)),)
 	FFLAGS+= -g -O0 -Wall -Wextra -Wconversion
-	FFLAGS+= -fbacktrace -fcheck=all -ffpe-trap=zero,overflow,underflow,denormal
+	FFLAGS+= -fbacktrace -fcheck=all -ffpe-trap=invalid,zero,overflow
 	FFLAGS+= -fdebug-aux-vars# -fimplicit-none --- numerical/dgamic.f misbehaves with the implicit-none restriction!
 else
 	FFLAGS+= -O3
