@@ -1,5 +1,13 @@
 FC=gfortran
-FOPT= -O3 -fPIC -std=legacy -fopenmp# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later 
+FOPT= -O3 -fPIC -std=legacy -fopenmp -march=native -funroll-loops# -Wall -fbounds-check -g  #legacy is required if you are running gcc 10 or later
+
+# On macOS, Homebrew GCC may have been built against an older SDK.
+# Pass the current SDK sysroot to the linker so it can find libSystem.
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  LDFLAGS += -Wl,-syslibroot,$(shell xcrun --show-sdk-path)
+endif
+
 NUMDIR = ./numerical
 QAGDIR = ./numerical/dqag
 # TSDIR = ./numerical/TSPACK
@@ -8,7 +16,7 @@ RDIR = ./Rfunctions
 
 MAIN = main.o
 MFSHR = sharedcap.o
-MFOBJ = gencap.o
+MFOBJ = gencap.o captn_general.o
 MFCAP = opercap.o
 TRGOBJ = alphakappamod.o spergelpressmod.o transgen.o fastevap.o
 NUMFOBJ =  dgamic.o d1mach.o
@@ -23,13 +31,13 @@ RFUNC = RM.o RS2.o RS1.o RP2.o RMP2.o RP1.o RD.o RS1D.o
 
 
 gencaplib.so: $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
-	$(FC) $(FOPT) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
+	$(FC) $(FOPT) $(LDFLAGS) -shared -o $@ $(MFSHR) $(MFOBJ) $(MFCAP) $(TRGOBJ) $(NUMFOBJ) $(NUMF90OBJ) $(QAG) $(WFUNC) $(RFUNC)
 
 # -L tells the linker where to look for shared libraries
 # -rpath puts the location of the libraries in the executable so the load can find them at runtime
 # -Wl lets us send options to the linker (which are comma seperated)
 gentest.x: $(MAIN) gencaplib.so
-	${FC} $(FOPT) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
+	${FC} $(FOPT) $(LDFLAGS) -L. -Wl,-rpath,. -o gentest.x $(MAIN) gencaplib.so
 #	rm $(MFOBJ) $(NUMFOBJ) $(QAG)
 
 
@@ -47,6 +55,8 @@ $(MFSHR): %.o: %.f90
 
 $(MFOBJ): %.o: %.f90
 	$(FC) $(FOPT) -c  $<
+
+captn_general.o: gencap.o
 
 $(MFCAP): %.o: %.f90
 	$(FC) $(FOPT) -c  $<

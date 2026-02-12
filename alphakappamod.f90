@@ -19,19 +19,28 @@ contains
     double precision :: yout
     integer :: i
 
-    if (xout .lt. xin(1)) then
-      print*,"xout ", xout, "xin min ", xin(1)
-      stop "Error in interpolation: xout < min(xin)"
+    ! Clamp to table boundaries (linear extrapolation from last interval)
+    if (xout .le. xin(1)) then
+      i = 2
+    else if (xout .ge. xin(lenxin)) then
+      i = lenxin
+    else
+      ! Binary search for the interval containing xout
+      block
+        integer :: lo, hi, mid
+        lo = 1
+        hi = lenxin
+        do while (hi - lo > 1)
+          mid = (lo + hi) / 2
+          if (xout > xin(mid)) then
+            lo = mid
+          else
+            hi = mid
+          end if
+        end do
+        i = hi
+      end block
     end if
-    if (xout .gt. xin(lenxin)) then
-    print*,"xout ", xout, "xin max ", xin(lenxin), lenxin
-    stop "Error in interpolation: xout > max(xin)"
-  end if
-
-    i = 1
-    do while (xout .gt. xin(i))
-      i = i+1
-    end do
 
     yout = yin(i-1)+(yin(i)-yin(i-1))/(xin(i)-xin(i-1))*(xout-xin(i-1))
     return

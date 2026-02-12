@@ -196,6 +196,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     double precision :: J, j_chi, RFuncConst, WFuncConst, mu_T, prefactor_functype, factor_final, prefactor_current
     double precision :: RD, RM, RMP2, RP1, RP2, RS1, RS1D, RS2 !R functions stored in their own source files
     double precision :: prefactor_array(niso,11,2)
+    double precision :: R_cache(8,2,2,6) ! Precomputed R-function values: (funcType, tau, taup, term_R)
     
     dimension alist(1000),blist(1000),elist(1000),iord(1000),rlist(1000)!for integrator
     
@@ -212,10 +213,32 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     end if
     ! allocate(u_int_res(nlines))
 
-    do eli = 1, niso
-        do q_pow = 1, 11
-            do w_pow = 1, 2
-                prefactor_array(eli,q_pow,w_pow) = 0.d0
+    prefactor_array = 0.d0
+
+    ! Precompute all R-function values once (they don't depend on element)
+    do funcType = 1,8
+        do tau = 1,2
+            do taup = 1,2
+                do term_R = 1,6
+                    select case (funcType)
+                    case (1)
+                        R_cache(funcType,tau,taup,term_R) = RM(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (2)
+                        R_cache(funcType,tau,taup,term_R) = RS2(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (3)
+                        R_cache(funcType,tau,taup,term_R) = RS1(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (4)
+                        R_cache(funcType,tau,taup,term_R) = RP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (5)
+                        R_cache(funcType,tau,taup,term_R) = RMP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (6)
+                        R_cache(funcType,tau,taup,term_R) = RP1(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (7)
+                        R_cache(funcType,tau,taup,term_R) = RD(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
+                    case (8)
+                        R_cache(funcType,tau,taup,term_R) = RS1D(tau,taup,term_R-1,j_chi,coupling_Array)
+                    end select
+                end do
             end do
         end do
     end do
@@ -246,7 +269,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
                     ! the possible y-terms for each W function in order: y^0, y^1, y^2, y^3, y^4, y^5, y^6
                     do term_W = 1,7
-                        
+
                         WFuncConst = W_array(funcType,eli,tau,taup,term_W)
 
                         ! skip if the result gets multiplied by zero in the WFunction
@@ -255,29 +278,8 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                             ! the possible terms for each R function in order: c, v2, q2, v2q2, q4, v2q4
                             do term_R = 1,6
 
-                                ! pick out the appropriate term's constant from a given R function of tau, taup, and term_R
-                                ! currently passes mnuc, and c0 - these are constants that could be shared to it through the shared module?
-                                select case (funcType)
-                                case (1)
-                                    RFuncConst = RM(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array) !!!!!!!!!!!!!!! in the R functions the R term starts at zero, should change it to start at 1 like other Fortran things do for consistency
-                                case (2)
-                                    RFuncConst = RS2(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (3)
-                                    RFuncConst = RS1(mnuc,c0,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (4)
-                                    RFuncConst = RP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (5)
-                                    RFuncConst = RMP2(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (6)
-                                    RFuncConst = RP1(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (7)
-                                    RFuncConst = RD(mnuc,tau,taup,term_R-1,j_chi,coupling_Array)
-                                case (8)
-                                    RFuncConst = RS1D(tau,taup,term_R-1,j_chi,coupling_Array)
-                                case default
-                                    RFuncConst = 0.
-                                    print*, "Um, I ran out of R functions to choose from?"
-                                end select
+                                ! Use precomputed R-function value from cache
+                                RFuncConst = R_cache(funcType,tau,taup,term_R)
 
                                 ! skip if the result gets multiplied by zero in the RFunction
                                 if (RFuncConst.ne.0.) then
@@ -296,7 +298,7 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
                                         ! this is the +w^2 contribution
                                         ! it has the same q^2 contribution, but has a v_perp^2 contribution
                                         prefactor_array(eli,q_index,2) = prefactor_array(eli,q_index,2) + prefactor_current
-                                        
+
                                     else
                                         prefactor_array(eli,q_index,1) = prefactor_array(eli,q_index,1) + prefactor_current
 
@@ -314,11 +316,11 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
     umin = 0.d0
     capped = 0.d0
     !$OMP parallel default(none) &
-    !$OMP private(vesc, elementalResult, a, mu, muplus, muminus, J, umax, integrateResult, factor_final, partialCapped, &
+    !$OMP private(vesc, elementalResult, a, muminus, J, umax, integrateResult, factor_final, &
     !$OMP   abserr,neval,ier,alist,blist,rlist,elist,iord,last) &
-    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, capped, &
-    !$OMP   umin,limit,epsabs,epsrel)
-    partialCapped = 0.d0
+    !$OMP shared(nlines,niso,mdm,vesc_halo,prefactor_array,tab_vesc,vesc_shared_arr,tab_starrho,tab_mfr_oper,tab_r,tab_dr, &
+    !$OMP   umin,limit,epsabs,epsrel) &
+    !$OMP reduction(+:capped)
     !$OMP do
     do ri=1,nlines
         vesc = tab_vesc(ri)
@@ -362,12 +364,10 @@ subroutine captn_oper(mx_in, jx_in, niso, capped)!, isotopeChosen)
 
             factor_final = (2*mnuc*a)/(2*J+1) * NAvo*tab_starrho(ri)*tab_mfr_oper(ri,eli)/(mnuc*a) * &
                 tab_r(ri)**2*tab_dr(ri) * (hbar*c0)**2
-            partialCapped = partialCapped + elementalResult * factor_final
+            capped = capped + elementalResult * factor_final
         end do !eli
     end do !ri
-    !$OMP critical
-    capped = capped + partialCapped
-    !$OMP end critical
+    !$OMP end do
     !$OMP end parallel
 
     capped = 4.d0*pi*Rsun**3*capped

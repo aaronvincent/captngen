@@ -212,20 +212,24 @@ x_1 = guess_1
 x_2 = guess_2
 error = reltolerance + 1.d0	! So that the first iteration is executed
 
+! Evaluate endpoints once
+f1 = f(x_1, sigma_N, Nwimps, niso)
+f2 = f(x_2, sigma_N, Nwimps, niso)
+
 ! Binary search loop
 i = 0
 
 do while (error > reltolerance)
 	x_3 = (x_1 + x_2)/2.d0
-	f1 = f(x_1, sigma_N, Nwimps, niso)
-	f2 = f(x_2, sigma_N, Nwimps, niso)
 	f3 = f(x_3, sigma_N, Nwimps, niso)
 	if (f3 == 0.d0) then
 		exit
 	else if (f1*f3 .gt. 0) then ! if f1 and f3 have the same sign
 		x_1 = x_3
-	else if (f2*f3 .gt. 0) then
+		f1 = f3
+	else
 		x_2 = x_3
+		f2 = f3
 	endif
 	error = abs(x_2-x_1)/x_2
 	i = i + 1
@@ -262,6 +266,7 @@ if (ierr /= 0) print *, "Forward FFT calculator 'dfft1f' failed with error ", ie
 ! dTdr_even is now the array Fourier components of dTdr_even (the way fftpack works)
 
 noise_indicator = 0.d0
+denominator = 0.d0
 ! Take the ratio of high frequency components to low frequency components as a measure of how noisy the data is
 do i=int(cutoff*nlines),nlines
 	noise_indicator = noise_indicator + abs(y_even(i))
